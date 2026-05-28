@@ -596,12 +596,13 @@ code {
   align-self: flex-end;
 }
 
+
 .chat-bubble {
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.15rem;
   border-radius: 12px;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-size: 0.95rem; /* larger font size */
+  line-height: 1.6;  /* relaxed line height for readability */
+  box-shadow: 0 1px 4px rgba(0, 33, 133, 0.04);
 }
 
 .chat-bubble-user {
@@ -610,11 +611,35 @@ code {
   border-bottom-right-radius: 2px;
 }
 
+.chat-bubble-user p {
+  color: white !important;
+}
+
 .chat-bubble-bot {
   background: white;
-  color: var(--HeaderText);
-  border: 1px solid var(--LightGray);
+  color: #0f172a; /* high contrast text */
+  border: 1.5px solid var(--LightGray);
   border-bottom-left-radius: 2px;
+}
+
+.chat-bubble-bot p {
+  color: #0f172a !important; /* enforce dark black color */
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.chat-bubble-bot li {
+  color: #0f172a !important; /* enforce dark black color */
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+
+.chat-bubble-bot code {
+  background-color: var(--WidgetBG);
+  color: var(--LabelBG);
+  border: 1px solid rgba(0, 33, 133, 0.15);
+  font-size: 0.85em;
+  padding: 0.15em 0.3em;
 }
 
 /* Custom Accordion for System Thinking */
