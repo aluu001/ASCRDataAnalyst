@@ -1,0 +1,3888 @@
+
+/***************************
+    Global Site Styles
+****************************/
+/*#region Global Site Styles */
+
+:root {
+    /* Current Color Scheme */
+
+    --LabelBG: #002185;
+    --BannerGB: #0052BD;
+    --LabelText: white;
+    --BannerText: white;
+    --HeaderText: black;
+    --TableStripe1: #E0EFF4;
+    --TableStripe2: aliceblue;
+    --TableText: black;
+    --WidgetBG: #EEF8FA;
+    --LightGray: lightgray;
+    --DarkGray: darkslategray;
+    --InputHoverBoxShadow: rgba(17, 153, 193,.75);
+    --DashboardBG: white;
+    --NavBG: #F9FAFC;
+    --BodyBG: #EEF1F1;
+    --ExtraLightGray: #EBEBEB;
+    --ProgressBG: #1F71DB;
+    /* Wacky Testing Color Scheme */
+    /*
+    --LabelBG: orangered;
+    --BannerGB: lightgreen;
+    --LabelText: blue;
+    --BannerText: red;
+    --HeaderText: gray;
+    --TableStripe1: orchid;
+    --TableStripe2: violet;
+    --TableText: mediumvioletred;
+    --WidgetBG: aqua;
+    --LightGray: lightpink;
+    --DarkGray: deeppink;
+    --InputHoverBoxShadow: rgba(17, 153, 193,.75);
+    --DashboardBG: black;
+    --NavBG:#F9FAFC;
+    --BodyBG:pink;
+    --ExtraLightGray: #EBEBEB;
+    --ProgressBG: #22AADD;
+*/
+    /* Original Color Scheme */
+    /*
+    --LabelBG: #91CFE1;
+	--BannerGB: #22AADD;
+    --LabelText: white;
+    --BannerText: white;
+    --HeaderText: gray;
+	--TableStripe1: #E0EFF4;
+	--TableStripe2: aliceblue;
+    --TableText: black;
+	--WidgetBG: #EEF8FA;
+    --LightGray: lightgray;
+    --DarkGray: gray; 
+    --InputHoverBoxShadow: rgba(17, 153, 193,.75);
+    --DashboardBG: white;
+    --NavBG:white;
+    --BodyBG:#EEF1F1;
+    --ExtraLightGray: #EBEBEB;
+    --ProgressBG: #22AADD;
+*/
+}
+
+body {
+    color: black;
+    font-size: 14px;
+    font-family: 'Open Sans', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--BodyBG);
+    list-style-type: none;
+    overflow-y: scroll;
+}
+
+.CloseX {
+    background: url(/Content/images/XClearX.png) repeat-x right #EBEBEB;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    border-radius: 5px;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+}
+
+.CloseX:hover {
+    background: url(/Content/images/XClearX.png) no-repeat right var(--BannerGB);
+}
+
+input, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+textarea {
+    resize: none;
+}
+
+p {
+    font-size: .85rem;
+}
+
+input::-ms-clear {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
+.bold {
+    font-weight: bold;
+    letter-spacing: -0.035em;
+}
+
+*:focus-visible {
+    outline: 1px black solid;
+}
+
+#body {
+    min-width: 1024px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.3);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: 1024px;
+    /*width:75vw;*/
+    margin: 0 auto;
+    background-color: var(--DashboardBG);
+}
+
+.cursive {
+    font-family: "Petit Formal Script", cursive;
+    font-weight: bold;
+}
+
+a {
+    color: #333;
+    text-decoration: underline;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin-top: 0.75em;
+    border: 0 none;
+}
+
+.InfoTable {
+    border-collapse: separate;
+    margin: 0px;
+}
+
+.InfoTable * {
+    box-sizing: border-box;
+}
+
+.InfoTable td {
+    padding: 5px 30px 5px 10px;
+    width: 50%;
+}
+
+.InfoTable div {
+    width: 100%;
+}
+
+.InfoTable td > label, .InfoTable td > h4 {
+    margin-left: -10px;
+}
+
+.IndexTableDiv {
+    width: 100%;
+    padding: 0px 20px;
+    background-color: var(--NavBG);
+    box-sizing: border-box;
+}
+
+.nav-grid-item img.StatusIcon {
+    display: inline !important;
+}
+
+.nav-grid-item img.PinIcon {
+    display: none !important;
+}
+
+.nav-grid-item.NavButtonSelected img.StatusIcon {
+    display: none !important;
+}
+
+.nav-grid-item.NavButtonSelected img.PinIcon {
+    display: inline !important;
+}
+
+.nav-grid {
+    display: grid;
+    /*grid-template-columns: repeat(4, 1fr);*/
+    gap: 0px;
+    background-color: var(--NavBG);
+}
+
+.nav-grid-item {
+    padding: 3px 0px 3px 5px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .8rem;
+    color: var(--DarkGray);
+    font-weight: 600;
+    background-color: transparent;
+    font-family: inherit;
+    outline-offset: -1px;
+    transition: all 0.3s ease-in-out;
+}
+
+.nav-grid-item:not(.NavButtonSelected,.GrayedOut):hover {
+    color: var(--DarkGray);
+    background-color: var(--TableStripe2);
+    transition: all 0.1s ease-in-out;
+    border: 1px solid var(--LightGray);
+    cursor: pointer;
+}
+
+.nav-grid-item.NavButtonSelected {
+    color: black;
+    background-color: var(--TableStripe1);
+    transition: all 0ms;
+    border: 1px solid var(--DarkGray);
+    cursor: pointer;
+}
+
+.ReportLabel {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.ReportLabel img {
+    padding: 2px 0px;
+    height: 30px;
+}
+
+.ReportLabel h1 {
+    margin: 0px;
+}
+
+.CalculationsTable {
+    font-size: .9rem;
+    position: relative;
+}
+
+.CalculationsTable td {
+    padding: 2px;
+    white-space: nowrap;
+    /*cursor: pointer;*/
+}
+
+.required:after {
+    content: " *";
+    color: red;
+}
+
+.CalculationsTable img {
+    height: 15px;
+    width: 15px;
+    vertical-align: middle;
+    margin-right: 3px;
+}
+
+.CalculationsTable .even {
+    background-color: var(--TableStripe1);
+}
+
+.CalculationsTable .odd {
+    background-color: var(--TableStripe2);
+}
+
+.CalculationsTable input {
+    background-color: white;
+    border: 1px solid transparent;
+    text-align: right;
+}
+
+.CalculationsTableDiv p {
+    color: var(--LabelBG);
+    font-weight: bold;
+    margin-left: 15px;
+    /*    -webkit-margin-before:0px;
+    -webkit-margin-after:0px;*/
+    margin-bottom: 0px;
+    margin-top: 0px;
+    padding-top: 10px;
+}
+
+.SummaryTable {
+    width: 900px;
+    border-collapse: collapse;
+    margin: 0px;
+    border-style: solid;
+    border-width: 3px;
+    border-spacing: 2px;
+    border-color: #D1D1D1;
+}
+
+.SummaryTable td {
+    border-collapse: separate;
+    padding-right: 50px;
+    height: 25px;
+    border-width: 2px;
+    border-style: solid;
+    border-color: #D1D1D1;
+}
+
+.SpacerRow td {
+    height: 25px;
+    border-color: transparent;
+}
+
+.SummaryTable div {
+    width: 100%;
+    padding-left: 10px;
+}
+
+.text-button, .text-button-inactive, a.text-button, .ui-widget input.text-button, .ui-widget .text-button {
+    box-sizing: border-box;
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--BannerGB);
+    background-color: var(--BannerGB);
+    color: var(--LabelText);
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    border-radius: 5px;
+    user-select: none;
+    font-size: .85rem;
+    font-family: inherit;
+    height: fit-content;
+    transition: background-color 0.2s ease-out, border-color 0.2s ease-out;
+    min-width: 85px;
+    outline-offset: 0px;
+}
+
+.text-button:hover, .ui-widget input.text-button:hover {
+    background-color: var(--LabelBG);
+    border-color: var(--LabelBG);
+}
+
+.text-button-inactive {
+    background-color: var(--LightGray);
+    color: black;
+    cursor: default;
+    border-color: var(--LightGray);
+}
+
+.text-button-dark {
+    background-color: var(--LabelBG);
+    border-color: var(--LabelBG);
+}
+
+.text-button-dark:hover {
+    border: 2px solid var(--BannerGB);
+    background-color: var(--BannerGB);
+}
+
+.text-button-dark:active {
+    background-color: var(--LabelBG);
+    border-color: var(--LabelBG);
+}
+
+.NavButtonPanel .text-button, .NavButtonPanel .text-button-inactive {
+    padding: 0px 5px;
+    border: 2px solid var(--BannerGB);
+    background-color: white;
+    color: var(--BannerGB);
+    height: 34px;
+    vertical-align: middle;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    line-height: 14px;
+    flex-grow: 1;
+    justify-content: center;
+    font-size: .8rem;
+}
+
+.NavButtonPanel .text-button-inactive {
+    color: black;
+    border: 2px solid var(--LightGray);
+    background-color: var(--LightGray);
+}
+
+.NavButtonPanel .text-button:hover {
+    background-color: var(--BannerGB);
+    color: white;
+}
+
+.NavButtonPanel .text-button:active {
+    background-color: var(--LabelBG);
+    color: white;
+}
+
+.input-cell .text-box {
+    width: 100%;
+    height: 35px;
+    /*padding:0px;*/
+    padding-left: 10px;
+    margin: 0px;
+    border: 1px;
+    border-style: solid;
+    line-height: 33px;
+    float: left;
+    background-color: #EBEBEB;
+    border-color: #EBEBEB;
+    border-radius: 0px 5px 5px 0px;
+}
+
+.input-cell .text-box:hover {
+    border-color: #dbdbdb;
+    box-shadow: inset 0 0 5px rgba(51,102,248,.4);
+}
+
+.input-cell .date-box {
+    height: 35px;
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+    border-style: solid;
+    line-height: 33px;
+    float: right;
+    background: url(/Content/images/BlueCalendar.png) no-repeat right #EBEBEB;
+    width: 130px;
+    padding-left: 5px;
+}
+
+.input-cell .date-label {
+    width: 260px;
+    color: white;
+    height: 33px;
+    padding: 0px;
+    margin: 0px;
+    border: 1px;
+    border-style: solid;
+    line-height: 33px;
+    float: left;
+    background-color: var(--BannerGB);
+    border-color: var(--BannerGB);
+    text-align: center;
+    font-size: .8rem;
+    border-radius: 5px 0px 0px 5px;
+}
+
+.UForm {
+    border: 1px;
+    border-style: solid;
+    border-color: #EBEBEB;
+}
+
+.UForm * {
+    box-sizing: border-box;
+}
+
+.UMForm div.UMRow {
+    display: flex;
+    gap: 50px;
+    padding-bottom: 10px;
+}
+
+.UMForm.UMFormCompact div.UMRow {
+    gap: 10px;
+}
+
+.UMForm div.UMRow > div:last-child {
+    padding: 0px;
+}
+
+.UMForm h4 {
+    line-height: 20px;
+    color: var(--BannerGB);
+    font-weight: normal;
+    bottom: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.UMForm fieldset {
+    width: 100%;
+    border-width: 1px 0px 0px 0px;
+    border-style: dashed;
+    border-color: var(--BannerGB);
+    margin: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.UMForm label, .UMForm span {
+    color: var(--BannerGB);
+}
+
+.UMForm .text-box, .UMForm .select-list select {
+    background-color: transparent;
+    height: 33px;
+    padding: 0px;
+    /*margin:2px;*/
+    border: 1px solid var(--BannerGB);
+    border-radius: 5px;
+    line-height: 33px;
+    width: 100%;
+    padding-left: 10px;
+    box-sizing: border-box;
+}
+
+.UMForm input[type='date'].text-box {
+    padding-right: 10px;
+}
+
+.UMForm .text-box.input-validation-error {
+    border: 1px solid #e80c4d;
+}
+
+.UMForm .text-box.input-validation-error:hover {
+    box-shadow: inset 0px 0px 10px pink;
+}
+
+div.UMForm {
+    min-height: 70px;
+}
+
+.UMForm .text-box.disabled, .UMForm input:is([disabled]) {
+    background-color: var(--ExtraLightGray);
+    color: var(--TableText);
+    user-select: none;
+    cursor: default;
+    border-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.UMForm .text-box.disabled:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.UMForm .disabled:hover {
+    box-shadow: none;
+}
+
+.UMForm .date-box:hover {
+    box-shadow: none;
+}
+
+.UMForm input:hover, .UMForm select:hover, .UMForm textarea:hover {
+    box-shadow: 0 0 5px var(--InputHoverBoxShadow) inset;
+    transition: all 200ms;
+}
+
+.UMForm input:is([disabled]):hover, .UMForm select:is([disabled]):hover, .UMForm textarea:is([disabled]):hover {
+    box-shadow: none;
+}
+
+.UMForm .Invalid input {
+    border-color: #ED5A4D;
+    box-shadow: 0 0 5px rgba(237,90,77,1);
+}
+
+.UMForm .Invalid div {
+    border-color: #ED5A4D;
+    box-shadow: 0 0 5px rgba(237,90,77,1);
+}
+
+.UMForm .Invalid .date-label {
+    border-color: var(--BannerGB);
+    box-shadow: none;
+}
+
+.ui-datepicker {
+    z-index: 10 !important;
+}
+
+.UMForm .field-validation-error span {
+    color: #e80c4d;
+}
+
+.UMForm td {
+    vertical-align: bottom;
+}
+
+.UMFormFull div {
+    padding: 0px;
+    line-height: 35px;
+}
+
+.UMFormFull .text-box {
+    background-color: transparent;
+    height: 33px;
+    padding: 0px;
+    margin: 2px;
+    border: 1px;
+    border-style: solid;
+    border-color: var(--BannerGB);
+    line-height: 33px;
+    width: 95%;
+    padding-left: 10px;
+}
+
+.UMFormFull .text-box:focus {
+    box-shadow: 0 0 5px rgba(51,102,248,.4);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
+    font-size: .85rem;
+}
+
+.info-grid-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.PrivilegeTable {
+    line-height: 30px;
+}
+
+.PGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0px 10px;
+}
+
+.PGrid label {
+    cursor: pointer;
+}
+
+.PGrid div {
+    line-height: 30px;
+}
+
+.PHeader {
+    grid-column: 1 / -1;
+}
+
+.label-cell, .label-cell:link, .label-cell:visited {
+    /*min-width:65px;
+    box-sizing: content-box;*/
+    min-width: 85px;
+    box-sizing: border-box;
+    color: var(--LabelText);
+    background-color: var(--BannerGB);
+    padding: 10px;
+    text-decoration: none;
+    user-select: none;
+    border-radius: 5px 0px 0px 5px;
+    transition: background-color 0.2s ease;
+    border-color: transparent;
+    white-space: nowrap;
+    text-align: center;
+    border: 5px;
+    position: relative;
+    /*float:left;*/
+    font-size: .8rem;
+    min-height: fit-content;
+}
+
+.label-cell-dark {
+    background-color: var(--LabelBG);
+}
+
+a.label-cell:hover, a.label-cell:active {
+    background-color: var(--LabelBG);
+}
+
+a.label-cell, a.label-cell:link, a.label-cell:visited, a.label-cell:active, a.label-cell:hover {
+    border-radius: 5px;
+}
+
+.logout-cell, .logout-cell:link, .logout-cell:visited, .logout-cell:active, .logout-cell:hover {
+    /*min-width:65px;
+    box-sizing: content-box;*/
+    min-width: 85px;
+    box-sizing: border-box;
+    color: black;
+    background-color: var(--LightGray);
+    padding: 10px;
+    text-decoration: none;
+    user-select: none;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+    border-color: transparent;
+    white-space: nowrap;
+    text-align: center;
+    border: 5px;
+    position: relative;
+    /*float:left;*/
+    font-size: .85rem;
+    height: fit-content;
+}
+
+.logout-cell:active, .logout-cell:hover {
+    color: white;
+    background-color: var(--DarkGray);
+}
+
+.pale-blue-box {
+    background-color: var(--WidgetBG);
+    color: var(--LabelBG);
+}
+
+.dashboard .pale-blue-box {
+    border: 2px solid var(--BannerGB);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard .pale-blue-box h2 {
+    padding: 0px;
+    margin: 0px;
+}
+
+.top-banner {
+    height: fit-content;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    color: var(--HeaderText);
+    font-weight: bold;
+    margin-bottom: 5px;
+    margin-top: 0px;
+    font-size: 1.3rem;
+    display: inline-block;
+}
+
+h2 {
+    color: var(--HeaderText);
+    font-weight: bold;
+    margin-bottom: 0px;
+    margin-top: 0px;
+    font-size: 1rem;
+    display: inline-block;
+    /* Derek Edit below*/
+    padding-top: 5px;
+    padding-bottom: 0px;
+    /*padding-left: 20px;*/
+}
+
+h3 {
+    color: var(--HeaderText);
+    font-weight: bold;
+    margin-bottom: 5px;
+    margin-top: 0px;
+    font-size: 1rem;
+    display: inline-block;
+}
+
+h4 {
+    color: var(--LabelBG);
+    font-size: 1em;
+    font-weight: 100;
+    margin-bottom: 0px;
+    margin-top: 5px;
+}
+
+.header-info {
+    background-color: var(--WidgetBG);
+    color: var(--BannerGB);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    height: fit-content;
+    gap: 10px;
+}
+
+.pale-blue-box p, .header-info p {
+    font-weight: bold;
+    margin: 0px;
+}
+
+.main-content {
+    background-color: var(--DashboardBG);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    /*min-height:calc(100vh - 250px);*/
+    /*min-height:50vh;*/
+    /*min-height:75vh;*/
+}
+
+.tabitem.dashboard {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+    /*min-height:calc(100vh - 375px);*/
+}
+
+.tabitem.dashboard form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+hr {
+    border: var(--DarkGray) 1px dashed;
+    border-style: none none dashed;
+    height: 0px;
+    margin: 5px;
+}
+
+.hr {
+    border: var(--DarkGray) 1px dashed;
+    border-style: none none dashed;
+    height: 0px;
+    margin: 5px;
+}
+
+.hr-vertical {
+    border: var(--DarkGray) 1px dashed;
+    border-style: none none none dashed;
+    height: 100%;
+    width: 1px;
+}
+
+.hr-solid {
+    border: var(--DarkGray) 1px solid;
+    border-style: none none solid;
+    height: 0px;
+    margin: 5px;
+}
+
+.FilterTextInput {
+    padding-left: 12px;
+}
+
+.FilterTextInput:hover {
+    box-shadow: 0px 0px 1px 1px var(--InputHoverBoxShadow) inset;
+}
+
+.multi-select {
+    width: 270px;
+    /*height: 38px;*/
+    color: #000;
+}
+
+.MultiSelectList.Selected {
+    background-color: var(--BannerGB);
+    color: white;
+}
+
+.MultiSelectList {
+    background-color: white;
+    color: black;
+}
+
+.StripedTable td.EditField select {
+    vertical-align: middle;
+    background-color: transparent;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    padding-left: 0px;
+}
+
+.StripedTable td.EditField select:not([readonly], [disabled]):focus {
+    background: white;
+}
+
+.StripedTable td.EditField input[type='checkbox'] {
+    width: 21px;
+    height: 21px;
+}
+
+.StripedTable div[contenteditable="true"] {
+    background-color: white;
+    box-shadow: 1px 1px 1px 0 var(--LightGray) inset;
+}
+
+.StripedTable td[contenteditable="true"] {
+    background-color: white;
+}
+
+div[contenteditable="true"].Invalid {
+    color: red;
+    outline-color: red;
+    box-shadow: 0px 0px 1px 1px red inset;
+}
+
+.styled-select {
+    width: 450px;
+    /*height: 35px;*/
+    color: #000;
+    /*outline: 1px solid #EBEBEB;*/
+    position: relative;
+    /*overflow: hidden;*/
+    border-radius: 0px 5px 5px 0px;
+}
+
+.styled-select:hover {
+    box-shadow: 0 0 5px rgba(0,0,0,.15) inset;
+}
+
+.ui-autocomplete {
+    max-height: 400px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    opacity: 0;
+    transform-origin: 50% 0;
+    transform: scaleY(0);
+    /*transition: transform .2s cubic-bezier(0.5, 0, 0, 1.25), opacity .15s ease-out;*/
+}
+
+.ui-autocomplete.ccopen {
+    transform: scaleY(1);
+    opacity: 1;
+}
+
+.ui-autocomplete .ui-menu-item {
+    text-indent: 5px;
+    padding: 0px;
+    font-size: .8rem;
+    border: 0px;
+}
+
+.ui-autocomplete .ui-menu-item .ui-state-active, .ui-autocomplete .ui-menu-item:hover {
+    transition: all 0.2s;
+    background: var(--BannerGB);
+    color: #fff;
+    margin: 0px;
+    border: 0px;
+    font-weight: inherit;
+}
+
+.ui-autocomplete .CurrentSelection {
+    font-weight: 700 !important;
+}
+
+.ui-autocomplete .ui-state-disabled {
+    font-style: italic;
+    color: dimgray;
+}
+
+
+.ui-autocomplete {
+    max-height: 400px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.ui-menu-item-wrapper {
+    padding: 3px 5px;
+}
+
+.styled-select select {
+    visibility: hidden;
+}
+
+.styled-select-accessible select {
+    height: 100%;
+    width: 100%;
+    padding-left: 5px;
+}
+
+.styled-select-year {
+    width: 110px;
+    /*height: 35px;*/
+    color: #000;
+    /*outline: 1px solid #EBEBEB;*/
+    position: relative;
+    border-radius: 0px 5px 5px 0px;
+}
+
+.styled-select-year:hover {
+    box-shadow: 0 0 5px rgba(0,0,0,.15) inset;
+}
+
+.styled-select-year select {
+    visibility: hidden;
+}
+
+.styled-select-user {
+    width: 180px;
+    height: 35px;
+    outline: 1px solid var(--LightGray);
+    position: relative;
+}
+
+.styled-filter-state {
+    width: 110px;
+    height: 35px;
+    color: #000;
+    outline: 1px solid #EBEBEB;
+}
+
+
+.dropdown .scrollable {
+    width: 180px;
+    height: 35px;
+}
+
+div.dropdown {
+    padding-left: 0px;
+}
+
+.styled-select-user select {
+    visibility: hidden;
+}
+
+.styled-select-state {
+    width: 90%;
+    background-color: #FFF;
+    height: 35px;
+    position: relative;
+}
+
+.styled-select-state select {
+    visibility: hidden;
+}
+
+.styled-select-state .dropdown {
+    border: 1px solid #EBEBEB;
+}
+
+.styled-select-state-gray {
+    width: 140px;
+    background-color: #EBEBEB;
+    height: 35px;
+}
+
+.styled-select-state-gray select {
+    visibility: hidden;
+}
+
+.styled-select-state-red {
+    width: 240px;
+    height: 35px;
+    overflow: hidden;
+    background: url(/Content/images/ddlArrow.png) no-repeat right #FAF0E6;
+    border: 0px solid #000;
+    font-size: .9em;
+}
+
+.styled-select-state-red select {
+    background: transparent;
+    width: 268px;
+    padding: 5px;
+    line-height: 1;
+    height: 34px;
+    /*-webkit-appearance: none;*/
+    font-size: .9em;
+    border: 1px;
+    border-style: solid;
+    border-color: #EBEBEB;
+}
+
+.styled-select-state-ie {
+    width: 115px;
+    height: 35px;
+    overflow: hidden;
+    border: 0px solid #000;
+}
+
+.styled-select-state-ie select {
+    background: url(/Content/images/ddlArrow.png) no-repeat 90px 0px;
+    width: 143px;
+    padding: 5px;
+    line-height: 1;
+    border: 0;
+    border-radius: 0;
+    height: 34px;
+}
+
+.styled-select-state-ie-info {
+    width: 115px;
+    height: 35px;
+    overflow: hidden;
+    border: 0px solid #000;
+}
+
+.styled-select-state-ie-info select {
+    background: url(/Content/images/ddlArrow.png) no-repeat 350px 0px;
+    width: 143px;
+    padding: 5px;
+    line-height: 1;
+    border: 0;
+    border-radius: 0;
+    height: 34px;
+}
+
+.selectWrapper {
+    /*position:relative;*/
+    display: flex;
+}
+
+.selectWrapper select {
+    flex-grow: 1;
+    white-space: break-spaces;
+    /*    position:absolute;
+    width:100%;
+    height:100%;*/
+    border-radius: 0px 5px 5px 0px;
+    /*    background-color:transparent;*/
+    padding-left: 5px;
+    font-size: .8rem;
+}
+
+.selectWrapper select:hover {
+    box-shadow: inset 0 0 5px var(--InputHoverBoxShadow);
+    transition: all 200ms;
+}
+
+.disabledOption {
+    color: dimgray;
+    font-style: italic;
+}
+
+.ImportantDates {
+    text-decoration: none;
+    color: var(--LabelBG);
+    font-weight: bold;
+    font-size: .75rem;
+    margin-top: 0px;
+}
+
+.ImportantDates tr {
+    height: 20px;
+}
+
+.ImportantDates td {
+    padding: 3px;
+}
+
+.ImportantDates a, .ImportantDates span {
+    text-decoration: none;
+    color: var(--LabelBG);
+    vertical-align: super;
+    /*    font-weight:bold;
+    font-size:.75rem;
+    word-break: break-all;*/
+}
+
+.DateList {
+    list-style-image: url(/Content/Images/SmallCalendarIcon.png);
+    padding-right: 10px;
+}
+
+.ReportsList {
+    list-style-image: url(/Content/Images/SmallReportIcon.png);
+    padding-right: 10px;
+}
+
+.LinksList {
+    list-style-image: url(/Content/Images/SmallLinkIcon.png);
+    padding-right: 10px;
+}
+
+.DateList li, .ReportsList li, .LinksList li {
+    vertical-align: text-top;
+    margin-bottom: 5px;
+}
+
+.dashboard {
+    padding: 0px 20px;
+    min-height: 60px;
+    position: relative;
+}
+
+.ShowHideDiv {
+    background-color: #F9FAFC;
+    padding-bottom: 0px;
+    width: 100%;
+    clear: both;
+}
+
+.stickyNavigation {
+    background-color: var(--DashboardBG);
+}
+
+.stickyNavigation.stuck {
+    position: fixed;
+    top: 0;
+    z-index: 100;
+    /*width:1024px;*/
+    background-color: var(--DashboardBG);
+}
+
+/*#endregion */
+
+
+/***************************
+    Header and Footer
+****************************/
+
+/*#region Header and Footer */
+.header-container {
+    position: relative;
+    background-color: var(--BannerGB);
+    width: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-decoration: none;
+    user-select: none;
+    gap: 10px;
+    padding: 0px 20px;
+}
+
+.header-container img {
+    max-height: 100%;
+}
+
+.header-container-logo {
+    height: 55px;
+}
+
+.header-container-text {
+    color: var(--LabelText);
+    font-family: 'Calibri', 'Candara', 'Segoe', 'Segoe UI', Optima, Arial, sans-serif;
+    text-align: left;
+    font-size: 18px;
+    text-decoration: none !important;
+    letter-spacing: .20em;
+    font-weight: bold;
+    line-height: .8em;
+    flex: 1 1 0;
+}
+
+.header-container-text-light {
+    font-weight: 100;
+}
+
+.footer-container {
+    position: relative;
+    background: #565657;
+    min-height: 160px;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+}
+
+.footer-left-logo {
+    padding: 0px 10px;
+    width: fit-content;
+    height: inherit;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.footer-left {
+    background: #2B2B2B;
+    z-index: 2;
+    position: relative;
+    display: flex;
+    min-width: 350px;
+    align-items: center;
+}
+
+.footer-left-header {
+    margin: 0px;
+    color: white;
+    font-size: 1.2em;
+    font-weight: 700;
+}
+
+.footer-left-text {
+    color: var(--LightGray);
+    padding: 0px;
+    font-size: .85em;
+    line-height: 1.5;
+}
+
+.footer-left-text a:link, .footer-left-text a:visited, .footer-left-text a:active, .footer-left-text a:hover {
+    color: var(--LightGray);
+    padding: 0px;
+    text-decoration: none;
+    background-color: #2B2B2B;
+}
+
+.footer-left-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5px 15px 5px 5px;
+}
+
+.footer-right {
+    height: inherit;
+    position: relative;
+    right: 0px;
+    flex: 1;
+    align-items: center;
+}
+
+.footer-logo {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    height: 65px;
+}
+
+.footer-right-bg {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    z-index: 0;
+    height: 100%;
+}
+
+.footer-right-header {
+    margin-top: 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-bottom: 0px;
+    color: white;
+    padding: 0px;
+    font-size: 1.2em;
+    font-weight: 700;
+}
+
+.footer-right-text {
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-bottom: 10px;
+    color: var(--LightGray);
+    padding: 0px;
+    font-size: .85em;
+    line-height: 1.5;
+}
+
+.footer-right-text a:link, .footer-right-text a:visited, .footer-right-text a:active, .footer-right-text a:hover {
+    color: var(--LightGray);
+    text-decoration: none;
+    background-color: #565657;
+}
+/*#endregion */
+
+/***************************
+    Login Page
+****************************/
+/*#region Login Page */
+.LoginContainer {
+    height: 683px;
+    position: relative;
+    background: url(/Content/images/LoginBackground.png) no-repeat;
+    width: 1024px;
+    margin: 0 auto;
+}
+
+.LoginContainer > * {
+    box-sizing: border-box;
+}
+
+.LoginMessage {
+    left: 90px;
+    top: 140px;
+    padding-left: 30px;
+    padding-top: 130px;
+    position: absolute;
+    height: 270px;
+    width: 400px;
+    background: url(/Content/images/LoginBackground.png) -90px -140px no-repeat;
+}
+
+.LoginMessage h2 {
+    color: white;
+    font-size: 2em;
+    font-weight: 100;
+}
+
+.LoginForm {
+    position: relative;
+    background-color: white;
+    /*    z-index:2;*/
+    left: 500px;
+    top: 130px;
+    height: fit-content;
+    width: 485px;
+    padding: 30px;
+    box-shadow: 0 0 4px 4px white;
+    border-radius: 20px;
+}
+
+.LoginForm h2 {
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 400;
+    padding: 5px;
+    margin-bottom: 15px;
+}
+
+.LoginForm table {
+    width: 100%;
+    margin-top: .5em;
+}
+
+.LoginForm td {
+    height: 35px;
+    padding: 0px;
+    border: 0 none;
+}
+
+.label-input-cell-pair {
+    display: flex;
+}
+
+.LoginForm .input-cell {
+    display: flex;
+    flex: 1;
+}
+
+.LoginForm .input-cell input {
+    text-indent: 10px;
+    margin: 0px;
+    border: 2px;
+    border-style: solid;
+    background-color: var(--WidgetBG);
+    border-color: var(--BannerGB);
+    border-radius: 0px 5px 5px 0px;
+    flex: 1;
+}
+
+.LoginForm .input-cell input:hover {
+    border-color: var(--BannerGB);
+    box-shadow: inset 0 0 5px var(--InputHoverBoxShadow);
+}
+
+.LoginForm .input-cell .date-box {
+    height: 35px;
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+    border-style: solid;
+    line-height: 33px;
+    float: right;
+    background: url(/Content/images/BlueCalendar.png) no-repeat right transparent;
+    width: 130px;
+    padding-left: 5px;
+}
+
+.ForgotPasswordPopup .text-box.single-line {
+    width: 300px;
+    border: 2px solid var(--BannerGB);
+    border-radius: 5px;
+    line-height: 30px;
+    padding-left: 10px;
+}
+
+.BlueLockBox {
+    height: 193px;
+    width: 151px;
+    background: url(/Content/images/LockIcon.png) 50% 50% no-repeat;
+    background-color: #074051;
+}
+
+.LightBlueBox {
+    height: 143px;
+    width: 239px;
+    background-color: var(--LabelBG);
+    padding: 25px;
+    color: white;
+    font-weight: 100;
+}
+
+.LightBlueBox h1 {
+    color: white;
+    font-weight: 100;
+}
+
+.NoSpaceTable td {
+    padding: 0px 0px 20px 0px;
+    border: 0 none;
+}
+
+.right-align {
+    float: right;
+}
+
+.center-text {
+    text-align: center;
+}
+
+.forgot-password-link {
+    text-decoration: underline;
+    font-size: .8rem;
+    cursor: pointer;
+}
+
+.clickable {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.LandingPage {
+    position: relative;
+    background-color: white;
+    z-index: 2;
+    width: 90%;
+    margin: auto;
+    padding: 0px;
+    border-radius: 10px;
+}
+
+.LandingContainer {
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+    height: 100%;
+}
+/*#endregion */
+
+/***************************
+    Validation Popup
+****************************/
+/*#region Validation Popup */
+.ValidationPopup {
+    height: 100%;
+}
+
+.ValidationHeader {
+    height: fit-content;
+    background-color: #2FB6DE;
+    padding: 10px;
+}
+
+.ValidationHeader h1 {
+    color: white;
+    font-weight: 100;
+}
+
+.ValidationSubHeader {
+    padding: 10px 40px;
+}
+
+.ValidationItem {
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ValidationIcon {
+    height: 43px;
+}
+
+.ValidationText {
+    flex: 1;
+}
+
+.ValidationEdit {
+    width: 120px;
+}
+
+.ValidationItem span {
+    color: #2FB6DE;
+    font-weight: 900;
+}
+
+/*#endregion */
+
+/***************************
+    Modal Popup
+****************************/
+/*#region Modal Popup */
+.ui-widget-overlay {
+    height: 100%;
+    left: 0;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    opacity: .5;
+}
+
+.ui-front {
+    z-index: 100;
+}
+
+.noTitleStuff .ui-dialog-titlebar {
+    display: none
+}
+
+.noTitleStuff {
+    position: fixed;
+    overflow: visible;
+}
+
+.EnterNote .ui-dialog-buttonpane {
+    background-color: var(--LightGray);
+}
+
+.rednote {
+    background-color: rgba(255,0,0, 0.8);
+}
+
+.lightrednote {
+    background-color: rgba(255,0,0, 0.3);
+}
+
+.ui-dialog .ui-dialog-content {
+    padding: 0px;
+}
+
+/*#endregion */
+
+/***************************
+    Progress Bar
+****************************/
+/*#region Progress Bar */
+#progressBar {
+    width: 100%;
+    height: 12px;
+    border: 0px solid #111;
+    border-radius: 4px;
+    background-color: var(--ProgressBG);
+}
+
+#progressBar div {
+    height: 100%;
+    color: #fff;
+    text-align: right;
+    line-height: 22px; /* same as #progressBar height if we want text middle aligned */
+    width: 0;
+    background-color: var(--LabelBG);
+    border-radius: 4px;
+    position: relative;
+}
+
+#progressBar img {
+    position: absolute;
+    top: -15px;
+}
+
+.progressBar {
+    width: 100%;
+    height: 12px;
+    border: 0px solid #111;
+    border-radius: 4px;
+    background-color: var(--ProgressBG);
+}
+
+.progressBar div {
+    height: 100%;
+    color: #fff;
+    text-align: right;
+    line-height: 22px; /* same as #progressBar height if we want text middle aligned */
+    width: 0;
+    background-color: var(--LabelBG);
+    border-radius: 4px;
+    position: relative;
+}
+
+.progressBar img {
+    position: absolute;
+    top: -15px;
+}
+
+#progressBarMA {
+    width: 100%;
+    height: 8px;
+    border: 0px solid #111;
+    border-radius: 4px;
+    background-color: var(--ProgressBG);
+}
+
+#progressBarMA div {
+    height: 100%;
+    color: #fff;
+    text-align: right;
+    line-height: 22px; /* same as #progressBarMA height if we want text middle aligned */
+    width: 0;
+    background-color: var(--LabelBG);
+    border-radius: 4px;
+    position: relative;
+}
+
+#progressBarMA img {
+    position: relative;
+    top: -6px;
+    left: 6px;
+}
+
+.progressBarMA {
+    width: 100%;
+    height: 8px;
+    border: 0px solid #111;
+    border-radius: 4px;
+    background-color: var(--ProgressBG);
+}
+
+.progressBarMA div {
+    height: 100%;
+    color: #fff;
+    text-align: right;
+    line-height: 22px; /* same as #progressBarMA height if we want text middle aligned */
+    width: 0;
+    background-color: var(--LabelBG);
+    border-radius: 4px;
+    position: relative;
+}
+
+.progressBarMA img {
+    position: absolute;
+    top: -15px;
+}
+
+/*#endregion */
+
+/***************************
+    Main Menu
+****************************/
+/*#region Main Menu */
+.main-nav {
+    position: relative;
+    width: fit-content;
+}
+
+.main-nav ul {
+    position: absolute;
+    width: fit-content;
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    font-size: .8rem;
+}
+
+.main-nav li {
+    position: relative;
+    text-align: left;
+}
+
+.main-nav li a {
+    padding-left: 25px;
+    padding-right: 25px;
+    transition: background-color 200ms;
+}
+
+.menu-trigger {
+    border-radius: 5px;
+}
+
+.main-nav ul li:first-child a {
+    border-radius: 0px 5px 0px 0px;
+}
+
+.main-nav ul li:last-child a {
+    border-radius: 0px 0px 5px 5px;
+}
+
+.main-nav .logout {
+    background-color: var(--LightGray);
+    color: black;
+}
+
+.main-nav a,
+.menu-trigger {
+    display: block;
+    white-space: nowrap;
+    text-decoration: none;
+    background-color: var(--BannerGB);
+    border-color: var(--BannerGB);
+    color: var(--LabelText);
+    padding: 10px;
+    min-width: 85px;
+    font-size: .85rem;
+}
+
+.main-nav a:hover,
+.main-nav a:focus,
+.menu-trigger:hover,
+.menu-trigger:focus {
+    background-color: var(--LabelBG);
+    color: var(--LabelText);
+}
+
+.menu-trigger.expanded {
+    border-radius: 5px 5px 0px 0px;
+}
+
+.main-nav ul.hide {
+    display: none;
+}
+
+/*#endregion */
+
+/***************************
+    Scrolling Table
+****************************/
+/*#region Scrolling Table */
+.TableWrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.NoteValidationEntry {
+    text-align: left;
+    width: auto;
+    border: 1px solid lightblue;
+}
+
+.NoteValidationEntry:focus {
+    box-shadow: 0 0 5px var(--InputHoverBoxShadow) inset;
+}
+
+td.ColWidth0, th.ColWidth0 /* Slim Header Columns */ {
+    width: 35px;
+    padding: 5px;
+}
+
+td.ColWidth1, th.ColWidth1 {
+    width: 110px; /* (110 * 1) + (11 * 0) */
+}
+
+td.ColWidth2, th.ColWidth2 {
+    min-width: 220px;
+}
+
+td.ColWidth3, th.ColWidth3 {
+    min-width: 350px; /* (110 * 3) + (11 * 2) */
+}
+
+td.ColWidth4, th.ColWidth4 {
+    width: 473px; /* (110 * 4) + (11 * 3) */
+}
+
+.StripedTable {
+    width:100%;
+    flex: 1;
+    margin: 0px;
+    box-sizing: border-box;
+    font-size: .7rem;
+    border-collapse: separate;
+}
+
+.StripedTable a {
+    color: var(--TableText);
+}
+
+.StripedTable * {
+    box-sizing: border-box;
+}
+
+.StripedTable thead {
+    position: sticky;
+    top: 0px;
+    z-index: 5;
+}
+
+.StripedTable thead th {
+    z-index: 5;
+}
+
+.StripedTable tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+}
+
+.StripedTable tbody tr:nth-child(even),.StripedTable tbody tr.even {
+    background-color: var(--TableStripe2);
+    transition: filter 0.1s ease-in;
+}
+
+.StripedTable tbody tr,.StripedTable tbody tr.odd {
+    background-color: var(--TableStripe1);
+    transition: filter 0.1s ease-in;
+}
+
+.StripedTable tbody tr:hover > td:not(td.HeaderColumn,td.CostCenterID,td.HeaderRow,td.empty,[contenteditable="true"],td.Invalid)
+,.StripedTable tbody tr:hover > td.CostCenterID.EditField {
+    filter: brightness(0.95);
+    transition: filter 0s;
+}
+
+.StripedTable tbody tr:nth-child(even) td > table tr {
+    background-color: var(--TableStripe2);
+}
+
+.StripedTable tbody tr:nth-child(even) td > table tr:nth-child(even) {
+    background-color: var(--TableStripe1);
+}
+
+.StripedTable tbody tr td > table tr {
+    background-color: var(--TableStripe1);
+}
+
+.StripedTable tbody tr td > table tr:nth-child(even) {
+    background-color: var(--TableStripe2);
+}
+
+.StripedTable tbody tr.red td:not(td.HeaderColumn,td.CostCenterID,td.HeaderRow,td.empty,[contenteditable="true"],[style*="position:sticky"],td.Invalid) {
+    background-color: rgba(240 128 128 /0.25);
+    /*transition: background-color 0.5s ease;*/
+    /*color: darkred;*/
+}
+
+.StripedTable tbody tr.yellow td:not(td.HeaderColumn,td.CostCenterID,td.HeaderRow,td.empty,[contenteditable="true"],[style*="position:sticky"],td.Invalid) {
+    background-color: rgb(250 250 210 / .5);
+    /*transition: background-color 0.5s ease;*/
+    /*color: black;*/
+}
+
+.StripedTable tbody tr.green td:not(td.HeaderColumn,td.CostCenterID,td.HeaderRow,td.empty,[contenteditable="true"],[style*="position:sticky"],td.Invalid) {
+    background-color: rgb(144 238 144 / .25);
+    /*transition: background-color 0.5s ease;*/
+    /*color: green;*/
+}
+
+.StripedTable tbody tr.red:hover td:not(td.HeaderColumn,td.CostCenterID,td.HeaderRow,td.empty,[contenteditable="true"],[style*="position:sticky"],td.Invalid) {
+    background-color: rgba(240 128 128 /0.15);
+    /*transition: background-color 0.5s ease;*/
+    /*color: darkred;*/
+}
+
+.StripedTable tbody tr.yellow:hover td:not(td.HeaderColumn,td.CostCenterID,td.HeaderRow,td.empty,[contenteditable="true"],[style*="position:sticky"],td.Invalid) {
+    background-color: rgb(250 250 210 / .25);
+    /*transition: background-color 0.5s ease;*/
+    /*color: black;*/
+}
+
+.StripedTable tbody tr.green:hover td:not(td.HeaderColumn,td.CostCenterID,td.HeaderRow,td.empty,[contenteditable="true"],[style*="position:sticky"],td.Invalid) {
+    background-color: rgb(144 238 144 / .15);
+    /*transition: background-color 0.5s ease;*/
+    /*color: green;*/
+}
+
+.StripedTable thead th, .StripedTable thead td, .StripedTable tfoot th, .StripedTable td.HeaderColumn, .StripedTable td.HeaderRow, .StripedTable td.FooterRow {
+    background-color: var(--BannerGB);
+    color: var(--BannerText);
+    text-align: left;
+    padding: 2px 5px;
+    overflow: hidden;
+    border-bottom: 1px solid white;
+    border-right: 1px solid white;
+    font-weight: normal;
+    word-break: keep-all;
+    vertical-align: middle;
+}
+
+.StripedTable td.HeaderColumn {
+    border-bottom: 1px solid white;
+    border-right: 1px solid white;
+}
+
+.StripedTable thead th.gray {
+    background-color: var(--LightGray);
+    color: var(--TableText);
+}
+
+.StripedTable thead th.HeaderRowGray {
+    background-color: var(--LightGray);
+    color: var(--TableText);
+}
+
+.StripedTable td.gray {
+    background-color: var(--LightGray);
+    color: var(--TableText);
+}
+
+.StripedTable thead th {
+    border-top: 0px;
+    /*min-width:100px;*/
+}
+
+.StripedTable tfoot th {
+    border-bottom: 0px;
+}
+
+.StripedTable td.HeaderColumn {
+    /*border-left: 0px;*/
+    text-align: center;
+}
+
+.StripedTable thead th.Filter {
+    overflow: visible;
+    position: relative;
+}
+
+.StripedTable thead th:first-child, .StripedTable tbody td:first-child, .StripedTable tfoot td:first-child {
+    border-left: 0px;
+}
+
+.StripedTable thead th:last-child, .StripedTable tbody td:last-child, .StripedTable tfoot td:last-child {
+    border-right: 0px;
+}
+
+.StripedTable th.empty, .StripedTable td.empty {
+    background-color: var(--DashboardBG) !important;
+    border-color: var(--DashboardBG) !important;
+}
+
+/*.StripedTable thead th:first-child, .StripedTable tbody td:first-child, .StripedTable tfoot td:first-child {
+    border-left: 2px solid var(--BannerGB);
+}
+
+.StripedTable thead th:last-child, .StripedTable tbody td:last-child, .StripedTable tfoot td:last-child {
+	border-right: 2px solid var(--BannerGB);
+}
+
+.StripedTable tfoot tr:last-child td, .StripedTable:not(:has(tfoot)) tr:last-child td {
+	border-bottom: 2px solid var(--BannerGB);
+}
+
+*/
+.StripedTable thead th:first-child:not(.empty), .StripedTable thead td:first-child:not(.empty), th.empty + th, td.empty + th {
+    border-top-left-radius: 5px;
+}
+
+.StripedTable thead:has(tr th.empty) + tbody tr:first-child td:first-child, .StripedTable thead:has(tr td.empty) + tbody tr:first-child td:first-child {
+    border-top-left-radius: 5px;
+}
+
+.StripedTable thead th:last-child, .StripedTable thead td:last-child {
+    border-top-right-radius: 5px;
+}
+
+.StripedTable:has(tfoot tr td:first-child.empty) tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 5px;
+}
+
+.StripedTable thead th.empty {
+    border-radius: 0px;
+}
+
+.pale-blue-box .StripedTable thead th, .pale-blue-box .StripedTable thead td, .MContent .StripedTable thead th, .MContent .StripedTable thead td, .pale-blue-box .StripedTable thead * {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+}
+
+.StripedTable tfoot th:first-child, .StripedTable tfoot th.empty + th, .StripedTable tfoot td:first-child, .StripedTable tfoot td.empty + td {
+    border-bottom-left-radius: 5px;
+}
+
+.StripedTable tfoot th:last-child, .StripedTable tfoot td:last-child, .StripedTable tfoot td:has(+ td.empty) {
+    border-bottom-right-radius: 5px;
+}
+
+.StripedTable:not(:has(tfoot)) tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 5px;
+}
+
+.StripedTable:not(:has(tfoot)) tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 5px;
+}
+
+.StripedTable tfoot th:last-child, .StripedTable tfoot td {
+    border-bottom: 0px;
+}
+
+.StripedTable:not(:has(tfoot)) tbody tr:last-child td {
+    border-bottom: 0px;
+}
+
+.StripedTable tr {
+    height: 25px;
+}
+
+.StripedTable td {
+    border-bottom: 1px solid white;
+    border-right: 1px solid white;
+    padding: 5px;
+    overflow: hidden;
+    position: relative;
+    word-break: break-word;
+    /*vertical-align:top;*/
+    background-color: inherit;
+}
+
+.StripedTable td, .StripedTable td * {
+    color: var(--TableText);
+}
+
+.StripedTable td.EditField {
+    padding: 0px;
+    position: relative;
+    overflow: visible;
+    vertical-align: top;
+}
+
+.StripedTable td.Centered {
+    text-align: center;
+}
+
+.StripedTable td.CostCenterID:not(.EditField) {
+    background-color: var(--BannerGB);
+    color: var(--BannerText);
+}
+
+.StripedTable td .dropdown .selected {
+    background-color: var(--BannerGB);
+    color: var(--BannerText);
+    font-size: unset;
+}
+
+.StripedTable td.Currency, .StripedTable td.Currency input, .StripedTable td.Integer, .StripedTable td.Integer input,
+.StripedTable td.Percentage, .StripedTable td.Percentage input, .StripedTable td.Numeric, .StripedTable td.Numeric input {
+    text-align: right;
+}
+
+.StripedTable td.fix {
+    position: absolute;
+    height: 42px;
+    margin-left: -265px;
+    width: 30px;
+    padding-top: 12px;
+}
+
+.StripedTable td.fix1 {
+    position: absolute;
+    margin-left: -235px;
+    height: 42px;
+    width: 30px;
+    padding-top: 12px;
+}
+
+.StripedTable td.fix2 {
+    position: absolute;
+    margin-left: -205px;
+    height: 42px;
+    width: 35px;
+    padding-top: 12px;
+}
+
+.StripedTable td.fix3 {
+    position: absolute;
+    margin-left: -170px;
+    height: 42px;
+    width: 170px;
+}
+
+.StripedTable td.ColWidth1, .StripedTable th.ColWidth1 {
+    min-width: 100px;
+}
+
+.StripedTable td.EditField.DragCopyCell.isSelected {
+    background-color: var(--LightGray);
+}
+
+.StripedTable td.EditField.DragCopyCell.isFirstSelected {
+    box-shadow: 0 0 5px 2px rgb(17 153 193 / 50%) inset;
+    background-color: white;
+}
+
+.StripedTable td.LineNumberCol {
+    white-space: nowrap;
+    width: 1%;
+}
+
+.StripedTable .LinkButton {
+    padding-inline-start: 0px;
+    padding-inline-end: 0px;
+    width:100%;
+}
+
+.StripedTable .LinkButton:hover {
+    font-weight:bolder;
+}
+
+.StripedTable .EditField input[type="text"], .StripedTable .EditField input[type="number"], .StripedTable .EditField input[type="date"], .StripedTable .EditField textarea, .StripedTable .EditField select, .StripedTable .date-box, .StripedInfoTable .EditField input[type="text"], .StripedTable .EditField div[contenteditable="true"], .StripedInfoTable .EditField input[type="number"], .StripedInfoTable textarea, .StripedInfoTable select, .StripedInfoTable .EditField input[type="date"], .StripedInfoTable .date-box {
+    height: 100%;
+    width: 100%;
+    background-color: rgba(255,255,255,.25);
+    padding: 3px 6px;
+    border-radius: 3px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    font-size: inherit;
+}
+
+.StripedTable .EditField input[readonly] {
+    border: none;
+}
+
+.StripedTable .EditField.Percentage input[type="text"] {
+    padding-right: 15px;
+}
+
+.StripedTable .EditField.Percentage input[type="text"]:focus {
+    padding-right: 17px;
+}
+
+.StripedTable .EditField input[type="text"]:not([readonly],[disabled]), .StripedTable .EditField input[type="number"]:not([readonly],[disabled]), .StripedTable .EditField input[type="date"]:not([readonly],[disabled]), .StripedTable textarea:not([readonly],[disabled]), .StripedTable select, .StripedTable .date-box, .StripedInfoTable .EditField input[type="text"]:not([readonly],[disabled]), .StripedTable .EditField div[contenteditable="true"], .StripedInfoTable .EditField input[type="number"]:not([readonly],[disabled]), .StripedInfoTable textarea, .StripedInfoTable select, .StripedInfoTable .EditField input[type="date"]:not([readonly],[disabled]), .StripedInfoTable .date-box {
+    border: 2px inset rgba(135,206,235,.75);
+    outline-offset: -2px;
+}
+
+.StripedTable .EditField input[type="text"]:not([readonly],[disabled]):hover, .StripedTable textarea:not([readonly],[disabled]):hover, .StripedTable select:hover, .StripedTable .EditField input[type="number"]:not([readonly],[disabled]):hover, .StripedTable .EditField input[type="date"]:not([readonly],[disabled]):hover, .StripedTable .EditField input[type="checkbox"]:not([readonly],[disabled]):hover, .StripedTable .date-box:hover, .StripedTable .EditField select:not([readonly],[disabled]):hover, .StripedTable .EditField div[contenteditable="true"]:hover, .StripedInfoTable .EditField input[type="text"]:not([readonly],[disabled]):hover, .StripedInfoTable textarea:hover, .StripedInfoTable select:hover, .StripedInfoTable .date-box:hover, .StripedInfoTable .EditField input[type="number"]:not([readonly],[disabled]):hover, .StripedInfoTable .EditField input[type="checkbox"]:not([readonly],[disabled]):hover, .StripedInfoTable .EditField input[type="date"]:not([readonly],[disabled]):hover, .StripedInfoGrid .EditField input[type="text"]:not([readonly],[disabled]):hover, .StripedInfoGrid textarea:hover, .StripedInfoGrid .EditField input[type="date"]:not([readonly],[disabled]):hover, .StripedInfoGrid select:hover, .StripedInfoGrid .date-box:hover, .StripedInfoGrid .EditField input[type="number"]:not([readonly],[disabled]):hover, .StripedInfoGrid .EditField input[type="checkbox"]:not([readonly],[disabled]):hover {
+    box-shadow: 0px 0px 5px 0px var(--InputHoverBoxShadow) inset;
+}
+
+.StripedTable .EditField input[type="text"].input-validation-error:hover, .StripedTable textarea.input-validation-error:hover, .StripedTable .select.input-validation-error:hover, .StripedTable .EditField input[type="date"].input-validation-error:hover, .StripedTable .EditField input[type="number"].input-validation-error:hover, .StripedTable .EditField input[type="checkbox"].input-validation-error:hover, .StripedTable .date-box:hover, .StripedTable .EditField div[contenteditable="true"].input-validation-error:hover, .StripedInfoTable .EditField input[type="text"].input-validation-error:hover, .StripedInfoTable textarea.input-validation-error:hover, .StripedInfoTable .date-box.input-validation-error:hover, .StripedInfoTable .EditField input[type="number"].input-validation-error:hover, .StripedInfoTable .EditField input[type="date"].input-validation-error:hover, .StripedInfoTable select.input-validation-error:hover, .StripedInfoGrid .EditField input[type="text"].input-validation-error:hover, .StripedInfoGrid textarea.input-validation-error:hover, .StripedInfoGrid .EditField input[type="date"].input-validation-error:hover, .StripedInfoGrid .date-box.input-validation-error:hover, .StripedInfoGrid .EditField input[type="number"].input-validation-error:hover, .StripedInfoGrid select.input-validation-error:hover {
+    box-shadow: 0px 0px 5px 1px rgba(255, 0, 0,.25) inset,0px 0px 1px 1px rgba(255, 0, 0,.75) inset;
+}
+
+.StripedTable .EditField input[type="text"]:not([readonly],[disabled]):focus, .StripedTable textarea:not([readonly],[disabled]):focus, .StripedTable .EditField input[type="number"]:not([readonly],[disabled]):focus, .StripedTable .EditField input[type="date"]:not([readonly],[disabled]):focus, .StripedInfoTable .EditField input[type="text"]:not([readonly],[disabled]):focus, .StripedInfoTable textarea:not([readonly],[disabled]):focus, .StripedInfoTable .EditField input[type="number"]:not([readonly],[disabled]):focus, .StripedInfoGrid .EditField input[type="text"]:not([readonly],[disabled]):focus, .StripedInfoGrid textarea:not([readonly],[disabled]):focus, .StripedInfoGrid .EditField input[type="date"]:not([readonly],[disabled]):focus, .StripedInfoGrid .EditField input[type="number"]:not([readonly],[disabled]):focus {
+    background: white;
+    box-shadow: 0px 0px 1px 1px var(--InputHoverBoxShadow) inset;
+    border: 1px var(--InputHoverBoxShadow);
+    padding: 5px 8px; /*padding to compensate for smaller border*/
+}
+
+.StripedTable .EditField input[type="text"].input-validation-error:focus, .StripedTable textarea.input-validation-error:focus, .StripedTable .EditField input[type="number"].input-validation-error:focus, .StripedInfoTable .EditField input[type="text"].input-validation-error:focus, .StripedInfoTable textarea.input-validation-error:focus, .StripedInfoTable .EditField input[type="number"].input-validation-error:focus, .StripedInfoTable .EditField input[type="date"].input-validation-error:focus, .StripedInfoGrid .EditField input[type="text"].input-validation-error:focus, .StripedInfoGrid textarea.input-validation-error:focus, .StripedInfoGrid .EditField input[type="number"].input-validation-error:focus, .StripedInfoGrid .EditField input[type="date"].input-validation-error:focus {
+    background: white;
+    box-shadow: 0px 0px 1px 1px rgba(255, 0, 0,.75) inset;
+    border: 1px rgba(255,0,0,.75);
+    padding: 5px 8px; /*padding to compensate for smaller border*/
+}
+
+.StripedTable .read-only-text-box, .StripedTable .read-only-text-box:hover, .StripedTable .read-only-text-box:focus,
+.StripedInfoTable .read-only-text-box, .StripedInfoTable .read-only-text-box:hover, .StripedInfoTable .read-only-text-box:focus
+.StripedInfoGrid .read-only-text-box, .StripedInfoGrid .read-only-text-box:hover, .StripedInfoGrid .read-only-text-box:focus {
+    box-shadow: none;
+    background: transparent;
+}
+
+.StripedTable td.UncategorizedWarning {
+    padding: 0px 5px;
+    line-height: 1em;
+    vertical-align: middle;
+}
+
+.StripedTable td.FileTrash {
+    cursor: pointer;
+    background-image: url('/Content/Images/Trash_Can.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 35px;
+}
+
+.StripedTable td.ReadOnlyCell, .StripedTable th.ReadOnlyCell {
+    vertical-align: middle;
+    text-align: right;
+}
+
+.StripedTable td.ReadOnlyCellDark {
+    color: var(--TableText);
+    box-shadow: rgba(211, 211, 211) 0px 0px 100px inset;
+}
+
+.StripedTable td.ReadOnlyCell input[type="text"], .StripedTable td.ReadOnlyCell input[type="text"]:hover, .StripedTable td.ReadOnlyCell input[type="text"]:focus, .StripedTable td.ReadOnlyCell textarea, .StripedTable td.ReadOnlyCell textarea:hover, .StripedTable td.ReadOnlyCell textarea:focus {
+    color: var(--TableText);
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border: 0px;
+    background: transparent;
+    padding: 6px;
+}
+
+.StripedTable td.Scrollable, .StripedTable td.ColumnSum, .StripedTable td.Scrollable input {
+    text-align: right;
+    vertical-align: middle;
+}
+
+.StripedTable td.RollBackError input[type='text'], .StripedTable td.RollBackError input[type='text']:hover, .StripedTable td.RollBackError input[type='text']:focus, .StripedTable td.RollBackError textarea, .StripedTable td.RollBackError textarea:hover, .StripedTable td.RollBackError textarea:focus {
+    color: red;
+    box-shadow: 0 0 5px 2px pink inset;
+}
+
+.StripedTable td.UpdatedAfterRollback {
+    box-shadow: 0 0 5px 2px gold inset;
+}
+
+.StripedTable td.UpdatedAfterRollback:hover {
+    box-shadow: 0 0 5px 2px gold inset;
+}
+
+.StripedTable .Invalid {
+    background-color: rgba(237,90,77,.3);
+    color: black;
+}
+
+.input-sizer {
+    display: inline-grid;
+    vertical-align: top;
+    align-items: center;
+    border: none;
+    margin: 0px;
+    width: 100%;
+    max-width: fit-content;
+}
+
+.input-sizer::after {
+    content: attr(data-value) ' ';
+    visibility: hidden;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-word;
+    padding: 5px 8px;
+}
+
+.input-sizer textarea {
+    overflow: hidden;
+    padding-top: 3px;
+    box-sizing: border-box;
+    outline-offset: -2px;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+.SignOffBlocker {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: var(--LightGray);
+    opacity: .5;
+    z-index: 3;
+    display: block;
+}
+
+.DepDescr textarea {
+    padding-top: 3px;
+}
+
+textarea[readonly], textarea[readonly]:hover, textarea[readonly]:focus, textarea[readonly]:focus-visible, input[readonly], input[readonly]:hover, input[readonly]:focus, input[readonly]:focus-visible {
+    background-color: inherit;
+    box-shadow: inherit;
+    /*outline: 0px;*/
+}
+
+textarea[readonly] {
+    border: 0px;
+    padding: 5px 8px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 100%;
+}
+
+fieldset {
+    width: fit-content;
+    margin: 10px 0px 20px 20px;
+    border: 3px solid var(--LabelBG);
+}
+
+legend {
+    font-size: 1.2rem;
+    color: black;
+    font-weight: bold;
+}
+
+fieldset.SupportingDocumentation {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0px;
+    margin-bottom: 10px;
+    padding: 0px;
+    padding-top: 5px;
+    border-radius: 5px;
+}
+
+.SupportingDocumentation legend {
+    margin: 0px 10px;
+}
+
+.StripedInfoTable * {
+    box-sizing: border-box;
+}
+
+.StripedInfoTable {
+    box-sizing: border-box;
+    font-size: 12px;
+    border: 2px solid var(--BannerGB);
+    margin: 10px 0px;
+    display: table;
+    border-radius: 4px;
+    width: fit-content;
+    color: var(--TableText);
+}
+
+.StripedInfoTable div.InfoRow {
+    background-color: var(--TableStripe1);
+    /*	width:100%;
+	min-height: 35px;
+*/
+}
+
+.StripedInfoTable div.InfoRow:nth-child(even) {
+    background-color: var(--TableStripe2)
+}
+
+.StripedInfoTable div.InfoHeaderRow {
+    background-color: var(--BannerGB);
+    color: var(--BannerText);
+    padding: 5px 5px;
+    overflow: hidden;
+    font-size: 16px;
+    text-align: left;
+    /*border:2px solid var(--LabelBG);*/
+    /*width:100%;*/
+}
+
+.StripedInfoTable div.InfoNotesRow {
+    font-size: 1.1em;
+    margin: 2px 5px;
+}
+
+.StripedInfoTable div.InfoCell:first-child {
+    width: 175px;
+}
+
+.StripedInfoTable div.InfoCell:last-child {
+    width: 200px;
+}
+
+.StripedInfoTable div.InfoCell:last-child.DoubleCell {
+    width: 450px;
+}
+
+.StripedInfoTable div.InfoCell:first-child.DoubleCell {
+    width: 375px;
+}
+
+.StripedInfoTable .InfoCell {
+    display: table-cell;
+    padding: 5px;
+    border: 1px solid white;
+    height: 100%;
+    width: 250px;
+    position: relative;
+    word-break: break-word;
+    vertical-align: top;
+}
+
+.StripedInfoTable .InfoCell select {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    border: 2px inset rgba(135, 206, 235, .75);
+    background-color: transparent;
+}
+
+.StripedInfoTable div.InfoCell:first-child label {
+    padding: 0px;
+}
+
+.StripedInfoTable .InfoCell select:hover {
+    box-shadow: 0 0 5px var(--InputHoverBoxShadow) inset;
+}
+
+.StripedInfoTable .InfoCell:has(select) {
+    padding: 0px;
+}
+
+.StripedInfoTable .InfoRow:first-of-type .InfoCell:first-of-type {
+    border-top-left-radius: 5px;
+}
+
+.StripedInfoTable .InfoRow:first-of-type .InfoCell:last-of-type {
+    border-top-right-radius: 5px;
+}
+
+.StripedInfoTable .InfoRow:last-of-type .InfoCell:first-of-type {
+    border-bottom-left-radius: 5px;
+}
+
+.StripedInfoTable .InfoRow:last-of-type .InfoCell:last-of-type {
+    border-bottom-right-radius: 5px;
+}
+
+.StripedInfoTable .InfoRow:first-of-type {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.StripedInfoTable .InfoRow:last-of-type {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.StripedInfoTable .DoubleCell {
+    width: 600px;
+}
+
+.StripedInfoTable .SubHeader {
+    font-weight: bold;
+}
+
+.StripedInfoTable .EditField.InfoCell, .StripedInfoTable .PseudoEditField.InfoCell {
+    padding: 0px;
+}
+
+.StripedInfoTable .RadioDiv label {
+    display: block;
+    padding: 5px;
+    flex: 1;
+}
+
+.StripedInfoTable.EditField label {
+    cursor: pointer;
+}
+
+.StripedInfoTable div.SignOffButton {
+    /*    width: 100px;
+	float: right;
+	margin: 2px;*/
+}
+
+.SignOffRow {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    position: sticky;
+    bottom: 0px;
+    background-color: var(--DashboardBG);
+    z-index: 10;
+    gap: 0px 5px;
+    padding: 2px;
+}
+
+.StripedInfoTable .RadioDiv {
+    /*outline: 0;*/
+    width: 100%;
+    height: 100%;
+}
+
+.StripedInfoTable .EditField .RadioDiv {
+    border: 2px inset var(--InputHoverBoxShadow);
+    /*position: absolute;*/
+    display: flex;
+    flex-direction: column;
+}
+
+.StripedInfoTable .EditField label:hover, .StripedInfoTable .PseudoEditField label:hover {
+    box-shadow: 0 0 3px 1px var(--InputHoverBoxShadow) inset;
+}
+
+.StripedInfoTable input[type="radio"]:checked + label, .StripedInfoTable input[type="radio"]:checked + div {
+    font-weight: bold;
+}
+
+.StripedInfoTable input[type="radio"]:checked + label .circle, .StripedInfoTable input[type="radio"]:checked + div .circle {
+    border-color: var(--LabelBG);
+    background-color: var(--BannerGB);
+}
+
+.StripedInfoTable .disabled input[type="radio"]:checked + label .circle, .StripedInfoTable .disabled input[type="radio"]:checked + div .circle {
+    border-color: darkgray;
+    background-color: darkslategray;
+}
+
+.StripedInfoTable input[type="radio"] {
+    display: none;
+}
+
+.StripedInfoTable input[type="checkbox"] {
+    vertical-align: middle;
+    width: 21px;
+    height: 21px;
+}
+
+.StripedInfoGrid * {
+    box-sizing: border-box;
+}
+
+.StripedInfoGrid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: max-content auto;
+    margin: 10px;
+    border: 2px solid var(--BannerGB);
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 12px;
+}
+
+.StripedInfoGrid > div:nth-child(4n+1), .StripedInfoGrid > div:nth-child(4n+2) {
+    background: var(--TableStripe2);
+}
+
+.StripedInfoGrid2 {
+    grid-template-columns: max-content auto auto;
+}
+
+.StripedInfoGrid div.InfoHeaderRow {
+    grid-column: 1/3;
+    background-color: var(--BannerGB);
+    color: white;
+    padding: 5px 5px;
+    overflow: hidden;
+    font-size: 16px;
+    text-align: left;
+}
+
+.StripedInfoGrid div.InfoRow {
+    display: contents;
+}
+
+.StripedInfoGrid .InfoCell {
+    background-color: var(--TableStripe1);
+    padding: 5px;
+    border: 1px solid white;
+    position: relative;
+}
+
+.StripedInfoGrid .WideCell {
+    grid-column: span 2;
+}
+
+.StripedInfoGrid .InfoCell .field-validation-error {
+    position: absolute;
+    left: 105%;
+    white-space: nowrap;
+    background-color: white;
+    padding: 5px;
+    border: 2px solid var(--BannerGB);
+    font-weight: bolder;
+    border-radius: 4px;
+}
+
+.StripedInfoGrid .InfoCell .field-validation-error::after {
+    content: " ";
+    position: absolute;
+    top: 30%;
+    right: 100%; /* To the left of the tooltip */
+    margin-top: -5px;
+    border-width: 10px;
+    border-style: solid;
+    border-color: transparent var(--BannerGB) transparent transparent;
+}
+
+.StripedInfoGrid div.InfoRow:nth-child(even) > .InfoCell {
+    background-color: var(--TableStripe2)
+}
+
+.StripedInfoGrid .EditField {
+    padding: 0px;
+}
+
+.StripedInfoGrid .EditField input[type="text"], .StripedInfoGrid .EditField input[type="number"],
+.StripedInfoGrid textarea, .StripedInfoGrid .EditField input[type="date"], .StripedInfoGrid .date-box, .StripedInfoGrid .EditField label {
+    height: 100%;
+    width: 100%;
+    background-color: transparent;
+    /*padding:5px;*/
+    border-radius: 3px;
+    /*border: 1px solid transparent;*/
+    border-top: none;
+    border-bottom: 1px solid #DDD;
+    /*box-shadow: inset 0 1px 2px rgba(0,0,0,.39), 0 -1px 1px #FFF, 0 1px 0 #FFF;*/
+    /*outline: 0;*/
+    box-shadow: 0px 0px 1px 1px var(--InputHoverBoxShadow) inset;
+    border: 1px var(--InputHoverBoxShadow);
+    padding: 5px 8px; /*padding to compensate for smaller border*/
+}
+
+.StripedInfoGrid .EditField input[type="checkbox"] {
+    border-radius: 3px;
+    box-shadow: 0px 0px 1px 1px var(--InputHoverBoxShadow) inset;
+    border: 1px var(--InputHoverBoxShadow);
+    background-color: transparent;
+}
+
+.StripedInfoGrid .EditField input.input-validation-error, .StripedTable .EditField input.input-validation-error {
+    box-shadow: 0px 0px 1px 1px rgba(255, 0, 0,.75) inset;
+}
+
+/*.SelectTable tbody tr:hover 
+{
+	background-color:#e1e5e7;
+}*/
+.SelectTable {
+    margin: 0px;
+}
+
+.circle {
+    height: 20px;
+    width: 20px;
+    background: #ccc;
+    border: 5px solid transparent;
+    display: inline-block;
+    margin-right: 5px;
+    border-radius: 50%;
+    transition: all 0.25s ease;
+    box-shadow: inset -4px -4px 10px rgba(0, 0, 0, 0.2);
+    vertical-align: text-bottom;
+}
+
+.ui-dialog.ui-corner-all.ui-widget.ui-widget-content.ui-front.BlueDialogConfirm, .BlueDialogConfirm .ui-dialog-content,
+.ui-dialog.ui-corner-all.ui-widget.ui-widget-content.ui-front.BlueDialogRow, .BlueDialogRow .ui-dialog-content {
+    overflow: visible;
+}
+
+.BlueDialogConfirm .ui-widget-header {
+    color: white;
+    background: linear-gradient(var(--BannerGB), var(--LabelBG));
+    font-weight: normal;
+    padding: 0.2em 0.5em;
+}
+
+.BlueDialogRow .ui-widget-header {
+    color: black;
+    background: linear-gradient(var(--TableStripe1), var(--TableStripe2));
+    font-weight: normal;
+    font-size: 12px;
+    padding: 0.2em 0.5em;
+}
+
+.BlueDialogConfirm .ui-dialog-buttonset button, .BlueDialogRow .ui-dialog-buttonset button {
+    /*margin: 0.5em 0.4em 0.3em 0em;*/
+    margin: 0.3em;
+    background-color: var(--BannerGB);
+    color: white;
+    cursor: pointer;
+    padding: 0.4em 1em;
+    transition: background-color 0.2s ease;
+}
+
+.BlueDialogConfirm .ui-dialog-buttonset button:hover, .BlueDialogRow .ui-dialog-buttonset button:hover {
+    background-color: var(--LabelBG);
+}
+
+.BlueDialogConfirm .ui-dialog-titlebar-close, .BlueDialogRow .ui-dialog-titlebar-close {
+    background-color: var(--LightGray);
+    font-weight: 900;
+    color: var(--LabelBG);
+    padding: 0px;
+    line-height: 16px;
+    font-size: 16px;
+    /*    line-height: 1em;
+    font-size: 14pt;*/
+    /*width: 30px;
+	height: 30px;*/
+}
+
+.BlueDialogConfirm .ui-dialog-titlebar-close:hover, .BlueDialogRow .ui-dialog-titlebar-close:hover {
+    color: var(--BannerGB);
+    /*background-color: var(--BannerGB);*/
+    /*width: 30px;
+	height: 30px;*/
+}
+
+.ui-widget-content {
+    background: var(--DashboardBG);
+    background-color: var(--DashboardBG);
+}
+
+.BlueDialogConfirm .ui-icon, .BlueDialogRow .ui-icon {
+    background-image: none;
+    /*background-image: url(/Content/images/XClearX.png);*/
+}
+
+.BlueDialogConfirm .ui-dialog-buttonpane, .BlueDialogRow .ui-dialog-buttonpane {
+    margin: 0px;
+    padding: 0px;
+}
+
+.BlueDialogConfirm input:focus-visible, .BlueDialogConfirm select:focus-visible, .BlueDialogConfirm textarea:focus-visible {
+    outline-offset: -2px;
+}
+
+.BlueDialogConfirm .text-button:focus-visible, .BlueDialogConfirm .text-button:focus, .BlueDialogConfirm .text-button:focus-within {
+    outline-offset: 0px;
+    outline: 2px black solid;
+}
+
+.BlueDialogConfirm .InfoCell .text-button, .BlueDialogConfirm .InfoCell .text-button:focus-visible, .BlueDialogConfirm .InfoCell .text-button:focus, .BlueDialogConfirm .InfoCell .text-button:focus-within {
+    width:100%;
+    outline-offset: -2px;
+}
+
+.BlueDialogConfirm.ui-dialog {
+    border-radius: 5px;
+}
+
+.BlueDialogConfirm .FooterButtonPanel {
+    padding: 0px 5px;
+}
+
+.ui-dialog.ui-corner-all.ui-widget.ui-widget-content.ui-front.BlueDialogConfirm {
+    box-shadow: rgba(158,158,158,.4) 5px 5px 5px;
+}
+
+.MHeader {
+    color: var(--BannerText);
+    background-color: var(--BannerGB);
+    padding-left: 10px;
+    cursor: initial;
+    text-decoration: none;
+    user-select: none;
+    border-radius: 5px 5px 0px 0px;
+    transition: background-color 0.2s ease;
+    border: 0px;
+    white-space: nowrap;
+    line-height: 30px;
+    font-size: 1rem;
+}
+
+.MContent {
+    border: 2px solid var(--BannerGB);
+    border-bottom: 0px;
+    border-top: 0px;
+    margin: 0px;
+    height: 400px;
+    overflow-y: scroll;
+    display: flex;
+    /*transition:all 1s ease-in-out;*/
+}
+
+.MFooter {
+    color: var(--LabelText);
+    background-color: var(--BannerGB);
+    /*padding: 10px;*/
+    /*cursor: pointer;*/
+    text-decoration: none;
+    user-select: none;
+    border-radius: 0px 0px 5px 5px;
+    transition: background-color 0.2s ease;
+    border: 0px;
+    line-height: 1;
+    font-size: 14px !important;
+    white-space: nowrap;
+    text-align: center;
+    min-height: 35px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.MFooter .BottomButtonBlue {
+    border: 1px dotted var(--LabelBG);
+}
+
+.MFooter .BottomButtonBlue:active {
+    border: 1px dotted white;
+}
+
+.MAddRemoveInfo {
+    font-size: 14px;
+    background-color: var(--DashboardBG);
+    padding: 0px 5px;
+    border: 2px solid var(--BannerGB);
+}
+
+
+.MInfo {
+    font-size: 12px;
+    background-color: var(--DashboardBG);
+    color: var(--HeaderText);
+    padding: 0px 5px;
+    border: 2px solid var(--BannerGB);
+}
+
+.InitiallySelected, tr.InitiallySelected td {
+    color: blue;
+}
+
+.RemoveCARRow {
+    background-image: url(/Content/images/Trash_Can.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+td.HeaderRow {
+    box-shadow: none;
+}
+
+.AddGridRowButton {
+    margin-top: 5px;
+    height: 35px;
+    margin-bottom: 5px;
+    float: right;
+}
+
+.DocumentAlertTable {
+    color: var(--TableText);
+    /*font-size:.8em;*/
+    text-align: left;
+}
+
+.DocumentAlertTable input {
+    text-align: left;
+    width: 95%;
+    background-color: transparent;
+    border: 1px solid transparent;
+    /*outline: none;*/
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.DocumentAlertTable input[type='text'] {
+    cursor: text;
+}
+
+.DocumentAlertTable input[type='number'] {
+    cursor: text;
+}
+
+.DocumentAlertTable textarea {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    /*outline:none;*/
+    text-align: left;
+    /*border:0px solid black;*/
+    border: 1px solid var(--LightGray);
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.DocumentAlertTable td {
+    border: 1px solid white;
+    height: 35px;
+    padding: 5px;
+    overflow: visible;
+}
+
+.DocumentAlertTable .EditField {
+    transition: all 0.5s ease;
+    box-shadow: 0 0 5px 5px var(--InputHoverBoxShadow) inset;
+}
+
+.DocumentAlertTable .EditField:focus {
+    transition: all 0.5s ease;
+    box-shadow: 0 0 5px 5px var(--InputHoverBoxShadow) inset;
+}
+
+.DocumentAlertTable .EditField:hover {
+    box-shadow: 0 0 5px 2px var(--InputHoverBoxShadow) inset;
+}
+
+.DocumentAlertTable tr:nth-child(even) {
+    background: var(--TableStripe1)
+}
+
+.DocumentAlertTable tr:nth-child(odd) {
+    background: var(--TableStripe2)
+}
+
+.DocumentAlertTable.CompactInfoTable td {
+    padding: 0px 5px;
+    height: 30px;
+}
+
+input.monthPicker {
+    width: 75px;
+}
+
+/*.Invalid
+{
+    background-color:rgba(237,90,77,.3);
+    color:black;
+}*/
+
+tr.Excluded td:not(:first-child):before {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    left: 5px;
+    border-bottom: 2px solid gray;
+    width: 95%;
+}
+
+tr.Excluded {
+    color: gray;
+}
+
+.InfoHeaderRow {
+    background-color: var(--LabelBG);
+    color: white;
+    /*border-top: 5px solid var(--LabelBG);*/
+    text-align: left;
+    vertical-align: top;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.HeaderRowGray.Highlight {
+    /*border-top: 5px solid #F0A65B;*/
+    background-image: linear-gradient(var(--BannerGB), var(--LightGray), var(--LightGray));
+}
+
+.HeaderRow.Highlight {
+    /*border-top: 5px solid #F0A65B;*/
+    background-image: linear-gradient(var(--BannerGB), var(--LabelBG), var(--LabelBG));
+}
+
+.HeaderColumn.Highlight {
+    /*border-left: 5px solid #F0A65B;*/
+    background-image: linear-gradient(to right, var(--BannerGB), var(--LabelBG), var(--LabelBG));
+}
+
+.BottomPager {
+    margin-top: 5px;
+    position: relative;
+}
+
+.BottomPager > div {
+    display: inline-block;
+    border: 1px solid gray;
+    border-radius: 5px;
+    padding: 3px 7px;
+    background-color: var(--BannerGB);
+    color: #333;
+    user-select: none;
+    color: white;
+}
+
+.BottomPager .CurrentPage {
+    font-weight: bold;
+    color: black;
+    background-color: var(--LightGray);
+    cursor: default;
+}
+
+.BottomPager .NotCurrentPage {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.BottomPager .NotCurrentPage:hover {
+    cursor: pointer;
+    background-color: var(--LabelBG);
+}
+
+.BottomPager .PageNumber {
+    position: absolute;
+    right: 0px;
+    border: none;
+    background-color: transparent;
+    color: black;
+}
+
+.BottomPager .PageNumber input[type="text"] {
+    width: 30px;
+}
+
+.AddTag {
+    padding: 5px 5px 7px 5px;
+    border: 2px solid var(--BannerGB);
+    cursor: pointer;
+    border-radius: 5px;
+    line-height: 1em;
+}
+
+.AddTag:hover {
+    border: 2px solid var(--LabelBG);
+}
+
+/*#endregion */
+
+/***************************
+    waring/success messages
+****************************/
+/*#region waring/success messages */
+.isa_info, .isa_success, .isa_warning, .isa_error {
+    margin: 5px 0px;
+    padding: 5px;
+    width: 100%;
+}
+
+.isa_info {
+    background-color: #BDE5F8;
+}
+
+.isa_success {
+    background-color: #DFF2BF;
+}
+
+.isa_warning {
+    background-color: #FEEFB3;
+}
+
+.isa_error {
+    background-color: #FFBABA;
+}
+
+.btn {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 1.428571429;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    user-select: none;
+}
+
+.btn:focus {
+    outline: thin dotted #333;
+    outline-offset: -2px;
+}
+
+.btn:hover,
+.btn:focus {
+    text-decoration: none;
+}
+
+.btn:active,
+.btn.active {
+    background-image: none;
+    outline: 0;
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+}
+
+.btn.disabled,
+.btn[disabled],
+fieldset[disabled] .btn {
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.65;
+    box-shadow: none;
+}
+
+.btn-success {
+    color: #ffffff;
+    background-color: var(--BannerGB);
+    border-color: var(--BannerGB);
+}
+
+.btn-success:hover,
+.btn-success:focus,
+.btn-success:active,
+.btn-success.active,
+.open .dropdown-toggle.btn-success {
+    color: #ffffff;
+    background-color: var(--LabelBG);
+    /*border-color: var(--BannerGB);*/
+}
+
+.btn-success:active,
+.btn-success.active,
+.open .dropdown-toggle.btn-success {
+    background-image: none;
+}
+
+.btn-success.disabled,
+.btn-success[disabled],
+fieldset[disabled] .btn-success,
+.btn-success.disabled:hover,
+.btn-success[disabled]:hover,
+fieldset[disabled] .btn-success:hover,
+.btn-success.disabled:focus,
+.btn-success[disabled]:focus,
+fieldset[disabled] .btn-success:focus,
+.btn-success.disabled:active,
+.btn-success[disabled]:active,
+fieldset[disabled] .btn-success:active,
+.btn-success.disabled.active,
+.btn-success[disabled].active,
+fieldset[disabled] .btn-success.active {
+    background-color: var(--BannerGB);
+    border-color: var(--BannerGB);
+}
+
+.progress {
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.progress-bar {
+    float: left;
+    width: 0;
+    height: 100%;
+    font-size: 12px;
+    color: #ffffff;
+    text-align: center;
+    background-color: #428bca;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    transition: width 0.6s ease;
+}
+
+.progress-striped .progress-bar {
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+    background-size: 40px 40px;
+}
+
+.progress.active .progress-bar {
+    animation: progress-bar-stripes 2s linear infinite;
+}
+
+.progress-bar-success {
+    background-color: #5cb85c;
+}
+
+.progress-striped .progress-bar-success {
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+}
+
+.progress-bar-info {
+    background-color: #5bc0de;
+}
+
+.progress-striped .progress-bar-info {
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+}
+
+.progress-bar-warning {
+    background-color: #f0ad4e;
+}
+
+.progress-striped .progress-bar-warning {
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+}
+
+.progress-bar-danger {
+    background-color: #d9534f;
+}
+
+.progress-striped .progress-bar-danger {
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+}
+
+.progress {
+    background-repeat: repeat-x;
+}
+
+.progress-bar {
+    background-image: linear-gradient(to bottom, #428bca 0%, #3071a9 100%);
+    background-repeat: repeat-x;
+}
+
+.progress-bar-success {
+    background-image: linear-gradient(to bottom, #5cb85c 0%, #449d44 100%);
+    background-repeat: repeat-x;
+}
+
+.progress-bar-info {
+    background-image: linear-gradient(to bottom, #5bc0de 0%, #31b0d5 100%);
+    background-repeat: repeat-x;
+}
+
+.progress-bar-warning {
+    background-image: linear-gradient(to bottom, #f0ad4e 0%, #ec971f 100%);
+    background-repeat: repeat-x;
+}
+
+.progress-bar-danger {
+    background-image: linear-gradient(to bottom, #d9534f 0%, #c9302c 100%);
+    background-repeat: repeat-x;
+}
+
+.ui-effects-transfer {
+    border: 2px solid black;
+    background-color: white;
+    opacity: .75;
+    z-index: 105;
+}
+
+/* styles for validation helpers */
+.field-validation-error {
+    color: #e80c4d;
+    font-weight: bold;
+}
+
+/*.field-validation-valid {
+    display: none;
+}*/
+
+input.input-validation-error {
+    border: 1px solid #e80c4d;
+}
+
+input[type="checkbox"].input-validation-error {
+    border: 0 none;
+}
+
+.validation-summary-errors {
+    color: #e80c4d;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.validation-summary-valid {
+    display: none;
+}
+
+.ui-tooltip {
+    white-space: pre-line;
+    opacity: 1;
+}
+
+.floatThead-floatContainer.floatThead-container {
+    margin-left: 1px;
+}
+
+/*#endregion */
+
+/***************************
+    Custom Combo Box
+****************************/
+/*#region Custom Combo Box */
+
+.custom-combobox {
+    display: inline-flex;
+    height: 100%;
+    width: 100%;
+    border-radius: 0px 5px 5px 0px;
+}
+
+.custom-combobox input {
+    background: white;
+}
+
+.custom-combobox-input {
+    width: 100%;
+    height: 100%;
+    color: #000;
+    padding: 0px 0px 0px 10px;
+    border-bottom-left-radius: 0px;
+    border-top-left-radius: 0px;
+    font-size: .8rem;
+    border: 1px solid black;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.custom-combobox-input-narrow {
+    width: 350px;
+}
+
+
+.custom-combobox:hover > * {
+    box-shadow: inset 0 0 5px var(--InputHoverBoxShadow);
+}
+
+.custom-combobox-toggle .ui-button-icon-only .ui-icon {
+    background-image: url(/Content/images/DownArrow.png);
+}
+
+.custom-combobox-toggle {
+    margin: 0px;
+    border: 1px solid black;
+    border-left: 0px;
+    width: 25px;
+}
+
+.custom-combobox-toggle svg {
+    outline: none;
+}
+
+.loading::after {
+    content: ""; /* Initial empty content */
+    animation: animateEllipsis 1.5s infinite steps(4, end); /* Animation definition */
+    display: inline-block;
+    width: 3ch;
+    text-align: left;
+}
+
+@keyframes animateEllipsis {
+    0% {
+        content: ""; /* No dots */
+    }
+
+    25% {
+        content: "."; /* One dot */
+    }
+
+    50% {
+        content: ".."; /* Two dots */
+    }
+
+    75% {
+        content: "..."; /* Three dots */
+    }
+
+    100% {
+        content: "..."; /* Three dots (hold) */
+    }
+}
+
+/*#endregion */
+
+/***************************
+    Desk Review
+****************************/
+/*#region Desk Review */
+
+.DRContainer input[type='text'] {
+    width: 100%;
+}
+
+.DRContainer textarea {
+    width: 100%;
+    height: 75px;
+    background-color: transparent;
+    text-align: left;
+    border: 1px solid black;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.DRContainer .styled-select {
+    width: 100%;
+}
+
+.dr-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 4fr;
+    gap: 0px;
+    background-color: var(--NavBG);
+}
+
+.dr-grid-item1 {
+    border: 1px solid black;
+    grid-column: 1;
+    padding: 5px;
+}
+
+.dr-grid-item2 {
+    border: 1px solid black;
+    grid-column: 2;
+    margin-left: -1px;
+    margin-right: -1px;
+    padding: 5px;
+}
+
+.dr-grid-item3 {
+    border: 1px solid black;
+    grid-column: 3;
+    grid-row: 1 / 10;
+}
+
+.CommentList {
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    position: absolute;
+    overflow-y: scroll;
+    padding: 5px;
+    white-space: pre-line;
+}
+
+.ReportHeader {
+    border: 4px double var(--BannerGB);
+    margin: 5px 0px;
+    padding: 5px 10px 5px 10px;
+    width: fit-content;
+    background-color: var(--WidgetBG);
+    color: var(--TableText);
+    border-radius: 5px;
+}
+
+.ReportHeader ol, .ReportHeader ul {
+    padding-left: 25px;
+    margin: 0px;
+}
+
+.CertifiedFooter {
+    border: 4px double var(--BannerGB);
+    padding: 5px;
+    flex: 1;
+    background-color: var(--WidgetBG);
+    color: var(--TableText);
+    text-align: center;
+    border-radius:10px;
+    corner-shape: squircle;
+}
+
+/*#endregion */
+
+
+/***************************
+    Flex Elements
+****************************/
+/*#region Flex Elements */
+
+.TabDiv {
+    border: 1px solid black;
+    /*border-right: 3px solid #545454;*/
+    border-bottom: 0px;
+    padding: 0px 10px;
+    position: relative;
+    background: #ccc;
+    cursor: pointer;
+    user-select: none;
+    width: fit-content;
+    border-radius: 7px 7px 0px 0px;
+    margin: 0px 2px;
+    height: 21px;
+    transition: all 0.2s ease-out;
+    color: darkslategray;
+}
+
+.TabDiv.TabDivSelected {
+    background: white;
+    margin: -6px 2px 0px 2px;
+    height: 27px;
+    top: 3px;
+    bottom: 0px;
+    color: black;
+    transition: all 0.2s ease-out, background 0s;
+    z-index: 2;
+}
+/*
+.TabDiv.TabDivSelected::before {
+  content: "";
+  position: absolute; 
+  background-color: transparent;
+  bottom: 0px;
+  top: 10px;
+  width: 15px;
+  left: -16px;
+  border-bottom-right-radius: 7px;
+  box-shadow: 10px 0px 0px 0px white;
+  border-right: 1px solid black;
+}
+
+.TabDiv.TabDivSelected::after {
+  content: "";
+  position: absolute; 
+  background-color: transparent;
+  bottom: 0px;
+  top: 10px;
+  width: 15px;
+  right: -18px;
+  border-bottom-left-radius: 7px;
+  box-shadow: -10px 0px 0px 0px white;
+  border-left: 3px solid #545454;
+}
+*/
+.TabDiv:not(.TabDivSelected):hover {
+    color: black;
+    background: #bbb;
+}
+
+/*    .TabDiv:hover
+    {
+        margin: -5px 5px 0px 5px;
+        height: 26px;
+    }*/
+
+.TabDivContents {
+    white-space: nowrap;
+}
+
+.TabWrapper {
+    clear: both;
+    line-height: 20px;
+    /*width: 950px;*/
+    position: relative;
+    padding: 0px 35px;
+    display: flex;
+    z-index: 1;
+    flex-wrap: wrap-reverse;
+    flex-direction: row;
+    align-content: space-around;
+}
+
+.TabWrapper > *:first-child {
+    margin-left: -5px;
+}
+
+.TabWrapperWR {
+    flex-wrap: wrap;
+    padding-left: 25px;
+}
+
+.TabWrapperWR > *:first-child {
+    margin-left: 10px;
+}
+
+.FooterButtonPanel, .NavButtonPanel {
+    /*box-sizing: content-box;*/
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    position: sticky;
+    bottom: 0px;
+    background-color: var(--DashboardBG);
+    z-index: 10;
+    gap: 0px 5px;
+    /*padding: 0px 5px;*/
+    /*border-radius: 5px;*/
+}
+
+.NavButtonPanel {
+    justify-content: flex-start;
+    /*flex-wrap:wrap;*/
+    padding: 0px 15px 10px;
+    background-color: inherit;
+}
+
+.FooterButtonPanel > * {
+    margin: 5px 0px;
+    /*white-space:nowrap;*/
+}
+
+.FooterButtonPanel #success {
+    white-space: nowrap;
+}
+
+.FooterButtonPanel .BottomMessageField {
+    font-size: 13px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.BottomButtonBlue, .BottomButtonBlue:link, .BottomButtonBlue:visited, .BottomButtonBlue:active, a.BottomButtonBlue, .NavButtonBlue, .NavButtonBlue:link, .NavButtonBlue:visited, .NavButtonBlue:active, a.NavButtonBlue, .BottomButtonGray, .NavButtonGray {
+    /*box-sizing: content-box;*/
+    box-sizing: border-box;
+    color: var(--BannerText);
+    background-color: var(--BannerGB);
+    padding: 8px 10px;
+    cursor: pointer;
+    text-decoration: none;
+    user-select: none;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+    border-color: transparent;
+    /*line-height:1;*/
+    white-space: nowrap;
+    text-align: center;
+    border: 5px;
+    position: relative;
+    font-size: 14px !important;
+}
+
+.BottomButtonBlue:hover, .NavButtonBlue:hover {
+    background-color: var(--LabelBG);
+    color: var(--LabelText);
+}
+
+.BottomButtonBlue:not(.fileinput-button):after, .BlueDialogConfirm .ui-dialog-buttonset button:after, .BlueDialogRow .ui-dialog-buttonset button:after {
+    content: "";
+    display: block;
+    position: absolute;
+    border-radius: 5px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: all 0.5s;
+    box-shadow: 0 0 10px 10px var(--BannerGB);
+}
+
+.BottomButtonBlue:active:after, .BlueDialogConfirm .ui-dialog-buttonset button:active:after, .BlueDialogRow .ui-dialog-buttonset button:active:after, .NavButtonBlue:active:after {
+    box-shadow: 0 0 0 0 var(--BannerGB);
+    position: absolute;
+    border-radius: 5px;
+    left: 0;
+    top: 0;
+    opacity: 1;
+    transition: 0s;
+}
+
+.BottomButtonGray, .NavButtonGray {
+    color: black;
+    background-color: var(--LightGray);
+    cursor: default;
+}
+
+.fileinput-button:focus-within {
+    outline: 1px black solid;
+}
+
+.CrosswalkWrapper {
+    min-height: 300px;
+    margin: 0px 20px;
+    border: solid;
+    border-radius: 5px;
+}
+
+.ImportError {
+    color: red;
+}
+
+.ProviderTableList {
+    font-size: .8rem;
+}
+
+.ProviderTableList tr.Selected td {
+    background-color: var(--LabelBG) !important;
+    color: white;
+}
+
+.ProviderTableList tr.Selected:hover td {
+    background-color: var(--BannerGB) !important;
+}
+
+.ProviderTableList tbody tr {
+    cursor: pointer;
+    user-select: none;
+    height: unset;
+}
+
+.ProviderTableList thead tr {
+    height: 30px;
+}
+
+.SelectAll {
+    cursor: pointer;
+    user-select: none;
+}
+
+.flexy {
+    display: flex;
+    flex: 1;
+}
+
+.flexy-hidden {
+    display: none;
+}
+
+/*#endregion */
+
+
+/***************************
+    Select2
+****************************/
+/*#region Select2 */
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    background: #DDEAF0;
+    height: 100%;
+    top: 0px;
+    right: 0px;
+}
+
+.select2-container--default .select2-selection--single {
+    border: none;
+    height: 35px;
+    line-height: 35px;
+    transition: box-shadow 200ms ease-out;
+    background-color: transparent;
+}
+
+.select2-selection__rendered {
+    font-size: 12px;
+}
+
+.select2-results__options {
+    font-size: 12px;
+}
+
+.select2-container--default .select2-selection--single:hover {
+    box-shadow: 0 0 5px rgba(0,0,0,.15) inset;
+}
+
+.select2-container--default .select2-selection--single:focus-within {
+    box-shadow: 0 0 5px var(--InputHoverBoxShadow) inset;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    height: 35px;
+    line-height: 35px;
+}
+
+.twenty {
+    width: 20%;
+}
+
+.fifty {
+    width: 50%;
+}
+
+.seventy {
+    width: 70%;
+}
+
+.ninety {
+    width: 90%;
+}
+
+/*#endregion */
+
+/***************************
+    Filter Dropdown
+****************************/
+/*#region FilterDropdown */
+
+.dropdown-filter-dropdown {
+    /*position:absolute;*/
+    width: 100%;
+    height: 100%;
+    left: 0px;
+    top: 0px;
+}
+
+.dropdown-filter-icon {
+    padding: 0px;
+    height: 100%;
+    width: 100%;
+    /*position:absolute;*/
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dropdown-filter-icon:hover {
+    cursor: pointer;
+}
+
+.checkbox-container {
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    color: black;
+    padding-left: 25px;
+    text-indent: -25px;
+}
+
+.dropdown-filter-content {
+    background: var(--LabelBG);
+    color: white;
+    position: absolute;
+    height: fit-content;
+    width: fit-content;
+    top: 100%;
+    right: 0px;
+    padding: 0px 5px 5px 5px;
+    display: none;
+}
+
+.dropdown-filter-content div {
+}
+
+.dropdown-filter-content div.dropdown-filter-search {
+    margin-bottom: 2px;
+    margin-top: 1px;
+}
+
+.dropdown-filter-menu-search {
+    /*background-color:var(--BannerGB);*/
+    width: 100%;
+}
+
+.dropdown-filter-content div.dropdown-filter-sort {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    background-color: var(--BannerGB);
+}
+
+.dropdown-filter-content div.dropdown-filter-sort:hover {
+    background-color: var(--LabelBG);
+    cursor: pointer;
+}
+
+.dropdown-filter-content div.dropdown-filter-sort span {
+    margin-right: 5px;
+    margin-left: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+label.dropdown-filter-item {
+    display: block;
+    cursor: pointer;
+}
+
+input.dropdown-filter-menu-item {
+    vertical-align: text-top;
+}
+
+.arrow-down {
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 3px;
+    margin-right: 0px;
+    margin-left: 5px;
+    transform: rotate(45deg);
+    /*-webkit-transform: rotate(45deg);*/
+    height: 10px;
+    /*position:absolute;*/
+    right: 2px;
+}
+
+/*#endregion */
+
