@@ -7,7 +7,13 @@ import {
   FileSpreadsheet,
   Database,
   Sliders,
-  Plus
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  Printer,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { FileUploader } from './components/FileUploader';
 import { DataPreview } from './components/DataPreview';
@@ -137,6 +143,15 @@ function App() {
   const [selectedChartTitles, setSelectedChartTitles] = useState<string[]>([]);
   const [isSelectorOpen, setIsSelectorOpen] = useState<boolean>(true);
 
+  // Collapse / Expand Workspace states
+  const [isChatCollapsed, setIsChatCollapsed] = useState<boolean>(false);
+  const [isInsightsCollapsed, setIsInsightsCollapsed] = useState<boolean>(false);
+  
+  // Presentation modes: 'grid' | 'carousel' | 'tabbed'
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'carousel' | 'tabbed'>('grid');
+  const [carouselIndex, setCarouselIndex] = useState<number>(0);
+  const [activeChartTab, setActiveChartTab] = useState<string>('');
+
   // Custom Chart Form states
   const [customTitle, setCustomTitle] = useState<string>('');
   const [customChartType, setCustomChartType] = useState<'bar' | 'line' | 'pie' | 'scatter'>('bar');
@@ -152,6 +167,7 @@ function App() {
 
   const activeSheet = workbookData?.sheets.find(s => s.name === activeSheetName) || workbookData?.sheets[0];
 
+  // Helper to execute query against Gemini
   const executeAnalysis = async (queryText: string, currentHistory: ChatMessage[], targetSheet: SheetData) => {
     if (!apiKey) {
       console.error('API key is missing in environment variables.');
@@ -168,7 +184,6 @@ function App() {
     setMessages(updatedMessages);
 
     try {
-      // Run the query using Sheet Schema and 5-row sample
       const sampleRows = targetSheet.rows.slice(0, 5);
       const analystResult = await queryGeminiAnalyst(
         apiKey,
@@ -231,10 +246,10 @@ function App() {
     const docName = loadedName || 'Uploaded Cost Report';
     setCurrentDocName(docName);
     setActiveTab('dashboard');
+    setIsChatCollapsed(false);
 
     const firstSheet = data.sheets[0];
     if (firstSheet) {
-      // Set default axis selectors for Custom Chart form
       setCustomX(firstSheet.columns[0]?.name || '');
       setCustomY(firstSheet.columns.filter(c => c.type === 'number')[0]?.name || firstSheet.columns[0]?.name || '');
       
@@ -242,6 +257,11 @@ function App() {
       const defaultCharts = generateDefaultCharts(firstSheet, docName);
       setAvailableCharts(defaultCharts);
       setSelectedChartTitles(defaultCharts.map(c => c.title));
+      
+      // Set default tab selection
+      if (defaultCharts.length > 0) {
+        setActiveChartTab(defaultCharts[0].title);
+      }
 
       if (apiKey) {
         executeAnalysis(
@@ -258,14 +278,17 @@ function App() {
     
     const nextSheet = workbookData?.sheets.find(s => s.name === sheetName);
     if (nextSheet) {
-      // Sync Custom Chart form options
       setCustomX(nextSheet.columns[0]?.name || '');
       setCustomY(nextSheet.columns.filter(c => c.type === 'number')[0]?.name || nextSheet.columns[0]?.name || '');
       
-      // Re-generate default charts for this active sheet
       const defaultCharts = generateDefaultCharts(nextSheet, currentDocName);
       setAvailableCharts(defaultCharts);
       setSelectedChartTitles(defaultCharts.map(c => c.title));
+
+      if (defaultCharts.length > 0) {
+        setActiveChartTab(defaultCharts[0].title);
+      }
+      setCarouselIndex(0);
 
       if (apiKey) {
         executeAnalysis(
@@ -301,7 +324,12 @@ function App() {
 
     setAvailableCharts(prev => [...prev, newChart]);
     setSelectedChartTitles(prev => [...prev, newChart.title]);
+    setActiveChartTab(newChart.title);
     setCustomTitle('');
+  };
+
+  const handleExportPDF = () => {
+    window.print();
   };
 
   // Filter available charts based on multi-select state
@@ -324,11 +352,13 @@ function App() {
     setCurrentDocName('');
     setAvailableCharts([]);
     setSelectedChartTitles([]);
+    setCarouselIndex(0);
+    setActiveChartTab('');
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      {/* Header */}
+      {/* Clean Header */}
       <header className="app-header">
         <div className="logo-container">
           <div className="logo-icon">
@@ -360,6 +390,15 @@ function App() {
             <button className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }} onClick={handleCloseWorkspace}>
               <ArrowLeft size={14} /> Close & Upload New
             </button>
+            {isChatCollapsed && (
+              <button 
+                className="btn btn-primary" 
+                style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                onClick={() => setIsChatCollapsed(false)}
+              >
+                <MessageSquare size={14} /> Open Copilot
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -423,23 +462,35 @@ function App() {
           /* ==========================================
              ACTIVE ANALYSIS WORKSPACE (MAXIMIZED FOR DATA VIS)
              ========================================== */
-          <div className="dashboard-grid" style={{ height: '100%', padding: '1rem 1.5rem' }}>
+          <div className="dashboard-grid" style={{ height: '100%', padding: '1rem 1.5rem', gridTemplateColumns: isChatCollapsed ? '1fr' : undefined }}>
             
             {/* Left Column - Large visual dashboard and data tables */}
             <div className="main-content-panel">
               
-              {/* Executive Summary & Key Insights (Updates dynamically with AI feedback) */}
+              {/* Collapsible Executive Summary & Key Insights */}
               {latestInsights.length > 0 && (
                 <div className="glass-card" style={{ borderLeft: '4px solid var(--BannerGB)', padding: '1.25rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                    <TrendingUp size={18} style={{ color: 'var(--BannerGB)' }} />
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--LabelBG)' }}>Executive Summary & Key Insights</h3>
+                  <div 
+                    onClick={() => setIsInsightsCollapsed(!isInsightsCollapsed)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <TrendingUp size={18} style={{ color: 'var(--BannerGB)' }} />
+                      <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--LabelBG)' }}>Executive Summary & Key Insights</h3>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--BannerGB)', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                      <span>{isInsightsCollapsed ? 'Expand' : 'Collapse'}</span>
+                      {isInsightsCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                    </div>
                   </div>
-                  <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--HeaderText)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {latestInsights.map((insight, idx) => (
-                      <li key={idx} dangerouslySetInnerHTML={{ __html: inlineMarkdown(insight) }} />
-                    ))}
-                  </ul>
+                  
+                  {!isInsightsCollapsed && (
+                    <ul style={{ margin: '0.75rem 0 0 0', paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--HeaderText)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {latestInsights.map((insight, idx) => (
+                        <li key={idx} dangerouslySetInnerHTML={{ __html: inlineMarkdown(insight) }} />
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
 
@@ -482,7 +533,7 @@ function App() {
                   </div>
 
                   {/* Chart Control Center (Selector + Creator) */}
-                  <div className="glass-card" style={{ padding: '1.25rem' }}>
+                  <div className="glass-card chart-control-center-panel" style={{ padding: '1.25rem' }}>
                     <div 
                       onClick={() => setIsSelectorOpen(!isSelectorOpen)}
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderBottom: isSelectorOpen ? '1px solid var(--LightGray)' : 'none', paddingBottom: isSelectorOpen ? '0.75rem' : '0' }}
@@ -490,7 +541,7 @@ function App() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Sliders size={18} style={{ color: 'var(--BannerGB)' }} />
                         <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--LabelBG)' }}>
-                          Chart Control Center ({selectedChartTitles.length}/{availableCharts.length} Rendered)
+                          Chart Control Center ({selectedChartTitles.length}/{availableCharts.length} Selected)
                         </h3>
                       </div>
                       <span style={{ fontSize: '0.8rem', color: 'var(--BannerGB)', fontWeight: 'bold' }}>
@@ -530,10 +581,22 @@ function App() {
                                     type="checkbox" 
                                     checked={isChecked} 
                                     onChange={() => {
+                                      let nextTitles;
                                       if (isChecked) {
-                                        setSelectedChartTitles(prev => prev.filter(t => t !== chart.title));
+                                        nextTitles = selectedChartTitles.filter(t => t !== chart.title);
                                       } else {
-                                        setSelectedChartTitles(prev => [...prev, chart.title]);
+                                        nextTitles = [...selectedChartTitles, chart.title];
+                                      }
+                                      setSelectedChartTitles(nextTitles);
+                                      
+                                      // Sync active tab or carousel index if deleted
+                                      if (nextTitles.length > 0) {
+                                        if (carouselIndex >= nextTitles.length) {
+                                          setCarouselIndex(nextTitles.length - 1);
+                                        }
+                                        if (!nextTitles.includes(activeChartTab)) {
+                                          setActiveChartTab(nextTitles[0]);
+                                        }
                                       }
                                     }}
                                     style={{ display: 'none' }}
@@ -642,11 +705,51 @@ function App() {
                     )}
                   </div>
 
-                  {/* Interactive Visualizations Card */}
-                  <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--LightGray)', paddingBottom: '0.75rem' }}>
-                      <BarChart2 size={18} style={{ color: 'var(--BannerGB)' }} />
-                      <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--LabelBG)' }}>Rendered Visualizations</h3>
+                  {/* Rendered Visualizations Card */}
+                  <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    
+                    {/* Visualizer header containing controls */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--LightGray)', paddingBottom: '0.75rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <BarChart2 size={18} style={{ color: 'var(--BannerGB)' }} />
+                        <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--LabelBG)' }}>Rendered Visualizations</h3>
+                      </div>
+                      
+                      <div className="layout-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        {/* Presentation Selector */}
+                        <div style={{ display: 'flex', background: 'var(--ExtraLightGray)', borderRadius: '6px', padding: '2px', border: '1px solid var(--LightGray)' }}>
+                          <button 
+                            className="btn" 
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: layoutMode === 'grid' ? 'white' : 'transparent', color: layoutMode === 'grid' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: layoutMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                            onClick={() => setLayoutMode('grid')}
+                          >
+                            Grid layout
+                          </button>
+                          <button 
+                            className="btn" 
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: layoutMode === 'carousel' ? 'white' : 'transparent', color: layoutMode === 'carousel' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: layoutMode === 'carousel' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                            onClick={() => setLayoutMode('carousel')}
+                          >
+                            Carousel
+                          </button>
+                          <button 
+                            className="btn" 
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: layoutMode === 'tabbed' ? 'white' : 'transparent', color: layoutMode === 'tabbed' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: layoutMode === 'tabbed' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                            onClick={() => setLayoutMode('tabbed')}
+                          >
+                            Tabbed
+                          </button>
+                        </div>
+
+                        {/* Export to PDF */}
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                          onClick={handleExportPDF}
+                        >
+                          <Printer size={12} /> PDF Export
+                        </button>
+                      </div>
                     </div>
 
                     {chartsToRender.length === 0 ? (
@@ -656,15 +759,113 @@ function App() {
                           : 'No charts selected. Check item boxes in the Chart Control Center above to display visualizations.'}
                       </div>
                     ) : (
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', width: '100%' }}>
-                        {chartsToRender.map((chart, idx) => (
-                          <InsightChart
-                            key={idx}
-                            chartSpec={chart}
-                            rows={activeSheet?.rows || []}
-                          />
-                        ))}
-                      </div>
+                      <>
+                        {/* ==========================================
+                           LAYOUT MODE: GRID RENDER (2-Column Large View)
+                           ========================================== */}
+                        {layoutMode === 'grid' && (
+                          <div className="print-charts-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', width: '100%' }}>
+                            {chartsToRender.map((chart, idx) => (
+                              <InsightChart
+                                key={idx}
+                                chartSpec={chart}
+                                rows={activeSheet?.rows || []}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {/* ==========================================
+                           LAYOUT MODE: CAROUSEL RENDER (Single-Frame Slider)
+                           ========================================== */}
+                        {layoutMode === 'carousel' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+                            {/* Carousel Controls */}
+                            <div className="carousel-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--WidgetBG)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(0,82,189,0.08)' }}>
+                              <button 
+                                className="btn btn-secondary" 
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                onClick={() => setCarouselIndex(prev => (prev > 0 ? prev - 1 : chartsToRender.length - 1))}
+                              >
+                                <ChevronLeft size={14} /> Prev
+                              </button>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
+                                Visualization {carouselIndex + 1} of {chartsToRender.length}
+                              </span>
+                              <button 
+                                className="btn btn-secondary" 
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                onClick={() => setCarouselIndex(prev => (prev < chartsToRender.length - 1 ? prev + 1 : 0))}
+                              >
+                                Next <ChevronRight size={14} />
+                              </button>
+                            </div>
+                            {/* Chart Frame */}
+                            {chartsToRender[carouselIndex] && (
+                              <InsightChart
+                                chartSpec={chartsToRender[carouselIndex]}
+                                rows={activeSheet?.rows || []}
+                              />
+                            )}
+                            {/* Printable Fallback (Hidden on Screen, visible in Print) */}
+                            <div className="print-charts-grid" style={{ display: 'none' }}>
+                              {chartsToRender.map((chart, idx) => (
+                                <InsightChart
+                                  key={idx}
+                                  chartSpec={chart}
+                                  rows={activeSheet?.rows || []}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ==========================================
+                           LAYOUT MODE: TABBED RENDER (Interactive Tabs)
+                           ========================================== */}
+                        {layoutMode === 'tabbed' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+                            {/* Chart Tabs Bar */}
+                            <div className="tabs-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', borderBottom: '1px solid var(--LightGray)', paddingBottom: '0.25rem' }}>
+                              {chartsToRender.map((chart, idx) => (
+                                <button
+                                  key={idx}
+                                  className="btn"
+                                  style={{
+                                    padding: '0.35rem 0.75rem',
+                                    fontSize: '0.75rem',
+                                    borderRadius: '6px',
+                                    background: activeChartTab === chart.title ? 'var(--LabelBG)' : 'transparent',
+                                    color: activeChartTab === chart.title ? 'white' : 'var(--DarkGray)',
+                                    border: activeChartTab === chart.title ? 'none' : '1px solid var(--LightGray)',
+                                    fontWeight: activeChartTab === chart.title ? 'bold' : 'normal'
+                                  }}
+                                  onClick={() => setActiveChartTab(chart.title)}
+                                >
+                                  {chart.title}
+                                </button>
+                              ))}
+                            </div>
+                            {/* Active Chart Frame */}
+                            {chartsToRender.find(c => c.title === activeChartTab) && (
+                              <InsightChart
+                                chartSpec={chartsToRender.find(c => c.title === activeChartTab)!}
+                                rows={activeSheet?.rows || []}
+                              />
+                            )}
+                            {/* Printable Fallback */}
+                            <div className="print-charts-grid" style={{ display: 'none' }}>
+                              {chartsToRender.map((chart, idx) => (
+                                <InsightChart
+                                  key={idx}
+                                  chartSpec={chart}
+                                  rows={activeSheet?.rows || []}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -681,15 +882,18 @@ function App() {
             </div>
 
             {/* Right Column - Chat Assistant Drawer */}
-            <div className="sidebar-panel">
-              <ChatPanel
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                hasData={!!workbookData}
-                hasApiKey={true}
-              />
-            </div>
+            {!isChatCollapsed && (
+              <div className="sidebar-panel">
+                <ChatPanel
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  hasData={!!workbookData}
+                  hasApiKey={true}
+                  onCollapse={() => setIsChatCollapsed(true)}
+                />
+              </div>
+            )}
           </div>
         )}
       </main>

@@ -8,6 +8,7 @@ interface ChatPanelProps {
   isLoading: boolean;
   hasData: boolean;
   hasApiKey: boolean;
+  onCollapse?: () => void;
 }
 
 /**
@@ -98,7 +99,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   onSendMessage,
   isLoading,
   hasData,
-  hasApiKey
+  hasApiKey,
+  onCollapse
 }) => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -136,11 +138,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       {/* Panel Header */}
       <div className="chat-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Sparkles size={16} style={{ color: 'hsl(var(--primary))' }} />
-          <h3 style={{ margin: 0, fontSize: '1rem', fontFamily: 'var(--font-display)' }}>AI Analyst Chat</h3>
+          <Sparkles size={16} style={{ color: 'var(--BannerGB)' }} />
+          <h3 style={{ margin: 0, fontSize: '1rem', fontFamily: 'var(--font-display)', color: 'var(--LabelBG)' }}>AI Analyst Chat</h3>
         </div>
-        <div className="badge badge-cyan" style={{ fontSize: '0.65rem' }}>
-          Gemini 3.5 Flash
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="badge badge-cyan" style={{ fontSize: '0.65rem', border: '1px solid rgba(0, 82, 189, 0.15)' }}>
+            Gemini 3.5
+          </div>
+          {onCollapse && (
+            <button 
+              className="btn btn-ghost" 
+              style={{ width: '24px', height: '24px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--DarkGray)', fontSize: '0.85rem' }} 
+              onClick={onCollapse}
+              title="Collapse Panel"
+            >
+              ✕
+            </button>
+          )}
         </div>
       </div>
 

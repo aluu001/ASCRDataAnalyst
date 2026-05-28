@@ -15,6 +15,7 @@ import {
   ScatterChart,
   Scatter
 } from 'recharts';
+import { Info } from 'lucide-react';
 import { aggregateDataset } from '../utils/dataEngine';
 import type { ChartSpecification } from '../utils/gemini';
 
@@ -23,7 +24,6 @@ interface InsightChartProps {
   rows: any[];
 }
 
-// Harmonious, premium corporate blue HSL colors for Pie chart partitions
 const PIE_COLORS = [
   '#002185', // PCG Deep Blue
   '#0052BD', // PCG Accent Blue
@@ -35,9 +35,34 @@ const PIE_COLORS = [
   '#f59e0b'  // Amber Gold
 ];
 
-/**
- * Premium white glassmorphic tooltip with high contrast and readable text labels.
- */
+// Helper to translate chart specs into human-readable descriptions for client hand-off reports
+function getChartDescription(spec: ChartSpecification): string {
+  const { chartType, xAxisColumn, yAxisColumn, aggregation } = spec;
+
+  const aggText = aggregation === 'sum' ? 'total aggregated sum'
+                : aggregation === 'avg' ? 'average value'
+                : aggregation === 'count' ? 'frequency volume'
+                : 'raw distributions';
+
+  const chartTypeText = chartType === 'bar' ? 'Bar Chart'
+                      : chartType === 'line' ? 'Line Graph'
+                      : chartType === 'pie' ? 'Pie Distribution'
+                      : 'Scatter Correlation Plot';
+
+  const xLower = xAxisColumn.toLowerCase();
+  if (xLower.includes('month')) {
+    return `This ${chartTypeText} presents the ${aggText} of ${yAxisColumn} calculated monthly. It reveals seasonal operational peaks and highlights monthly budget pacing.`;
+  }
+  if (xLower.includes('title') || xLower.includes('job')) {
+    return `This ${chartTypeText} visualizes the ${aggText} of ${yAxisColumn} segmented by Job Title. It helps identify cost concentrations, FTE efficiency, and department staffing expenses.`;
+  }
+  if (xLower.includes('source') || xLower.includes('call')) {
+    return `This ${chartTypeText} plots the ${aggText} of ${yAxisColumn} across Dispatch Call Sources. It measures response performance and transport volumes by incident urgency.`;
+  }
+
+  return `This ${chartTypeText} visualizes the ${aggText} of ${yAxisColumn} plotted against ${xAxisColumn}. It provides quick analytical comparisons to verify cost distributions.`;
+}
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -56,7 +81,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           {label}
         </p>
         {payload.map((item: any, i: number) => {
-          // Format numeric values cleanly
           const formattedVal = typeof item.value === 'number' 
             ? item.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) 
             : item.value;
@@ -84,7 +108,6 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows }) =
   }, [rows, chartSpec]);
 
   const uniqueId = useMemo(() => {
-    // Generates a safe DOM-ready ID string based on the chart title
     return chartSpec.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
   }, [chartSpec.title]);
 
@@ -221,8 +244,29 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows }) =
     <div className="chart-container-widget">
       <div className="chart-header-widget">
         <div className="chart-title-widget">{chartSpec.title}</div>
-        <div className="badge badge-cyan" style={{ fontSize: '0.65rem', border: '1px solid rgba(0, 82, 189, 0.15)', textTransform: 'capitalize' }}>
-          {chartSpec.chartType} • {chartSpec.aggregation !== 'none' ? `${chartSpec.aggregation}(${chartSpec.yAxisColumn})` : 'Raw Records'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          
+          {/* Detailed analysis hover tooltip */}
+          <div className="chart-info-tooltip-container">
+            <Info size={14} style={{ color: 'var(--BannerGB)', cursor: 'pointer', display: 'block' }} />
+            <div className="chart-info-tooltip-content">
+              <strong style={{ display: 'block', color: 'var(--LabelBG)', marginBottom: '0.25rem', fontSize: '0.8rem' }}>
+                Analysis Insights
+              </strong>
+              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', color: '#475569', lineHeight: 1.4 }}>
+                {getChartDescription(chartSpec)}
+              </p>
+              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.35rem', fontSize: '0.7rem', color: '#64748b' }}>
+                X-Axis: <code>{chartSpec.xAxisColumn}</code> • Y-Axis: <code>{chartSpec.yAxisColumn}</code>
+                <br />
+                Rollup: <strong style={{ textTransform: 'capitalize' }}>{chartSpec.aggregation}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="badge badge-cyan" style={{ fontSize: '0.65rem', border: '1px solid rgba(0, 82, 189, 0.15)', textTransform: 'capitalize' }}>
+            {chartSpec.chartType}
+          </div>
         </div>
       </div>
       <div className="chart-wrapper">
