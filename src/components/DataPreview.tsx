@@ -98,9 +98,9 @@ export const DataPreview: React.FC<DataPreviewProps> = ({
       </div>
 
       {/* Grid Content */}
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
         {viewMode === 'preview' ? (
-          <div className="table-container" style={{ margin: 0, maxHeight: '400px' }}>
+          <div className="table-container" style={{ margin: 0, flex: 1, overflow: 'auto' }}>
             <table className="data-table">
               <thead>
                 <tr>
@@ -143,7 +143,7 @@ export const DataPreview: React.FC<DataPreviewProps> = ({
             </table>
           </div>
         ) : (
-          <div className="table-container" style={{ margin: 0 }}>
+          <div className="table-container" style={{ margin: 0, flex: 1, overflow: 'auto' }}>
             <table className="data-table">
               <thead>
                 <tr>

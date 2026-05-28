@@ -22,6 +22,7 @@ import type { ChartSpecification } from '../utils/gemini';
 interface InsightChartProps {
   chartSpec: ChartSpecification;
   rows: any[];
+  borderless?: boolean;
 }
 
 const PIE_COLORS = [
@@ -97,7 +98,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows }) => {
+export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, borderless = false }) => {
   const data = useMemo(() => {
     try {
       return aggregateDataset(rows, chartSpec);
@@ -241,7 +242,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows }) =
   };
 
   return (
-    <div className="chart-container-widget">
+    <div className={`chart-container-widget ${borderless ? 'borderless' : ''}`}>
       <div className="chart-header-widget">
         <div className="chart-title-widget">{chartSpec.title}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
