@@ -1,0 +1,210 @@
+import React, { useState } from 'react';
+import { Database, Hash, Calendar, ToggleLeft, Type as LetterText, Eye, ChevronLeft, ChevronRight, BarChart2 } from 'lucide-react';
+import type { WorkbookData } from '../utils/dataEngine';
+
+interface DataPreviewProps {
+  workbookData: WorkbookData;
+  activeSheetName: string;
+  onSheetChange: (name: string) => void;
+}
+
+export const DataPreview: React.FC<DataPreviewProps> = ({
+  workbookData,
+  activeSheetName,
+  onSheetChange
+}) => {
+  const [viewMode, setViewMode] = useState<'preview' | 'schema'>('preview');
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+
+  const activeSheet = workbookData.sheets.find(s => s.name === activeSheetName) || workbookData.sheets[0];
+
+  if (!activeSheet) return null;
+
+  const totalPages = Math.ceil(activeSheet.rows.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const paginatedRows = activeSheet.rows.slice(startIndex, startIndex + rowsPerPage);
+
+  const getColumnIcon = (type: string) => {
+    switch (type) {
+      case 'number':
+        return <Hash size={12} />;
+      case 'date':
+        return <Calendar size={12} />;
+      case 'boolean':
+        return <ToggleLeft size={12} />;
+      default:
+        return <LetterText size={12} />;
+    }
+  };
+
+  const handlePageChange = (direction: 'next' | 'prev') => {
+    if (direction === 'prev' && currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    } else if (direction === 'next' && currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
+  return (
+    <div className="glass-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      {/* Sheet Tabs */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Database size={18} style={{ color: 'hsl(var(--primary))' }} />
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'var(--font-display)' }}>Workbook Sheets</h3>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {workbookData.sheets.map(sheet => (
+            <button
+              key={sheet.name}
+              className={`btn ${activeSheetName === sheet.name ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+              onClick={() => {
+                onSheetChange(sheet.name);
+                setCurrentPage(1); // Reset page
+              }}
+            >
+              {sheet.name}
+              <span style={{ opacity: 0.6, fontSize: '0.75rem', marginLeft: '0.25rem' }}>({sheet.rowCount} rows)</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Grid Toolbar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <span style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>
+          Showing sheet <strong>{activeSheet.name}</strong> • {activeSheet.rowCount} rows × {activeSheet.columns.length} columns
+        </span>
+
+        <div style={{ display: 'flex', gap: '0.5rem', background: 'hsl(var(--bg-input))', padding: '0.25rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+          <button
+            className={`btn ${viewMode === 'preview' ? 'btn-primary' : 'btn-ghost'}`}
+            style={{ padding: '0.3rem 0.75rem', fontSize: '0.75rem', borderRadius: '6px' }}
+            onClick={() => setViewMode('preview')}
+          >
+            <Eye size={12} /> Data Preview
+          </button>
+          <button
+            className={`btn ${viewMode === 'schema' ? 'btn-primary' : 'btn-ghost'}`}
+            style={{ padding: '0.3rem 0.75rem', fontSize: '0.75rem', borderRadius: '6px' }}
+            onClick={() => setViewMode('schema')}
+          >
+            <BarChart2 size={12} /> Column Statistics
+          </button>
+        </div>
+      </div>
+
+      {/* Grid Content */}
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        {viewMode === 'preview' ? (
+          <div className="table-container" style={{ margin: 0, maxHeight: '400px' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '50px' }}>#</th>
+                  {activeSheet.columns.map(col => (
+                    <th key={col.name}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <span style={{ color: 'hsl(var(--primary))' }}>{getColumnIcon(col.type)}</span>
+                        {col.name}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedRows.map((row, idx) => (
+                  <tr key={idx}>
+                    <td>{startIndex + idx + 1}</td>
+                    {activeSheet.columns.map(col => {
+                      const rawVal = row[col.name];
+                      let displayVal = '';
+                      if (rawVal !== null && rawVal !== undefined) {
+                        if (rawVal instanceof Date) {
+                          displayVal = rawVal.toLocaleDateString();
+                        } else if (typeof rawVal === 'boolean') {
+                          displayVal = rawVal ? 'TRUE' : 'FALSE';
+                        } else {
+                          displayVal = String(rawVal);
+                        }
+                      }
+                      return (
+                        <td key={col.name} title={displayVal}>
+                          {displayVal === '' ? <em style={{ opacity: 0.3 }}>null</em> : displayVal}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="table-container" style={{ margin: 0 }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Column Name</th>
+                  <th>Inferred Type</th>
+                  <th>Nulls / Missing</th>
+                  <th>Unique Values</th>
+                  <th>Min / Range Start</th>
+                  <th>Max / Range End</th>
+                  <th>Average Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeSheet.columns.map(col => (
+                  <tr key={col.name}>
+                    <td style={{ fontWeight: 600, color: 'hsl(var(--text-primary))' }}>{col.name}</td>
+                    <td>
+                      <span className={`badge ${col.type === 'number' ? 'badge-cyan' : 'badge-purple'}`} style={{ gap: '0.25rem' }}>
+                        {getColumnIcon(col.type)} {col.type}
+                      </span>
+                    </td>
+                    <td>
+                      {col.nullCount} <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>({Math.round((col.nullCount / activeSheet.rowCount) * 100)}%)</span>
+                    </td>
+                    <td>{col.uniqueCount}</td>
+                    <td>{col.min !== undefined ? String(col.min) : <span style={{ opacity: 0.3 }}>-</span>}</td>
+                    <td>{col.max !== undefined ? String(col.max) : <span style={{ opacity: 0.3 }}>-</span>}</td>
+                    <td>{col.avg !== undefined ? col.avg : <span style={{ opacity: 0.3 }}>-</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination controls for preview */}
+      {viewMode === 'preview' && totalPages > 1 && (
+        <div className="table-pagination">
+          <span style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
+            Page <strong>{currentPage}</strong> of {totalPages} ({activeSheet.rows.length} total rows)
+          </span>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              className="btn btn-secondary btn-icon-only"
+              onClick={() => handlePageChange('prev')}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              className="btn btn-secondary btn-icon-only"
+              onClick={() => handlePageChange('next')}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
