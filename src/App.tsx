@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   BarChart2, 
   ArrowLeft, 
@@ -11,7 +11,12 @@ import {
   MessageSquare,
   Printer,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  SlidersHorizontal,
+  Users,
+  Clock,
+  DollarSign,
+  ShieldCheck
 } from 'lucide-react';
 import { FileUploader } from './components/FileUploader';
 import { DataPreview } from './components/DataPreview';
@@ -170,6 +175,12 @@ function App() {
   // Workspace Tab selection: 'dashboard' | 'spreadsheet' | 'methodology'
   const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'dashboard' | 'spreadsheet' | 'methodology'>('dashboard');
 
+  // Dashboard Interactive Filters state: mapping column names to selected values to filter by
+  const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
+
+  // Sub-tab selection in Methodology page
+  const [activeMethodologySubTab, setActiveMethodologySubTab] = useState<'pemt' | 'fte' | 'cad'>('pemt');
+
   // Presentation modes: 'grid' | 'carousel' | 'tabbed'
   const [layoutMode, setLayoutMode] = useState<'grid' | 'carousel' | 'tabbed'>('grid');
   const [carouselIndex, setCarouselIndex] = useState<number>(0);
@@ -186,6 +197,82 @@ function App() {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 
   const activeSheet = workbookData?.sheets.find(s => s.name === activeSheetName) || workbookData?.sheets[0];
+
+  // Reactive filtered dataset rows based on activeFilters state
+  const filteredRows = useMemo(() => {
+    if (!activeSheet) return [];
+    const filterKeys = Object.keys(activeFilters);
+    if (filterKeys.length === 0) return activeSheet.rows;
+
+    return activeSheet.rows.filter(row => {
+      return filterKeys.every(colName => {
+        const allowedValues = activeFilters[colName];
+        if (!allowedValues || allowedValues.length === 0) return true;
+        const cellValue = String(row[colName] ?? '').trim();
+        return allowedValues.includes(cellValue);
+      });
+    });
+  }, [activeSheet, activeFilters]);
+
+  // Dynamically find columns we can filter on (string/bool with 2 to 25 unique values)
+  const filterableColumns = useMemo(() => {
+    if (!activeSheet) return [];
+    return activeSheet.columns.filter(col => {
+      if (col.type !== 'string' && col.type !== 'boolean') return false;
+      const uniqueVals = new Set(activeSheet.rows.map(r => String(r[col.name] ?? '').trim()).filter(v => v !== ''));
+      return uniqueVals.size >= 2 && uniqueVals.size <= 25;
+    }).map(col => {
+      const uniqueVals = Array.from(new Set(activeSheet.rows.map(r => String(r[col.name] ?? '').trim()).filter(v => v !== ''))).sort();
+      return {
+        name: col.name,
+        values: uniqueVals
+      };
+    });
+  }, [activeSheet]);
+
+  const handleToggleFilterVal = (colName: string, value: string) => {
+    setActiveFilters(prev => {
+      const current = prev[colName] || [];
+      const next = current.includes(value)
+        ? current.filter(v => v !== value)
+        : [...current, value];
+      
+      const newFilters = { ...prev };
+      if (next.length === 0) {
+        delete newFilters[colName];
+      } else {
+        newFilters[colName] = next;
+      }
+      return newFilters;
+    });
+  };
+
+  const handleSetSingleFilterVal = (colName: string, value: string) => {
+    setActiveFilters(prev => {
+      const newFilters = { ...prev };
+      if (value === '' || value === 'ALL_VALUES') {
+        delete newFilters[colName];
+      } else {
+        newFilters[colName] = [value];
+      }
+      return newFilters;
+    });
+  };
+
+  // Dynamically calculate average of numeric columns on filtered dataset
+  const getFilteredAverage = (colName: string): number => {
+    if (filteredRows.length === 0) return 0;
+    let sum = 0;
+    let count = 0;
+    for (const r of filteredRows) {
+      const val = Number(r[colName]);
+      if (!isNaN(val) && r[colName] !== null && r[colName] !== undefined) {
+        sum += val;
+        count++;
+      }
+    }
+    return count > 0 ? sum / count : 0;
+  };
 
   // Helper to execute query against Gemini
   const executeAnalysis = async (queryText: string, currentHistory: ChatMessage[], targetSheet: SheetData) => {
@@ -262,6 +349,7 @@ function App() {
   const handleWorkbookLoaded = (data: WorkbookData, loadedName?: string) => {
     setWorkbookData(data);
     setActiveSheetName(data.activeSheetName);
+    setActiveFilters({});
     setMessages([]);
     const docName = loadedName || 'Uploaded Cost Report';
     setCurrentDocName(docName);
@@ -293,6 +381,7 @@ function App() {
 
   const handleSheetChange = (sheetName: string) => {
     setActiveSheetName(sheetName);
+    setActiveFilters({});
     
     const nextSheet = workbookData?.sheets.find(s => s.name === sheetName);
     if (nextSheet) {
@@ -384,7 +473,7 @@ function App() {
 
     const financialCharts = charts.filter(c => classifyChart(c.title) === 'financial');
     const operationalCharts = charts.filter(c => classifyChart(c.title) === 'operational');
-    const rows = activeSheet?.rows || [];
+    const rows = filteredRows;
 
     return (
       <div className="print-charts-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
@@ -475,6 +564,7 @@ function App() {
     setCarouselIndex(0);
     setActiveChartTab('');
     setActiveWorkspaceTab('dashboard');
+    setActiveFilters({});
   };
 
   return (
@@ -779,14 +869,26 @@ function App() {
                   </div>
                 </div>
 
-                {/* 2. Worksheet Metadata Summary Card */}
-                {activeSheet && (
+                {/* 2. Interactive Dashboard Filters */}
+                {activeSheet && filterableColumns.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <FileSpreadsheet size={14} style={{ color: 'var(--BannerGB)' }} />
-                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Active Worksheet Summary
-                      </span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <SlidersHorizontal size={14} style={{ color: 'var(--BannerGB)' }} />
+                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Dashboard Filters
+                        </span>
+                      </div>
+                      {Object.keys(activeFilters).length > 0 && (
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
+                          style={{ padding: '0px 4px', fontSize: '0.65rem', color: 'var(--BannerGB)', fontWeight: 'bold', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                          onClick={() => setActiveFilters({})}
+                        >
+                          Reset All
+                        </button>
+                      )}
                     </div>
                     <div 
                       style={{ 
@@ -797,100 +899,71 @@ function App() {
                         padding: '1rem', 
                         background: 'white',
                         boxShadow: 'var(--shadow-sm)',
-                        gap: '0.75rem'
+                        gap: '0.85rem'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: 'rgba(0, 33, 133, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Database size={16} style={{ color: 'var(--LabelBG)' }} />
-                        </div>
-                        <div style={{ overflow: 'hidden' }}>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--LabelBG)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                            {activeSheet.name}
-                          </div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--DarkGray)' }}>
-                            Active worksheet schema & size
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Row/Col stats badges */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                        <div style={{ background: 'var(--ExtraLightGray)', border: '1px solid var(--LightGray)', borderRadius: '6px', padding: '0.4rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
-                          <span style={{ fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--DarkGray)', fontWeight: 'bold' }}>Total Rows</span>
-                          <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{activeSheet.rowCount.toLocaleString()}</strong>
-                        </div>
-                        <div style={{ background: 'var(--ExtraLightGray)', border: '1px solid var(--LightGray)', borderRadius: '6px', padding: '0.4rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
-                          <span style={{ fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--DarkGray)', fontWeight: 'bold' }}>Columns Count</span>
-                          <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{activeSheet.columns.length} cols</strong>
-                        </div>
-                      </div>
-
-                      {/* Column Types preview list */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-                          Detected Fields ({activeSheet.columns.length})
-                        </span>
-                        <div 
-                          style={{ 
-                            maxHeight: '110px', 
-                            overflowY: 'auto', 
-                            border: '1px solid var(--LightGray)', 
-                            borderRadius: '6px', 
-                            padding: '0.4rem 0.5rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '0.3rem',
-                            background: 'var(--ExtraLightGray)'
-                          }}
-                        >
-                          {activeSheet.columns.map((c, i) => {
-                            let typeLabel = 'Text';
-                            let typeColor = '#0052BD'; // Blue
-                            if (c.type === 'number') {
-                              typeLabel = 'Num';
-                              typeColor = '#10b981'; // Green
-                            } else if (c.type === 'date') {
-                              typeLabel = 'Date';
-                              typeColor = '#f59e0b'; // Amber
-                            } else if (c.type === 'boolean') {
-                              typeLabel = 'Bool';
-                              typeColor = '#6366f1'; // Purple
-                            }
-
-                            return (
-                              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.7rem' }}>
-                                <span style={{ fontWeight: 500, color: 'var(--LabelBG)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '250px' }} title={c.name}>
-                                  {c.name}
-                                </span>
-                                <span style={{ fontSize: '0.65rem', background: 'white', color: typeColor, border: `1px solid ${typeColor}`, borderRadius: '4px', padding: '0px 4px', fontWeight: 'bold' }}>
-                                  {typeLabel}
-                                </span>
+                      {filterableColumns.map((col, idx) => {
+                        const selectedValues = activeFilters[col.name] || [];
+                        
+                        return (
+                          <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--LabelBG)', textTransform: 'capitalize' }}>
+                              {col.name}
+                            </span>
+                            
+                            {col.values.length <= 5 ? (
+                              /* Pill list multi-selector */
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                                {col.values.map(val => {
+                                  const isSel = selectedValues.includes(val);
+                                  return (
+                                    <button
+                                      key={val}
+                                      type="button"
+                                      style={{
+                                        padding: '0.25rem 0.5rem',
+                                        fontSize: '0.65rem',
+                                        borderRadius: '20px',
+                                        background: isSel ? 'var(--LabelBG)' : 'var(--ExtraLightGray)',
+                                        color: isSel ? 'white' : 'var(--DarkGray)',
+                                        border: isSel ? 'none' : '1px solid var(--LightGray)',
+                                        cursor: 'pointer',
+                                        fontWeight: isSel ? 'bold' : 'normal',
+                                        transition: 'all 0.15s ease'
+                                      }}
+                                      onClick={() => handleToggleFilterVal(col.name, val)}
+                                    >
+                                      {val}
+                                    </button>
+                                  );
+                                })}
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Direct jump to dedicated tab button */}
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        style={{ 
-                          width: '100%', 
-                          padding: '0.45rem', 
-                          fontSize: '0.75rem', 
-                          borderRadius: '6px', 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center', 
-                          gap: '0.4rem', 
-                          marginTop: '0.25rem' 
-                        }}
-                        onClick={() => setActiveWorkspaceTab('spreadsheet')}
-                      >
-                        <FileSpreadsheet size={14} /> Open Full Spreadsheet Grid
-                      </button>
+                            ) : (
+                              /* Dropdown single-selector */
+                              <select
+                                className="filter-select"
+                                style={{
+                                  width: '100%',
+                                  padding: '0.35rem 0.5rem',
+                                  fontSize: '0.75rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--LightGray)',
+                                  background: selectedValues.length > 0 ? 'var(--ExtraLightGray)' : 'white',
+                                  color: 'var(--LabelBG)',
+                                  fontWeight: selectedValues.length > 0 ? 'bold' : 'normal'
+                                }}
+                                value={selectedValues[0] || 'ALL_VALUES'}
+                                onChange={(e) => handleSetSingleFilterVal(col.name, e.target.value)}
+                              >
+                                <option value="ALL_VALUES">-- All {col.name}s --</option>
+                                {col.values.map(val => (
+                                  <option key={val} value={val}>{val}</option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1258,28 +1331,33 @@ function App() {
                       }}
                     >
                       <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Records</span>
-                      <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>{workbookData.sheets[0].rowCount.toLocaleString()} rows</span>
+                      <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
+                        {filteredRows.length.toLocaleString()} {filteredRows.length === activeSheet?.rows.length ? 'rows' : 'filtered'}
+                      </span>
                     </div>
-                    {workbookData.sheets[0].columns.filter(c => c.type === 'number').slice(0, 3).map((col, idx) => (
-                      <div 
-                        key={idx} 
-                        style={{ 
-                          border: '1px solid var(--border-light)', 
-                          background: 'white', 
-                          borderRadius: '10px', 
-                          padding: '1rem', 
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          gap: '0.25rem',
-                          boxShadow: 'var(--shadow-sm)' 
-                        }}
-                      >
-                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg {col.name}</span>
-                        <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
-                          {typeof col.avg === 'number' ? col.avg.toLocaleString(undefined, { maximumFractionDigits: 2 }) : 'N/A'}
-                        </span>
-                      </div>
-                    ))}
+                    {activeSheet?.columns.filter(c => c.type === 'number').slice(0, 3).map((col, idx) => {
+                      const avg = getFilteredAverage(col.name);
+                      return (
+                        <div 
+                          key={idx} 
+                          style={{ 
+                            border: '1px solid var(--border-light)', 
+                            background: 'white', 
+                            borderRadius: '10px', 
+                            padding: '1rem', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: '0.25rem',
+                            boxShadow: 'var(--shadow-sm)' 
+                          }}
+                        >
+                          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg {col.name}</span>
+                          <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
+                            {avg.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* Dynamic Visualizations Area */}
@@ -1326,8 +1404,9 @@ function App() {
                             <div className="dashboard-section-card" style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.25rem', boxShadow: 'var(--shadow-md)' }}>
                               <InsightChart
                                 chartSpec={chartsToRender[carouselIndex]}
-                                rows={activeSheet?.rows || []}
+                                rows={filteredRows}
                                 borderless={true}
+                                height="400px"
                               />
                             </div>
                           )}
@@ -1370,8 +1449,9 @@ function App() {
                             <div className="dashboard-section-card" style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.25rem', boxShadow: 'var(--shadow-md)' }}>
                               <InsightChart
                                 chartSpec={chartsToRender.find(c => c.title === activeChartTab)!}
-                                rows={activeSheet?.rows || []}
+                                rows={filteredRows}
                                 borderless={true}
+                                height="400px"
                               />
                             </div>
                           )}
@@ -1423,7 +1503,7 @@ function App() {
                   }}
                 >
                   {/* Methodology Intro Card */}
-                  <div style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
+                  <div style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--shadow-sm)', flexShrink: 0 }}>
                     <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       🧠 Methodology and Analytical Framework
                     </h3>
@@ -1432,88 +1512,322 @@ function App() {
                     </p>
                   </div>
 
-                  {/* Section 1: PEMT Cost Reimbursement */}
-                  <div style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
-                    <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      💰 PEMT Supplemental Reimbursement Calculations
-                    </h4>
-                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--DarkGray)', lineHeight: '1.5' }}>
-                      The Public Emergency Medical Transportation (PEMT) program provides supplemental reimbursement to eligible providers for emergency medical ground transportation services.
-                    </p>
-                    
-                    <div style={{ background: 'var(--ExtraLightGray)', border: '1px solid var(--LightGray)', borderRadius: '8px', padding: '1rem', fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--LabelBG)', marginBottom: '1rem' }}>
-                      Reimbursement = (Total Run Volume * Avg Cost Per Transport) - Net Baseline Revenues
-                    </div>
-                    
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', border: '1px solid var(--LightGray)' }}>
-                      <thead>
-                        <tr style={{ background: 'var(--ExtraLightGray)', borderBottom: '1.5px solid var(--LightGray)' }}>
-                          <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Parameter</th>
-                          <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Source Column</th>
-                          <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Analytical Meaning</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr style={{ borderBottom: '1px solid var(--LightGray)' }}>
-                          <td style={{ padding: '0.5rem', fontFamily: 'monospace' }}>Run Volume</td>
-                          <td style={{ padding: '0.5rem', color: 'var(--DarkGray)' }}>Month / Count</td>
-                          <td style={{ padding: '0.5rem' }}>Total emergency ground medical transports.</td>
-                        </tr>
-                        <tr style={{ borderBottom: '1px solid var(--LightGray)' }}>
-                          <td style={{ padding: '0.5rem', fontFamily: 'monospace' }}>Avg Cost</td>
-                          <td style={{ padding: '0.5rem', color: 'var(--DarkGray)' }}>Avg Cost Per Transport</td>
-                          <td style={{ padding: '0.5rem' }}>Sum of allowables divided by total runs.</td>
-                        </tr>
-                        <tr>
-                          <td style={{ padding: '0.5rem', fontFamily: 'monospace' }}>Net Revenues</td>
-                          <td style={{ padding: '0.5rem', color: 'var(--DarkGray)' }}>Total Revenue</td>
-                          <td style={{ padding: '0.5rem' }}>Total receipts/payments received for runs.</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  {/* Methodology Sub-Tabs Navigation */}
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', borderBottom: '1px solid var(--LightGray)', paddingBottom: '0.75rem', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      className="btn"
+                      style={{
+                        padding: '0.4rem 0.85rem',
+                        fontSize: '0.8rem',
+                        borderRadius: '20px',
+                        background: activeMethodologySubTab === 'pemt' ? 'var(--LabelBG)' : 'white',
+                        color: activeMethodologySubTab === 'pemt' ? 'white' : 'var(--DarkGray)',
+                        border: activeMethodologySubTab === 'pemt' ? 'none' : '1px solid var(--LightGray)',
+                        fontWeight: activeMethodologySubTab === 'pemt' ? 'bold' : 'normal',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        boxShadow: activeMethodologySubTab === 'pemt' ? 'var(--shadow-sm)' : 'none',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => setActiveMethodologySubTab('pemt')}
+                    >
+                      <DollarSign size={14} /> PEMT Supplemental Reimbursement
+                    </button>
+                    <button
+                      type="button"
+                      className="btn"
+                      style={{
+                        padding: '0.4rem 0.85rem',
+                        fontSize: '0.8rem',
+                        borderRadius: '20px',
+                        background: activeMethodologySubTab === 'fte' ? 'var(--LabelBG)' : 'white',
+                        color: activeMethodologySubTab === 'fte' ? 'white' : 'var(--DarkGray)',
+                        border: activeMethodologySubTab === 'fte' ? 'none' : '1px solid var(--LightGray)',
+                        fontWeight: activeMethodologySubTab === 'fte' ? 'bold' : 'normal',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        boxShadow: activeMethodologySubTab === 'fte' ? 'var(--shadow-sm)' : 'none',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => setActiveMethodologySubTab('fte')}
+                    >
+                      <Users size={14} /> Personnel Hours & FTEs
+                    </button>
+                    <button
+                      type="button"
+                      className="btn"
+                      style={{
+                        padding: '0.4rem 0.85rem',
+                        fontSize: '0.8rem',
+                        borderRadius: '20px',
+                        background: activeMethodologySubTab === 'cad' ? 'var(--LabelBG)' : 'white',
+                        color: activeMethodologySubTab === 'cad' ? 'white' : 'var(--DarkGray)',
+                        border: activeMethodologySubTab === 'cad' ? 'none' : '1px solid var(--LightGray)',
+                        fontWeight: activeMethodologySubTab === 'cad' ? 'bold' : 'normal',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        boxShadow: activeMethodologySubTab === 'cad' ? 'var(--shadow-sm)' : 'none',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => setActiveMethodologySubTab('cad')}
+                    >
+                      <Clock size={14} /> CAD Dispatch Time Benchmarks
+                    </button>
                   </div>
 
-                  {/* Section 2: Labor & FTE Rollups */}
-                  <div style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
-                    <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      👥 Personnel Hours & Full-Time Equivalent (FTE) Calculations
-                    </h4>
-                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--DarkGray)', lineHeight: '1.5' }}>
-                      Labor analytics group personnel hours into standardized FTE metrics to analyze staff allocations and hourly cost variances by role.
-                    </p>
-                    
-                    <div style={{ background: 'var(--ExtraLightGray)', border: '1px solid var(--LightGray)', borderRadius: '8px', padding: '1rem', fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--LabelBG)', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <span>1 FTE = 2,080 Hours (Standard 40-hour work week annually)</span>
-                      <span>Allocated FTE = (Total Hours Worked / 2080) * (Active Months / 12)</span>
-                      <span>Regular Hourly Rate = Base Regular Pay / Regular Hours Worked</span>
-                      <span>Overtime Hourly Rate = Overtime Pay / Overtime Hours (Weighted averages)</span>
-                    </div>
-                    
-                    <p style={{ margin: 0, fontSize: '0.825rem', color: 'var(--DarkGray)', lineHeight: '1.5' }}>
-                      Regular and overtime rates represent the weighted average of regular and overtime hours across active personnel.
-                    </p>
-                  </div>
+                  {/* Active Sub-Tab content */}
+                  {activeMethodologySubTab === 'pemt' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          💰 PEMT Supplemental Reimbursement Calculations
+                        </h4>
+                        <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.825rem', color: 'var(--DarkGray)', lineHeight: '1.5' }}>
+                          The Public Emergency Medical Transportation (PEMT) program provides supplemental funding to eligible providers for emergency ground transport services. The calculation models the deficit between allowable costs and baseline revenues.
+                        </p>
 
-                  {/* Section 3: Operational Benchmarks */}
-                  <div style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
-                    <h4 style={{ margin: '0 0 0.75rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      🚑 Dispatch CAD Response Time Benchmarks
-                    </h4>
-                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--DarkGray)', lineHeight: '1.5' }}>
-                      Operational performance dashboards audit Computer Aided Dispatch (CAD) response intervals to assess quality standards compliance.
-                    </p>
-                    
-                    <div style={{ background: 'var(--ExtraLightGray)', border: '1px solid var(--LightGray)', borderRadius: '8px', padding: '1rem', fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--LabelBG)', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      <span>Chute/Turnout Time = Dispatch Time - Notification Time</span>
-                      <span>Transit Duration = Scene Arrival Time - Dispatch Time</span>
-                      <span>On-Scene Time = Depart Scene Time - Scene Arrival Time</span>
-                      <span>Total CAD Response Time = Scene Arrival Time - CAD Call Created Time</span>
+                        {/* Equation layout */}
+                        <div className="math-container">
+                          <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--DarkGray)', fontWeight: 'bold', letterSpacing: '0.05em', marginBottom: '0.6rem' }}>Operational Equation</div>
+                          <div className="math-equation">
+                            <span className="math-variable">Reimbursement</span>
+                            <span className="math-operator">=</span>
+                            <span className="math-operator">(</span>
+                            <span className="math-variable">Total Run Volume</span>
+                            <span className="math-operator">×</span>
+                            <span className="math-variable">Avg Cost Per Transport</span>
+                            <span className="math-operator">)</span>
+                            <span className="math-operator">−</span>
+                            <span className="math-variable">Net Baseline Revenues</span>
+                          </div>
+                        </div>
+
+                        {/* Interactive Example walkthrough */}
+                        <div style={{ border: '1px solid rgba(0, 82, 189, 0.15)', background: 'rgba(0, 82, 189, 0.02)', borderRadius: '10px', padding: '1.25rem', margin: '1.25rem 0' }}>
+                          <h5 style={{ margin: '0 0 0.6rem 0', color: 'var(--LabelBG)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 'bold' }}>
+                            <ShieldCheck size={15} style={{ color: 'var(--BannerGB)' }} /> Illustrative Rollup Calculation Example
+                          </h5>
+                          <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.75rem', color: 'var(--DarkGray)' }}>
+                            Assume the following variables are parsed from an uploaded cost workbook sheet:
+                          </p>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+                            <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>RUN VOLUME</div>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>1,450 transports</strong>
+                            </div>
+                            <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>AVG COST PER RUN</div>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>$850.00</strong>
+                            </div>
+                            <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>NET REVENUES</div>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>$650,000.00</strong>
+                            </div>
+                          </div>
+                          <div style={{ background: 'white', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(0, 82, 189, 0.12)', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                            <div>1. <strong>Total Allowable Cost</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>1,450 runs × $850 = $1,232,500</code></div>
+                            <div>2. <strong>Supplemental Funding</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>$1,232,500 − $650,000 = $582,500</code></div>
+                            <div style={{ color: 'var(--BannerGB)', fontWeight: 'bold', borderTop: '1px dashed var(--LightGray)', paddingTop: '0.5rem', marginTop: '0.2rem' }}>
+                              Net supplemental claim value: $582,500.00
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Parameter Mapping Table */}
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', border: '1px solid var(--LightGray)', marginTop: '1.25rem' }}>
+                          <thead>
+                            <tr style={{ background: 'var(--ExtraLightGray)', borderBottom: '1.5px solid var(--LightGray)' }}>
+                              <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Parameter</th>
+                              <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Source Column</th>
+                              <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Analytical Meaning</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr style={{ borderBottom: '1px solid var(--LightGray)' }}>
+                              <td style={{ padding: '0.5rem', fontFamily: 'monospace', fontWeight: 'bold' }}>Run Volume</td>
+                              <td style={{ padding: '0.5rem', color: 'var(--DarkGray)' }}>Month / Count / Transports</td>
+                              <td style={{ padding: '0.5rem' }}>Total emergency ground medical transports.</td>
+                            </tr>
+                            <tr style={{ borderBottom: '1px solid var(--LightGray)' }}>
+                              <td style={{ padding: '0.5rem', fontFamily: 'monospace', fontWeight: 'bold' }}>Avg Cost</td>
+                              <td style={{ padding: '0.5rem', color: 'var(--DarkGray)' }}>Avg Cost Per Transport</td>
+                              <td style={{ padding: '0.5rem' }}>Sum of allowable expenses divided by total runs.</td>
+                            </tr>
+                            <tr>
+                              <td style={{ padding: '0.5rem', fontFamily: 'monospace', fontWeight: 'bold' }}>Net Revenues</td>
+                              <td style={{ padding: '0.5rem', color: 'var(--DarkGray)' }}>Total Revenue / Net Receipts</td>
+                              <td style={{ padding: '0.5rem' }}>Total payments received for emergency runs.</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                    
-                    <p style={{ margin: 0, fontSize: '0.825rem', color: 'var(--DarkGray)', lineHeight: '1.5' }}>
-                      Operational averages ignore entries with missing timestamps or zero durations (negative errors) to ensure data integrity benchmarks are maintained.
-                    </p>
-                  </div>
+                  )}
+
+                  {activeMethodologySubTab === 'fte' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          👥 Personnel Hours & Full-Time Equivalent (FTE) Calculations
+                        </h4>
+                        <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.825rem', color: 'var(--DarkGray)', lineHeight: '1.5' }}>
+                          Labor analytics convert actual paid personnel hours into standardized FTEs to review resource distributions, analyze shift coverages, and calculate weighted average pay rates.
+                        </p>
+
+                        <div className="math-container" style={{ gap: '1.25rem' }}>
+                          {/* FTE Equation */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', width: '100%' }}>
+                            <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--DarkGray)', fontWeight: 'bold', letterSpacing: '0.05em' }}>FTE Allocation</div>
+                            <div className="math-equation">
+                              <span className="math-variable">Allocated FTE</span>
+                              <span className="math-operator">=</span>
+                              <div className="math-fraction">
+                                <span className="math-numerator">Total Hours Worked</span>
+                                <span className="math-denominator">2,080 Hours (Annual Standard)</span>
+                              </div>
+                              <span className="math-operator">×</span>
+                              <div className="math-fraction">
+                                <span className="math-numerator">Active Months</span>
+                                <span className="math-denominator">12 Months</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ width: '80%', height: '1px', background: 'var(--LightGray)' }}></div>
+
+                          {/* Regular Hourly Rate Equation */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', width: '100%' }}>
+                            <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--DarkGray)', fontWeight: 'bold', letterSpacing: '0.05em' }}>Weighted Regular Pay Rate</div>
+                            <div className="math-equation">
+                              <span className="math-variable">Regular Hourly Rate</span>
+                              <span className="math-operator">=</span>
+                              <div className="math-fraction">
+                                <span className="math-numerator">Base Regular Pay ($)</span>
+                                <span className="math-denominator">Regular Hours Worked</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Interactive Example walkthrough */}
+                        <div style={{ border: '1px solid rgba(0, 82, 189, 0.15)', background: 'rgba(0, 82, 189, 0.02)', borderRadius: '10px', padding: '1.25rem', margin: '1.25rem 0' }}>
+                          <h5 style={{ margin: '0 0 0.6rem 0', color: 'var(--LabelBG)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 'bold' }}>
+                            <ShieldCheck size={15} style={{ color: 'var(--BannerGB)' }} /> Illustrative Personnel Calculation Example
+                          </h5>
+                          <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.75rem', color: 'var(--DarkGray)' }}>
+                            Assume a full-time paramedic works additional overtime shifts during a 12-month period:
+                          </p>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+                            <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>REGULAR HOURS</div>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>2,080 hours</strong>
+                            </div>
+                            <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>OVERTIME HOURS</div>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>520 hours</strong>
+                            </div>
+                            <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>TOTAL PAY (REG + OT)</div>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>$85,800.00</strong>
+                            </div>
+                          </div>
+                          <div style={{ background: 'white', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(0, 82, 189, 0.12)', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                            <div>1. <strong>FTE Count</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>(2,080 + 520) / 2,080 = 1.25 FTEs</code></div>
+                            <div>2. <strong>Weighted Average Hourly Rate</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>$85,800 total pay / 2,600 total hours = $33.00/hour</code></div>
+                            <div style={{ color: 'var(--BannerGB)', fontWeight: 'bold', borderTop: '1px dashed var(--LightGray)', paddingTop: '0.5rem', marginTop: '0.2rem' }}>
+                              Net employee resource value: 1.25 FTEs @ $33.00/hr
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeMethodologySubTab === 'cad' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          🚑 Dispatch CAD Response Time Benchmarks
+                        </h4>
+                        <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.825rem', color: 'var(--DarkGray)', lineHeight: '1.5' }}>
+                          Computer Aided Dispatch (CAD) log systems record timestamps for key response phase transitions. Averages help verify contract compliance and triage service-level bottlenecks.
+                        </p>
+
+                        {/* Horizontal Flowchart */}
+                        <div style={{ background: 'white', border: '1px solid var(--LightGray)', borderRadius: '10px', padding: '1rem', margin: '1.5rem 0' }}>
+                          <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--DarkGray)', fontWeight: 'bold', letterSpacing: '0.05em', textAlign: 'center', marginBottom: '0.5rem' }}>
+                            Dispatch Lifecycle & Interval Mapping
+                          </div>
+                          
+                          <div className="dispatch-timeline">
+                            <div className="dispatch-milestone">
+                              <div className="dispatch-dot" style={{ background: '#64748b' }}></div>
+                              <span className="dispatch-label">Call Created</span>
+                            </div>
+
+                            <div className="dispatch-milestone">
+                              <div className="dispatch-dot"></div>
+                              <span className="dispatch-label">Dispatched</span>
+                              <div className="dispatch-interval" style={{ left: '50%', transform: 'translateX(-50%)' }}>Dispatch Delay</div>
+                            </div>
+
+                            <div className="dispatch-milestone">
+                              <div className="dispatch-dot"></div>
+                              <span className="dispatch-label">En Route</span>
+                              <div className="dispatch-interval" style={{ left: '50%', transform: 'translateX(-50%)' }}>Turnout/Chute</div>
+                            </div>
+
+                            <div className="dispatch-milestone">
+                              <div className="dispatch-dot"></div>
+                              <span className="dispatch-label">Arrived Scene</span>
+                              <div className="dispatch-interval" style={{ left: '50%', transform: 'translateX(-50%)' }}>Transit Time</div>
+                            </div>
+                          </div>
+
+                          <div style={{ textAlign: 'center', fontSize: '0.725rem', color: 'var(--BannerGB)', fontWeight: 'bold', marginTop: '1.25rem', background: 'rgba(0, 82, 189, 0.04)', padding: '0.45rem', borderRadius: '6px', border: '1px dashed rgba(0, 82, 189, 0.15)' }}>
+                            Total CAD Response Time = Scene Arrival Time − Call Created Time
+                          </div>
+                        </div>
+
+                        {/* Operational calculation card list */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginTop: '1.25rem' }}>
+                          <div style={{ background: 'var(--ExtraLightGray)', border: '1px solid var(--LightGray)', borderRadius: '8px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            <strong style={{ fontSize: '0.75rem', color: 'var(--LabelBG)' }}>Chute / Turnout Duration</strong>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--DarkGray)', lineHeight: '1.4' }}>
+                              Measures how quickly emergency personnel leave the station once dispatched.
+                            </p>
+                            <code style={{ background: 'white', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.65rem', border: '1px solid var(--LightGray)', marginTop: '0.35rem', display: 'inline-block', width: 'fit-content' }}>
+                              En Route − Dispatched
+                            </code>
+                          </div>
+                          
+                          <div style={{ background: 'var(--ExtraLightGray)', border: '1px solid var(--LightGray)', borderRadius: '8px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            <strong style={{ fontSize: '0.75rem', color: 'var(--LabelBG)' }}>Transit Duration</strong>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--DarkGray)', lineHeight: '1.4' }}>
+                              Measures direct driving time to the scene of the emergency.
+                            </p>
+                            <code style={{ background: 'white', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.65rem', border: '1px solid var(--LightGray)', marginTop: '0.35rem', display: 'inline-block', width: 'fit-content' }}>
+                              Arrived Scene − En Route
+                            </code>
+                          </div>
+
+                          <div style={{ background: 'var(--ExtraLightGray)', border: '1px solid var(--LightGray)', borderRadius: '8px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            <strong style={{ fontSize: '0.75rem', color: 'var(--LabelBG)' }}>On-Scene Duration</strong>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--DarkGray)', lineHeight: '1.4' }}>
+                              Measures the total care and preparation time spent at the incident site.
+                            </p>
+                            <code style={{ background: 'white', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.65rem', border: '1px solid var(--LightGray)', marginTop: '0.35rem', display: 'inline-block', width: 'fit-content' }}>
+                              Depart Scene − Arrived Scene
+                            </code>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -1103,3 +1103,136 @@ code {
   }
 }
 
+/* ==========================================================================
+   MATHEMATICAL FORMULA LAYOUTS & CAD TIMELINE
+   ========================================================================== */
+
+.math-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--ExtraLightGray);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  margin: 1.25rem 0;
+}
+
+.math-equation {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.1rem;
+  color: var(--LabelBG);
+  font-weight: 700;
+  flex-wrap: wrap;
+  justify-content: center;
+  line-height: 2.2;
+}
+
+.math-variable {
+  color: var(--BannerGB);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(0, 82, 189, 0.05);
+  border: 1px solid rgba(0, 82, 189, 0.1);
+  font-family: var(--font-display);
+}
+
+.math-operator {
+  color: var(--DarkGray);
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.math-fraction {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  vertical-align: middle;
+  padding: 0 0.5rem;
+}
+
+.math-numerator {
+  border-bottom: 1.75px solid var(--LabelBG);
+  padding-bottom: 3px;
+  width: 100%;
+}
+
+.math-denominator {
+  padding-top: 3px;
+  width: 100%;
+}
+
+/* Dispatch Timeline Flowchart */
+.dispatch-timeline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin: 2.5rem 0 1.5rem 0;
+  padding: 0 1.5rem;
+}
+
+.dispatch-timeline::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 3px;
+  background: var(--LightGray);
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
+.dispatch-milestone {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  padding: 0 0.5rem;
+}
+
+.dispatch-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--BannerGB);
+  border: 3px solid white;
+  box-shadow: 0 0 0 3px var(--LightGray);
+  transition: all 0.25s ease;
+}
+
+.dispatch-milestone:hover .dispatch-dot {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 4px var(--BannerGB);
+}
+
+.dispatch-label {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: var(--LabelBG);
+  margin-top: 0.6rem;
+  white-space: nowrap;
+}
+
+.dispatch-interval {
+  position: absolute;
+  top: -1.85rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--BannerGB);
+  background: rgba(0, 82, 189, 0.08);
+  border: 1px solid rgba(0, 82, 189, 0.15);
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+
