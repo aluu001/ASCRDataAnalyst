@@ -523,41 +523,132 @@ function App() {
           /* ==========================================
              UPLOADER PAGE (NO WORKBOOK LOADED)
              ========================================== */
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '2rem 1.5rem', backgroundColor: 'var(--DashboardBG)' }}>
-            <div style={{ maxWidth: '550px', width: '100%', margin: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div className="glass-card" style={{ padding: '2rem' }}>
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '3rem 1.5rem', backgroundColor: 'var(--DashboardBG)' }}>
+            <div style={{ maxWidth: '640px', width: '100%', margin: 'auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              
+              {/* Main Uploader Card Container */}
+              <div className="glass-card" style={{ padding: '2.5rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.75rem', borderRadius: '16px' }}>
+                
+                {/* Uploader Card Header */}
+                <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ background: 'var(--WidgetBG)', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(0, 82, 189, 0.12)', color: 'var(--BannerGB)', boxShadow: '0 4px 10px rgba(0, 82, 189, 0.05)' }}>
+                    <FileSpreadsheet size={26} />
+                  </div>
+                  <h2 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)', color: 'var(--LabelBG)', margin: 0, fontWeight: 700 }}>
+                    ASCR Data Analyst Workspace
+                  </h2>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--DarkGray)', margin: 0, maxWidth: '460px', lineHeight: '1.5' }}>
+                    Upload an ambulance service cost report or personnel spreadsheet file to automatically parse sheets, compute rollup benchmarks, and run audits.
+                  </p>
+                </div>
+
+                {/* Drag and Drop Zone Component */}
                 <FileUploader onWorkbookLoaded={handleWorkbookLoaded} />
                 
-                {/* Sample Selection Buttons */}
-                <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--LightGray)', paddingTop: '1.25rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--LabelBG)', marginBottom: '0.75rem', textTransform: 'uppercase', textAlign: 'center' }}>
-                    Or select a sample document to test the system immediately
+                {/* Visual Separator */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '0.5rem 0' }}>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--LightGray)' }} />
+                  <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Or Quick Start with Demo Reports
+                  </span>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--LightGray)' }} />
+                </div>
+
+                {/* Clickable Sample Document Cards list */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div 
+                    className="clickable-row" 
+                    onClick={() => handleLoadSample('PEMT Data 7-1-24 - 6-30-25.xlsx', 'PEMT Data')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.85rem 1rem',
+                      background: 'var(--ExtraLightGray)',
+                      border: '1.5px solid var(--LightGray)',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
+                        <Database size={18} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Alachua County PEMT Data</strong>
+                        <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>PEMT volumes, transport fees, & supplemental funding totals</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
+                      <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}
-                      onClick={() => handleLoadSample('PEMT Data 7-1-24 - 6-30-25.xlsx', 'PEMT Data')}
-                    >
-                      <FileSpreadsheet size={14} style={{ color: 'var(--BannerGB)' }} /> Alachua PEMT Data
-                    </button>
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}
-                      onClick={() => handleLoadSample('Personnel Hours and Pay.xlsx', 'Personnel Hours')}
-                    >
-                      <FileSpreadsheet size={14} style={{ color: 'var(--BannerGB)' }} /> Personnel Pay Details
-                    </button>
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}
-                      onClick={() => handleLoadSample('Emergency Room Arrival Time.csv', 'Arrival Time')}
-                    >
-                      <Database size={14} style={{ color: 'var(--BannerGB)' }} /> Dispatch Response Logs
-                    </button>
+
+                  <div 
+                    className="clickable-row" 
+                    onClick={() => handleLoadSample('Personnel Hours and Pay.xlsx', 'Personnel Hours')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.85rem 1rem',
+                      background: 'var(--ExtraLightGray)',
+                      border: '1.5px solid var(--LightGray)',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
+                        <Database size={18} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Personnel Hours and Pay Details</strong>
+                        <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>FTE counts, base pay, and overtime expenditures by job title</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
+                      <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
+                    </div>
+                  </div>
+
+                  <div 
+                    className="clickable-row" 
+                    onClick={() => handleLoadSample('Emergency Room Arrival Time.csv', 'Arrival Time')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.85rem 1rem',
+                      background: 'var(--ExtraLightGray)',
+                      border: '1.5px solid var(--LightGray)',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
+                        <Database size={18} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Dispatch Response Time Logs</strong>
+                        <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>CAD response times, transit durations, & incident scene benchmarks</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span className="badge badge-cyan" style={{ fontSize: '0.65rem', textTransform: 'none' }}>CSV data</span>
+                      <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
+                    </div>
                   </div>
                 </div>
+
               </div>
+
             </div>
           </div>
         ) : (
