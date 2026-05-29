@@ -524,8 +524,8 @@ function App() {
           /* ==========================================
              UPLOADER PAGE (NO WORKBOOK LOADED)
              ========================================== */
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backgroundColor: 'var(--DashboardBG)' }}>
-            <div style={{ maxWidth: '550px', width: '100%', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '2rem 1.5rem', backgroundColor: 'var(--DashboardBG)' }}>
+            <div style={{ maxWidth: '550px', width: '100%', margin: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ background: 'var(--WidgetBG)', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', border: '1.5px solid var(--LightGray)' }}>
                   <Sparkles size={28} color="var(--BannerGB)" />
