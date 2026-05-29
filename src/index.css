@@ -961,6 +961,22 @@ code {
   opacity: 1;
 }
 
+/* Responsive split uploader reports card */
+.uploader-demo-reports {
+  border-left: 1px solid var(--LightGray);
+  padding-left: 2.5rem;
+}
+
+@media (max-width: 900px) {
+  .uploader-demo-reports {
+    border-left: none !important;
+    padding-left: 0 !important;
+    border-top: 1px solid var(--LightGray) !important;
+    padding-top: 1.5rem !important;
+    margin-top: 0.5rem !important;
+  }
+}
+
 /* ==========================================================================
    Print / PDF Export Styles
    ========================================================================== */
