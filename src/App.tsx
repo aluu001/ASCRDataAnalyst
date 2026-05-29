@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { 
   BarChart2, 
-  Sparkles, 
   ArrowLeft, 
   TrendingUp,
   FileSpreadsheet,
@@ -526,18 +525,6 @@ function App() {
              ========================================== */
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '2rem 1.5rem', backgroundColor: 'var(--DashboardBG)' }}>
             <div style={{ maxWidth: '550px', width: '100%', margin: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ background: 'var(--WidgetBG)', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', border: '1.5px solid var(--LightGray)' }}>
-                  <Sparkles size={28} color="var(--BannerGB)" />
-                </div>
-                <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', color: 'var(--LabelBG)', margin: '0 0 0.5rem' }}>
-                  Executive Data Workspace
-                </h2>
-                <p style={{ fontSize: '0.9rem', color: 'var(--DarkGray)', margin: 0 }}>
-                  Upload an Excel workbook file to trigger client-side data crunching and generate an AI executive analyst dashboard.
-                </p>
-              </div>
-
               <div className="glass-card" style={{ padding: '2rem' }}>
                 <FileUploader onWorkbookLoaded={handleWorkbookLoaded} />
                 
