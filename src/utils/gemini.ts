@@ -2,15 +2,17 @@ import { GoogleGenAI } from '@google/genai';
 import type { ColumnMetadata } from './dataEngine';
 
 export interface ChartSpecification {
-  chartType: 'bar' | 'line' | 'pie' | 'scatter';
+  chartType: 'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box';
   title: string;
   xAxisColumn: string;
   yAxisColumn: string;
   aggregation: 'sum' | 'avg' | 'count' | 'none';
+  zAxisColumn?: string;
 }
 
 export interface AnalystResponse {
   thinking: string;
+  conversationalResponse: string;
   insights: string[];
   charts: ChartSpecification[];
   followUpQuestions: string[];
@@ -97,23 +99,29 @@ Rules:
    - Choose which fields should be plotted.
    - Outline the mathematical relationship (e.g., aggregation type: sum/avg/count).
    - Summarize findings before writing the insights.
-3. In "insights", write 2 to 4 bullet points. Keep insights extremely punchy, analytical, and backed by specific data points. Use Markdown formatting.
-4. In "charts", you can recommend up to 2 charts. Only select columns that actually exist in the schema.
+3. In the "conversationalResponse" field, write a clear, friendly, and conversational reply directly to the user (2-4 sentences). 
+   - Talk back to the user like a human colleague.
+   - If the user asked to add a chart, confirm that you have added the visualization to the dashboard.
+   - Example: "I have added a Bar Chart for FTE counts by Job Title to your dashboard. This comparison reveals that Paramedics constitute the highest FTE count."
+4. In "insights", write 2 to 4 bullet points. Keep insights extremely punchy, analytical, and backed by specific data points. Use Markdown formatting.
+5. In "charts", you can recommend up to 2 charts. Only select columns that actually exist in the schema.
    - xAxisColumn: typically a categorical, text, or date column.
    - yAxisColumn: MUST be a numeric column (unless aggregation is 'count', where it can count rows).
-   - aggregation: 'sum', 'avg', or 'count'. If plotting raw points (e.g. scatter), use 'none'.
-5. In "followUpQuestions", suggest 2-3 logical next steps or deeper questions the user might want to ask.
+   - aggregation: 'sum', 'avg', or 'count'. If plotting raw points (e.g. scatter/bubble/box), use 'none'.
+6. In "followUpQuestions", write 2-3 interactive, action-oriented questions that YOU (the analyst) are asking the user to guide them (e.g., "Would you like me to analyze X?"). Do NOT write questions that the user would ask you.
+   - Example: "Would you like me to analyze the correlation between Regular Hours and Salary?"
+   - Example: "Shall we build a Radar Chart comparing average dispatch times across Call Sources?"
+   - Note: The user may respond by repeating your question. If they do, treat it as confirmation to execute that analysis.
 `;
 
   // Format chat history for the SDK
-  // We feed past messages. To keep it lightweight, user messages are just texts, and model responses can be represented as their key insights.
   const contents = history.map(msg => ({
     role: msg.role,
     parts: [
       {
         text: msg.role === 'user' 
           ? msg.content 
-          : `[Thinking]: ${msg.analystResponse?.thinking}\n\n[Insights]:\n${msg.analystResponse?.insights.map(i => `- ${i}`).join('\n')}`
+          : `[Thinking]: ${msg.analystResponse?.thinking}\n[Conversational Response]: ${msg.analystResponse?.conversationalResponse}\n[Insights]:\n${msg.analystResponse?.insights.map(i => `- ${i}`).join('\n')}`
       }
     ]
   }));
@@ -142,6 +150,10 @@ Rules:
             type: 'STRING' as any, 
             description: 'Step-by-step analytical reasoning before writing insights and charts.' 
           },
+          conversationalResponse: {
+            type: 'STRING' as any,
+            description: 'A direct, friendly conversational response addressing the user (1-3 sentences), explaining what you did (e.g. confirming added charts).'
+          },
           insights: {
             type: 'ARRAY' as any,
             items: { type: 'STRING' as any },
@@ -154,8 +166,8 @@ Rules:
               type: 'OBJECT' as any,
               properties: {
                 chartType: { 
-                  type: 'STRING' as any, 
-                  enum: ['bar', 'line', 'pie', 'scatter'] 
+                   type: 'STRING' as any, 
+                   enum: ['bar', 'horizontalBar', 'line', 'pie', 'scatter', 'bubble', 'radar', 'box'] 
                 },
                 title: { type: 'STRING' as any },
                 xAxisColumn: { type: 'STRING' as any, description: 'Column name for categories/X-axis.' },
@@ -163,8 +175,9 @@ Rules:
                 aggregation: { 
                   type: 'STRING' as any, 
                   enum: ['sum', 'avg', 'count', 'none'],
-                  description: 'How to roll up the values: sum, avg (average), count (number of records), or none (plot raw records).' 
-                }
+                  description: 'How to roll up the values: sum, avg, count, or none.' 
+                },
+                zAxisColumn: { type: 'STRING' as any, description: 'Optional third numeric column name specifically for Bubble chart dot sizes.' }
               },
               required: ['chartType', 'title', 'xAxisColumn', 'yAxisColumn', 'aggregation']
             }
@@ -172,10 +185,10 @@ Rules:
           followUpQuestions: {
             type: 'ARRAY' as any,
             items: { type: 'STRING' as any },
-            description: 'Suggested follow-up questions for the user.'
+            description: 'Questions asked BY the analyst TO the user to guide further analysis (e.g. "Would you like me to...").'
           }
         },
-        required: ['thinking', 'insights', 'charts', 'followUpQuestions']
+        required: ['thinking', 'conversationalResponse', 'insights', 'charts', 'followUpQuestions']
       }
     }
   });

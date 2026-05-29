@@ -772,6 +772,30 @@ code {
   border: 1px solid #bbf7d0;
 }
 
+.badge-blue {
+  background: #eff6ff;
+  color: #1e3a8a;
+  border: 1px solid #dbeafe;
+}
+
+.badge-indigo {
+  background: #e0e7ff;
+  color: #312e81;
+  border: 1px solid #c7d2fe;
+}
+
+.badge-emerald {
+  background: #ecfdf5;
+  color: #064e3b;
+  border: 1px solid #d1fae5;
+}
+
+.badge-amber {
+  background: #fffbeb;
+  color: #78350f;
+  border: 1px solid #fef3c7;
+}
+
 /* Sheet Selection Tabs */
 .sheet-tabs-container {
   display: flex;

@@ -13,7 +13,13 @@ import {
   CartesianGrid,
   Tooltip,
   ScatterChart,
-  Scatter
+  Scatter,
+  ZAxis,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar
 } from 'recharts';
 import { Info } from 'lucide-react';
 import { aggregateDataset } from '../utils/dataEngine';
@@ -24,6 +30,7 @@ interface InsightChartProps {
   rows: any[];
   borderless?: boolean;
   height?: number | string;
+  colorTheme?: 'classic' | 'vibrant';
 }
 
 const PIE_COLORS = [
@@ -37,6 +44,62 @@ const PIE_COLORS = [
   '#f59e0b'  // Amber Gold
 ];
 
+function getChartColors(title: string, colorTheme?: 'classic' | 'vibrant') {
+  if (colorTheme === 'classic') {
+    return {
+      stroke: '#0052BD',
+      fill: '#0052BD',
+      gradient: ['#0052BD', '#1F71DB'],
+      glow: 'rgba(0, 82, 189, 0.15)',
+      badgeClass: 'badge-blue'
+    };
+  }
+  const t = title.toLowerCase();
+  if (t.includes('revenue') || t.includes('supplement') || t.includes('funding')) {
+    return {
+      stroke: '#10b981',
+      fill: '#10b981',
+      gradient: ['#10b981', '#059669'],
+      glow: 'rgba(16, 185, 129, 0.15)',
+      badgeClass: 'badge-emerald'
+    };
+  }
+  if (t.includes('hourly') || t.includes('pay') || t.includes('salary') || t.includes('expenditure') || t.includes('rate') || t.includes('expenses')) {
+    return {
+      stroke: '#6366f1',
+      fill: '#6366f1',
+      gradient: ['#6366f1', '#4f46e5'],
+      glow: 'rgba(99, 102, 241, 0.15)',
+      badgeClass: 'badge-purple'
+    };
+  }
+  if (t.includes('time') || t.includes('dispatch') || t.includes('lag') || t.includes('duration') || t.includes('efficiency') || t.includes('benchmark')) {
+    return {
+      stroke: '#0d9488',
+      fill: '#0d9488',
+      gradient: ['#0ea5e9', '#0d9488'],
+      glow: 'rgba(13, 148, 136, 0.15)',
+      badgeClass: 'badge-cyan'
+    };
+  }
+  if (t.includes('volume') || t.includes('count') || t.includes('distribution') || t.includes('share')) {
+    return {
+      stroke: '#f59e0b',
+      fill: '#f59e0b',
+      gradient: ['#f59e0b', '#d97706'],
+      glow: 'rgba(245, 158, 11, 0.15)',
+      badgeClass: 'badge-amber'
+    };
+  }
+  return {
+    stroke: '#0052BD',
+    fill: '#0052BD',
+    gradient: ['#0052BD', '#1F71DB'],
+    glow: 'rgba(0, 82, 189, 0.15)',
+    badgeClass: 'badge-blue'
+  };
+}
+
 // Helper to translate chart specs into human-readable descriptions for client hand-off reports
 function getChartDescription(spec: ChartSpecification): string {
   const { chartType, xAxisColumn, yAxisColumn, aggregation } = spec;
@@ -47,9 +110,26 @@ function getChartDescription(spec: ChartSpecification): string {
                 : 'raw distributions';
 
   const chartTypeText = chartType === 'bar' ? 'Bar Chart'
+                      : chartType === 'horizontalBar' ? 'Horizontal Bar Chart'
                       : chartType === 'line' ? 'Line Graph'
                       : chartType === 'pie' ? 'Pie Distribution'
+                      : chartType === 'bubble' ? 'Bubble Size Correlation Plot'
+                      : chartType === 'radar' ? 'Radar Comparison Profile'
+                      : chartType === 'box' ? 'Box and Whisker Plot'
                       : 'Scatter Correlation Plot';
+
+  if (chartType === 'bubble') {
+    return `This Bubble Chart plots the correlation between ${xAxisColumn} (X-axis) and ${yAxisColumn} (Y-axis), with bubble size representing ${spec.zAxisColumn || 'magnitude'}. It highlights multi-dimensional patterns and outliers.`;
+  }
+  if (chartType === 'radar') {
+    return `This Radar Chart visualizes the relative values of ${yAxisColumn} mapped along spokes for each ${xAxisColumn} category. It provides visual profile comparisons across multiple dimensions.`;
+  }
+  if (chartType === 'box') {
+    return `This Box and Whisker Plot shows the distribution and spread of ${yAxisColumn} across different ${xAxisColumn} categories. The box outlines the IQR (middle 50% from Q1 to Q3) with a solid median line, the whiskers extend to the non-outlier range, and individual points show anomalous outliers.`;
+  }
+  if (chartType === 'horizontalBar') {
+    return `This Horizontal Bar Chart compares the ${aggText} of ${yAxisColumn} across ${xAxisColumn} categories. The horizontal layout provides structured, readable comparative rankings for longer text categories.`;
+  }
 
   const xLower = xAxisColumn.toLowerCase();
   if (xLower.includes('month')) {
@@ -64,6 +144,261 @@ function getChartDescription(spec: ChartSpecification): string {
 
   return `This ${chartTypeText} visualizes the ${aggText} of ${yAxisColumn} plotted against ${xAxisColumn}. It provides quick analytical comparisons to verify cost distributions.`;
 }
+
+interface BoxPlotGroup {
+  category: string;
+  min: number;
+  max: number;
+  median: number;
+  q1: number;
+  q3: number;
+  outliers: number[];
+}
+
+function calculateBoxPlotGroups(rows: any[], xAxisColumn: string, yAxisColumn: string): BoxPlotGroup[] {
+  const groups: Record<string, number[]> = {};
+  
+  rows.forEach(row => {
+    const cat = String(row[xAxisColumn] ?? 'Unknown');
+    const val = Number(row[yAxisColumn]);
+    if (!isNaN(val) && val !== null && val !== undefined) {
+      if (!groups[cat]) {
+        groups[cat] = [];
+      }
+      groups[cat].push(val);
+    }
+  });
+
+  const boxGroups: BoxPlotGroup[] = [];
+
+  Object.entries(groups).forEach(([cat, vals]) => {
+    if (vals.length < 1) return;
+    vals.sort((a, b) => a - b);
+
+    const getPercentile = (p: number) => {
+      const idx = (vals.length - 1) * p;
+      const base = Math.floor(idx);
+      const rest = idx - base;
+      if (vals[base + 1] !== undefined) {
+        return vals[base] + rest * (vals[base + 1] - vals[base]);
+      }
+      return vals[base];
+    };
+
+    const median = getPercentile(0.5);
+    const q1 = getPercentile(0.25);
+    const q3 = getPercentile(0.75);
+    const iqr = q3 - q1;
+
+    const lowerLimit = q1 - 1.5 * iqr;
+    const upperLimit = q3 + 1.5 * iqr;
+
+    const nonOutliers = vals.filter(v => v >= lowerLimit && v <= upperLimit);
+    const outliers = vals.filter(v => v < lowerLimit || v > upperLimit);
+
+    const min = nonOutliers.length > 0 ? nonOutliers[0] : q1;
+    const max = nonOutliers.length > 0 ? nonOutliers[nonOutliers.length - 1] : q3;
+
+    boxGroups.push({
+      category: cat,
+      min,
+      max,
+      median,
+      q1,
+      q3,
+      outliers
+    });
+  });
+
+  return boxGroups.slice(0, 6);
+}
+
+const BoxPlot: React.FC<{
+  rows: any[];
+  xAxisColumn: string;
+  yAxisColumn: string;
+  colors: { stroke: string; fill: string; gradient: string[]; glow: string };
+}> = ({ rows, xAxisColumn, yAxisColumn, colors }) => {
+  const groups = useMemo(() => {
+    return calculateBoxPlotGroups(rows, xAxisColumn, yAxisColumn);
+  }, [rows, xAxisColumn, yAxisColumn]);
+
+  if (groups.length === 0) {
+    return (
+      <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+        No numeric records available to compute quartile distributions.
+      </div>
+    );
+  }
+
+  const allValues = groups.flatMap(g => [g.min, g.max, g.median, g.q1, g.q3, ...g.outliers]);
+  const globalMin = Math.min(...allValues);
+  const globalMax = Math.max(...allValues);
+  const yPadding = (globalMax - globalMin) * 0.12 || 1;
+  const paddedMin = globalMin - yPadding;
+  const paddedMax = globalMax + yPadding;
+
+  const svgWidth = 500;
+  const svgHeight = 260;
+  const margin = { top: 20, right: 20, bottom: 40, left: 55 };
+  const chartWidth = svgWidth - margin.left - margin.right;
+  const chartHeight = svgHeight - margin.top - margin.bottom;
+
+  const scaleY = (yVal: number) => {
+    return margin.top + chartHeight - ((yVal - paddedMin) / (paddedMax - paddedMin)) * chartHeight;
+  };
+
+  const widthPerCat = chartWidth / groups.length;
+  const boxWidth = widthPerCat * 0.38;
+
+  const tickCount = 5;
+  const ticks = Array.from({ length: tickCount }).map((_, i) => {
+    return paddedMin + (i * (paddedMax - paddedMin)) / (tickCount - 1);
+  });
+
+  const formatTick = (tick: number) => {
+    const abs = Math.abs(tick);
+    if (abs >= 1000000) return `${(tick / 1000000).toFixed(1)}M`;
+    if (abs >= 1000) return `${(tick / 1000).toFixed(1)}k`;
+    return Number(tick.toFixed(2)).toString();
+  };
+
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0' }}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ fontFamily: 'var(--font-sans)', overflow: 'visible' }}>
+        <g>
+          {ticks.map((tick, idx) => {
+            const y = scaleY(tick);
+            return (
+              <g key={idx}>
+                <line
+                  x1={margin.left}
+                  y1={y}
+                  x2={svgWidth - margin.right}
+                  y2={y}
+                  stroke="#f1f5f9"
+                  strokeWidth={1.5}
+                />
+                <text
+                  x={margin.left - 8}
+                  y={y + 3}
+                  textAnchor="end"
+                  fontSize={9}
+                  fontWeight="600"
+                  fill="#94a3b8"
+                >
+                  {formatTick(tick)}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+
+        {groups.map((group, idx) => {
+          const centerX = margin.left + widthPerCat * (idx + 0.5);
+
+          return (
+            <g key={idx}>
+              <defs>
+                <linearGradient id={`boxGrad-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.85} />
+                  <stop offset="100%" stopColor={colors.gradient[1]} stopOpacity={0.35} />
+                </linearGradient>
+              </defs>
+
+              {/* Whisker Line */}
+              <line
+                x1={centerX}
+                y1={scaleY(group.min)}
+                x2={centerX}
+                y2={scaleY(group.max)}
+                stroke={colors.stroke}
+                strokeWidth={1.5}
+              />
+
+              {/* Min Cap */}
+              <line
+                x1={centerX - boxWidth / 4}
+                y1={scaleY(group.min)}
+                x2={centerX + boxWidth / 4}
+                y2={scaleY(group.min)}
+                stroke={colors.stroke}
+                strokeWidth={2}
+              />
+
+              {/* Max Cap */}
+              <line
+                x1={centerX - boxWidth / 4}
+                y1={scaleY(group.max)}
+                x2={centerX + boxWidth / 4}
+                y2={scaleY(group.max)}
+                stroke={colors.stroke}
+                strokeWidth={2}
+              />
+
+              {/* Box Rect */}
+              <rect
+                x={centerX - boxWidth / 2}
+                y={scaleY(group.q3)}
+                width={boxWidth}
+                height={Math.max(scaleY(group.q1) - scaleY(group.q3), 1)}
+                fill={`url(#boxGrad-${idx})`}
+                stroke={colors.stroke}
+                strokeWidth={2}
+                rx={2}
+              >
+                <title>{`Category: ${group.category}
+Max (non-outlier): ${group.max.toLocaleString()}
+Q3 (Upper Quartile): ${group.q3.toLocaleString()}
+Median: ${group.median.toLocaleString()}
+Q1 (Lower Quartile): ${group.q1.toLocaleString()}
+Min (non-outlier): ${group.min.toLocaleString()}
+Outliers: ${group.outliers.length} point(s)`}</title>
+              </rect>
+
+              {/* Median Line */}
+              <line
+                x1={centerX - boxWidth / 2}
+                y1={scaleY(group.median)}
+                x2={centerX + boxWidth / 2}
+                y2={scaleY(group.median)}
+                stroke={colors.stroke}
+                strokeWidth={3}
+              />
+
+              {/* Outliers */}
+              {group.outliers.map((val, oIdx) => (
+                <circle
+                  key={oIdx}
+                  cx={centerX}
+                  cy={scaleY(val)}
+                  r={3.5}
+                  fill="#ffffff"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                >
+                  <title>Outlier: {val.toLocaleString()}</title>
+                </circle>
+              ))}
+
+              <text
+                x={centerX}
+                y={svgHeight - 12}
+                textAnchor="middle"
+                fontSize={9}
+                fontWeight="700"
+                fill="#475569"
+              >
+                {group.category.length > 11 ? `${group.category.slice(0, 9)}..` : group.category}
+                <title>{group.category}</title>
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -86,10 +421,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           const formattedVal = typeof item.value === 'number' 
             ? item.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) 
             : item.value;
+          const sizeVal = item.payload && item.payload.z !== undefined && item.payload.z !== 10
+            ? ` (Size: ${item.payload.z.toLocaleString(undefined, { maximumFractionDigits: 2 })})`
+            : '';
           return (
             <p key={i} style={{ margin: 0, fontSize: '0.85rem', color: '#334155', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <span style={{ color: item.color || '#0052BD', fontSize: '1rem' }}>●</span>
-              {item.name}: <strong>{formattedVal}</strong>
+              {item.name}: <strong>{formattedVal}</strong>{sizeVal}
             </p>
           );
         })}
@@ -99,7 +437,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, borderless = false, height }) => {
+export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, borderless = false, height, colorTheme = 'vibrant' }) => {
   const data = useMemo(() => {
     try {
       return aggregateDataset(rows, chartSpec);
@@ -113,8 +451,12 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
     return chartSpec.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
   }, [chartSpec.title]);
 
+  const colors = useMemo(() => {
+    return getChartColors(chartSpec.title, colorTheme);
+  }, [chartSpec.title, colorTheme]);
+
   const renderChart = () => {
-    if (data.length === 0) {
+    if (chartSpec.chartType !== 'box' && data.length === 0) {
       return (
         <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
           No chart data available. Verify your aggregations.
@@ -130,8 +472,8 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
           <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
             <defs>
               <linearGradient id={`barGradient-${uniqueId}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0052BD" stopOpacity={0.9} />
-                <stop offset="100%" stopColor="#1F71DB" stopOpacity={0.45} />
+                <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.9} />
+                <stop offset="100%" stopColor={colors.gradient[1]} stopOpacity={0.45} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -152,6 +494,38 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
             <Bar dataKey="value" name={yAxisColumn} fill={`url(#barGradient-${uniqueId})`} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        );
+
+      case 'horizontalBar':
+        return (
+          <BarChart layout="vertical" data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+            <defs>
+              <linearGradient id={`barHorizGradient-${uniqueId}`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.9} />
+                <stop offset="100%" stopColor={colors.gradient[1]} stopOpacity={0.45} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} vertical={true} />
+            <XAxis
+              type="number"
+              stroke="#64748b"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
+            />
+            <YAxis
+              type="category"
+              dataKey="name"
+              stroke="#64748b"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              width={100}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
+            <Bar dataKey="value" name={yAxisColumn} fill={`url(#barHorizGradient-${uniqueId})`} radius={[0, 4, 4, 0]} />
           </BarChart>
         );
 
@@ -179,10 +553,10 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               type="monotone"
               dataKey="value"
               name={yAxisColumn}
-              stroke="#002185"
+              stroke={colors.stroke}
               strokeWidth={3}
-              dot={{ r: 4, fill: '#ffffff', stroke: '#002185', strokeWidth: 2 }}
-              activeDot={{ r: 6, stroke: '#1F71DB', strokeWidth: 2, fill: '#ffffff' }}
+              dot={{ r: 4, fill: '#ffffff', stroke: colors.stroke, strokeWidth: 2 }}
+              activeDot={{ r: 6, stroke: colors.gradient[1], strokeWidth: 2, fill: '#ffffff' }}
             />
           </LineChart>
         );
@@ -233,8 +607,57 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               axisLine={false}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
-            <Scatter name={yAxisColumn} data={data} fill="#1F71DB" />
+            <Scatter name={yAxisColumn} data={data} fill={colors.stroke} />
           </ScatterChart>
+        );
+
+      case 'bubble':
+        return (
+          <ScatterChart margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <XAxis
+              type="category"
+              dataKey="name"
+              stroke="#64748b"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              dy={10}
+            />
+            <YAxis
+              type="number"
+              dataKey="value"
+              name={yAxisColumn}
+              stroke="#64748b"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+            />
+            <ZAxis
+              type="number"
+              dataKey="z"
+              range={[50, 400]}
+              name={chartSpec.zAxisColumn || 'Size'}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
+            <Scatter name={yAxisColumn} data={data} fill={colors.stroke} />
+          </ScatterChart>
+        );
+
+      case 'radar':
+        return (
+          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+            <PolarGrid stroke="#cbd5e1" />
+            <PolarAngleAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
+            <PolarRadiusAxis angle={30} domain={[0, 'auto']} stroke="#cbd5e1" fontSize={8} tickLine={false} />
+            <Radar name={yAxisColumn} dataKey="value" stroke={colors.stroke} fill={colors.fill} fillOpacity={0.2} />
+            <Tooltip content={<CustomTooltip />} />
+          </RadarChart>
+        );
+
+      case 'box':
+        return (
+          <BoxPlot rows={rows} xAxisColumn={chartSpec.xAxisColumn} yAxisColumn={chartSpec.yAxisColumn} colors={colors} />
         );
 
       default:
@@ -269,15 +692,19 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
             </div>
           </div>
 
-          <div className="badge badge-cyan" style={{ fontSize: '0.65rem', border: '1px solid rgba(0, 82, 189, 0.15)', textTransform: 'capitalize' }}>
+          <div className={`badge ${colors.badgeClass}`} style={{ fontSize: '0.65rem', textTransform: 'capitalize' }}>
             {chartSpec.chartType}
           </div>
         </div>
       </div>
       <div className="chart-wrapper">
-        <ResponsiveContainer width="100%" height="100%">
-          {renderChart() || <div></div>}
-        </ResponsiveContainer>
+        {chartSpec.chartType === 'box' ? (
+          renderChart()
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            {renderChart() || <div></div>}
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

@@ -127,11 +127,12 @@ export function parseExcelWorkbook(arrayBuffer: ArrayBuffer): WorkbookData {
 }
 
 export interface AggregationRequest {
-  chartType: 'bar' | 'line' | 'pie' | 'scatter';
+  chartType: 'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box';
   title: string;
   xAxisColumn: string;
   yAxisColumn: string;
   aggregation: 'sum' | 'avg' | 'count' | 'none';
+  zAxisColumn?: string;
 }
 
 export interface AggregatedDataPoint {
@@ -153,9 +154,11 @@ export function aggregateDataset(rows: any[], request: AggregationRequest): Aggr
       .map(row => {
         const xVal = row[xAxisColumn];
         const yVal = Number(row[yAxisColumn]);
+        const zVal = request.zAxisColumn ? Number(row[request.zAxisColumn]) : undefined;
         return {
           name: xVal instanceof Date ? xVal.toLocaleDateString() : String(xVal ?? 'Unknown'),
-          value: isNaN(yVal) ? 0 : yVal
+          value: isNaN(yVal) ? 0 : yVal,
+          z: zVal !== undefined && !isNaN(zVal) ? zVal : 10 // Fallback size
         };
       })
       .slice(0, 50);

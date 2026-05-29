@@ -90,20 +90,90 @@ const pemtRows = [
 
 // 2. Personnel Hours and Pay
 const personnelRows = [
-  { 'Job Title': 'EMT-Basic', 'FTE Count': 18, 'Avg Hourly Rate': 24.50, 'Regular Hours': 37440, 'Overtime Hours': 5200, 'Total Regular Pay': 917280, 'Total Overtime Pay': 191100 },
-  { 'Job Title': 'Paramedic', 'FTE Count': 24, 'Avg Hourly Rate': 31.00, 'Regular Hours': 49920, 'Overtime Hours': 8300, 'Total Regular Pay': 1547520, 'Total Overtime Pay': 385950 },
-  { 'Job Title': 'Firefighter/EMT', 'FTE Count': 32, 'Avg Hourly Rate': 26.00, 'Regular Hours': 66560, 'Overtime Hours': 9400, 'Total Regular Pay': 1730560, 'Total Overtime Pay': 366600 },
-  { 'Job Title': 'Captain/Shift Supervisor', 'FTE Count': 6, 'Avg Hourly Rate': 38.50, 'Regular Hours': 12480, 'Overtime Hours': 1850, 'Total Regular Pay': 480480, 'Total Overtime Pay': 106840 },
-  { 'Job Title': 'Dispatcher', 'FTE Count': 8, 'Avg Hourly Rate': 21.00, 'Regular Hours': 16640, 'Overtime Hours': 2100, 'Total Regular Pay': 349440, 'Total Overtime Pay': 66150 },
-  { 'Job Title': 'Fire Chief', 'FTE Count': 1, 'Avg Hourly Rate': 62.00, 'Regular Hours': 2080, 'Overtime Hours': 0, 'Total Regular Pay': 128960, 'Total Overtime Pay': 0 }
+  // EMT-Basic
+  { 'Employee ID': 'EMP-001', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 23.50, 'Regular Hours': 2080, 'Overtime Hours': 120, 'Total Regular Pay': 48880, 'Total Overtime Pay': 4230 },
+  { 'Employee ID': 'EMP-002', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 24.00, 'Regular Hours': 2080, 'Overtime Hours': 250, 'Total Regular Pay': 49920, 'Total Overtime Pay': 9000 },
+  { 'Employee ID': 'EMP-003', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 25.50, 'Regular Hours': 2080, 'Overtime Hours': 450, 'Total Regular Pay': 53040, 'Total Overtime Pay': 17210 },
+  { 'Employee ID': 'EMP-004', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 22.00, 'Regular Hours': 2080, 'Overtime Hours': 80, 'Total Regular Pay': 45760, 'Total Overtime Pay': 2640 },
+  { 'Employee ID': 'EMP-005', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 28.50, 'Regular Hours': 2080, 'Overtime Hours': 320, 'Total Regular Pay': 59280, 'Total Overtime Pay': 13680 },
+  { 'Employee ID': 'EMP-006', 'Job Title': 'EMT-Basic', 'FTE Count': 0.5, 'Avg Hourly Rate': 24.50, 'Regular Hours': 1040, 'Overtime Hours': 40, 'Total Regular Pay': 25480, 'Total Overtime Pay': 1470 },
+  { 'Employee ID': 'EMP-007', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 23.00, 'Regular Hours': 2080, 'Overtime Hours': 180, 'Total Regular Pay': 47840, 'Total Overtime Pay': 6210 },
+  { 'Employee ID': 'EMP-008', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 24.50, 'Regular Hours': 2080, 'Overtime Hours': 290, 'Total Regular Pay': 50960, 'Total Overtime Pay': 10650 },
+  { 'Employee ID': 'EMP-009', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 26.00, 'Regular Hours': 2080, 'Overtime Hours': 310, 'Total Regular Pay': 54080, 'Total Overtime Pay': 12090 },
+  { 'Employee ID': 'EMP-010', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 15.00, 'Regular Hours': 2080, 'Overtime Hours': 150, 'Total Regular Pay': 31200, 'Total Overtime Pay': 3375 },
+  { 'Employee ID': 'EMP-011', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 25.00, 'Regular Hours': 2080, 'Overtime Hours': 140, 'Total Regular Pay': 52000, 'Total Overtime Pay': 5250 },
+  { 'Employee ID': 'EMP-012', 'Job Title': 'EMT-Basic', 'FTE Count': 1.0, 'Avg Hourly Rate': 23.50, 'Regular Hours': 2080, 'Overtime Hours': 200, 'Total Regular Pay': 48880, 'Total Overtime Pay': 7050 },
+
+  // Paramedic
+  { 'Employee ID': 'EMP-013', 'Job Title': 'Paramedic', 'FTE Count': 1.0, 'Avg Hourly Rate': 30.50, 'Regular Hours': 2080, 'Overtime Hours': 310, 'Total Regular Pay': 63440, 'Total Overtime Pay': 14180 },
+  { 'Employee ID': 'EMP-014', 'Job Title': 'Paramedic', 'FTE Count': 1.0, 'Avg Hourly Rate': 32.00, 'Regular Hours': 2080, 'Overtime Hours': 420, 'Total Regular Pay': 66560, 'Total Overtime Pay': 20160 },
+  { 'Employee ID': 'EMP-015', 'Job Title': 'Paramedic', 'FTE Count': 1.0, 'Avg Hourly Rate': 29.50, 'Regular Hours': 2080, 'Overtime Hours': 150, 'Total Regular Pay': 61360, 'Total Overtime Pay': 6630 },
+  { 'Employee ID': 'EMP-016', 'Job Title': 'Paramedic', 'FTE Count': 1.0, 'Avg Hourly Rate': 34.00, 'Regular Hours': 2080, 'Overtime Hours': 480, 'Total Regular Pay': 70720, 'Total Overtime Pay': 24480 },
+  { 'Employee ID': 'EMP-017', 'Job Title': 'Paramedic', 'FTE Count': 1.0, 'Avg Hourly Rate': 31.00, 'Regular Hours': 2080, 'Overtime Hours': 220, 'Total Regular Pay': 64480, 'Total Overtime Pay': 10230 },
+  { 'Employee ID': 'EMP-018', 'Job Title': 'Paramedic', 'FTE Count': 1.0, 'Avg Hourly Rate': 28.00, 'Regular Hours': 2080, 'Overtime Hours': 180, 'Total Regular Pay': 58240, 'Total Overtime Pay': 7560 },
+  { 'Employee ID': 'EMP-019', 'Job Title': 'Paramedic', 'FTE Count': 1.0, 'Avg Hourly Rate': 31.50, 'Regular Hours': 2080, 'Overtime Hours': 350, 'Total Regular Pay': 65520, 'Total Overtime Pay': 16530 },
+  { 'Employee ID': 'EMP-020', 'Job Title': 'Paramedic', 'FTE Count': 1.0, 'Avg Hourly Rate': 35.00, 'Regular Hours': 2080, 'Overtime Hours': 510, 'Total Regular Pay': 72800, 'Total Overtime Pay': 26770 },
+  { 'Employee ID': 'EMP-021', 'Job Title': 'Paramedic', 'FTE Count': 1.0, 'Avg Hourly Rate': 46.00, 'Regular Hours': 2080, 'Overtime Hours': 200, 'Total Regular Pay': 95680, 'Total Overtime Pay': 13800 },
+  { 'Employee ID': 'EMP-022', 'Job Title': 'Paramedic', 'FTE Count': 1.0, 'Avg Hourly Rate': 30.00, 'Regular Hours': 2080, 'Overtime Hours': 280, 'Total Regular Pay': 62400, 'Total Overtime Pay': 12600 },
+
+  // Firefighter/EMT
+  { 'Employee ID': 'EMP-023', 'Job Title': 'Firefighter/EMT', 'FTE Count': 1.0, 'Avg Hourly Rate': 25.00, 'Regular Hours': 2080, 'Overtime Hours': 240, 'Total Regular Pay': 52000, 'Total Overtime Pay': 9000 },
+  { 'Employee ID': 'EMP-024', 'Job Title': 'Firefighter/EMT', 'FTE Count': 1.0, 'Avg Hourly Rate': 26.50, 'Regular Hours': 2080, 'Overtime Hours': 380, 'Total Regular Pay': 55120, 'Total Overtime Pay': 15100 },
+  { 'Employee ID': 'EMP-025', 'Job Title': 'Firefighter/EMT', 'FTE Count': 1.0, 'Avg Hourly Rate': 27.00, 'Regular Hours': 2080, 'Overtime Hours': 450, 'Total Regular Pay': 56160, 'Total Overtime Pay': 18225 },
+  { 'Employee ID': 'EMP-026', 'Job Title': 'Firefighter/EMT', 'FTE Count': 1.0, 'Avg Hourly Rate': 24.50, 'Regular Hours': 2080, 'Overtime Hours': 190, 'Total Regular Pay': 50960, 'Total Overtime Pay': 6980 },
+  { 'Employee ID': 'EMP-027', 'Job Title': 'Firefighter/EMT', 'FTE Count': 1.0, 'Avg Hourly Rate': 26.00, 'Regular Hours': 2080, 'Overtime Hours': 310, 'Total Regular Pay': 54080, 'Total Overtime Pay': 12090 },
+  { 'Employee ID': 'EMP-028', 'Job Title': 'Firefighter/EMT', 'FTE Count': 1.0, 'Avg Hourly Rate': 28.00, 'Regular Hours': 2080, 'Overtime Hours': 400, 'Total Regular Pay': 58240, 'Total Overtime Pay': 16800 },
+  { 'Employee ID': 'EMP-029', 'Job Title': 'Firefighter/EMT', 'FTE Count': 1.0, 'Avg Hourly Rate': 25.50, 'Regular Hours': 2080, 'Overtime Hours': 220, 'Total Regular Pay': 53040, 'Total Overtime Pay': 8415 },
+
+  // Captain/Shift Supervisor
+  { 'Employee ID': 'EMP-030', 'Job Title': 'Captain/Shift Supervisor', 'FTE Count': 1.0, 'Avg Hourly Rate': 37.00, 'Regular Hours': 2080, 'Overtime Hours': 150, 'Total Regular Pay': 76960, 'Total Overtime Pay': 8325 },
+  { 'Employee ID': 'EMP-031', 'Job Title': 'Captain/Shift Supervisor', 'FTE Count': 1.0, 'Avg Hourly Rate': 39.00, 'Regular Hours': 2080, 'Overtime Hours': 280, 'Total Regular Pay': 81120, 'Total Overtime Pay': 16380 },
+  { 'Employee ID': 'EMP-032', 'Job Title': 'Captain/Shift Supervisor', 'FTE Count': 1.0, 'Avg Hourly Rate': 38.00, 'Regular Hours': 2080, 'Overtime Hours': 210, 'Total Regular Pay': 79040, 'Total Overtime Pay': 11970 },
+  { 'Employee ID': 'EMP-033', 'Job Title': 'Captain/Shift Supervisor', 'FTE Count': 1.0, 'Avg Hourly Rate': 41.50, 'Regular Hours': 2080, 'Overtime Hours': 340, 'Total Regular Pay': 86320, 'Total Overtime Pay': 21160 },
+
+  // Dispatcher
+  { 'Employee ID': 'EMP-034', 'Job Title': 'Dispatcher', 'FTE Count': 1.0, 'Avg Hourly Rate': 20.00, 'Regular Hours': 2080, 'Overtime Hours': 120, 'Total Regular Pay': 41600, 'Total Overtime Pay': 3600 },
+  { 'Employee ID': 'EMP-035', 'Job Title': 'Dispatcher', 'FTE Count': 1.0, 'Avg Hourly Rate': 21.50, 'Regular Hours': 2080, 'Overtime Hours': 280, 'Total Regular Pay': 44720, 'Total Overtime Pay': 9030 },
+  { 'Employee ID': 'EMP-036', 'Job Title': 'Dispatcher', 'FTE Count': 1.0, 'Avg Hourly Rate': 22.50, 'Regular Hours': 2080, 'Overtime Hours': 190, 'Total Regular Pay': 46800, 'Total Overtime Pay': 6410 },
+  { 'Employee ID': 'EMP-037', 'Job Title': 'Dispatcher', 'FTE Count': 1.0, 'Avg Hourly Rate': 19.50, 'Regular Hours': 2080, 'Overtime Hours': 80, 'Total Regular Pay': 40560, 'Total Overtime Pay': 2340 },
+  { 'Employee ID': 'EMP-038', 'Job Title': 'Dispatcher', 'FTE Count': 1.0, 'Avg Hourly Rate': 21.00, 'Regular Hours': 2080, 'Overtime Hours': 220, 'Total Regular Pay': 43680, 'Total Overtime Pay': 6930 },
+
+  // Fire Chief
+  { 'Employee ID': 'EMP-039', 'Job Title': 'Fire Chief', 'FTE Count': 1.0, 'Avg Hourly Rate': 62.00, 'Regular Hours': 2080, 'Overtime Hours': 0, 'Total Regular Pay': 128960, 'Total Overtime Pay': 0 }
 ];
 
 // 3. Emergency Room Arrival / CAD Data
 const cadRows = [
-  { 'Call Source': '911 Emergency Medical', 'Dispatch Time (sec)': 45, 'Response Time (min)': 6.2, 'Scene Time (min)': 14.5, 'Transport Time (min)': 11.2 },
-  { 'Call Source': '911 Non-Urgent Response', 'Dispatch Time (sec)': 110, 'Response Time (min)': 14.8, 'Scene Time (min)': 9.8, 'Transport Time (min)': 17.3 },
-  { 'Call Source': 'Mutual Aid Request', 'Dispatch Time (sec)': 90, 'Response Time (min)': 12.5, 'Scene Time (min)': 16.0, 'Transport Time (min)': 13.5 },
-  { 'Call Source': 'Inter-Facility Transport', 'Dispatch Time (sec)': 175, 'Response Time (min)': 19.2, 'Scene Time (min)': 8.2, 'Transport Time (min)': 21.0 }
+  // 911 Emergency Medical
+  { 'Incident ID': 'CAD-001', 'Call Source': '911 Emergency Medical', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 42, 'Response Time (min)': 5.5, 'Scene Time (min)': 13.0, 'Transport Time (min)': 10.5 },
+  { 'Incident ID': 'CAD-002', 'Call Source': '911 Emergency Medical', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 48, 'Response Time (min)': 6.8, 'Scene Time (min)': 15.2, 'Transport Time (min)': 12.0 },
+  { 'Incident ID': 'CAD-003', 'Call Source': '911 Emergency Medical', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 35, 'Response Time (min)': 4.2, 'Scene Time (min)': 12.5, 'Transport Time (min)': 8.5 },
+  { 'Incident ID': 'CAD-004', 'Call Source': '911 Emergency Medical', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 55, 'Response Time (min)': 8.5, 'Scene Time (min)': 18.0, 'Transport Time (min)': 14.2 },
+  { 'Incident ID': 'CAD-005', 'Call Source': '911 Emergency Medical', 'Disposition': 'Refusal of Care', 'Dispatch Time (sec)': 40, 'Response Time (min)': 6.0, 'Scene Time (min)': 14.0, 'Transport Time (min)': 0 },
+  { 'Incident ID': 'CAD-006', 'Call Source': '911 Emergency Medical', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 44, 'Response Time (min)': 5.8, 'Scene Time (min)': 14.8, 'Transport Time (min)': 11.0 },
+  { 'Incident ID': 'CAD-007', 'Call Source': '911 Emergency Medical', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 50, 'Response Time (min)': 7.2, 'Scene Time (min)': 16.5, 'Transport Time (min)': 11.5 },
+  { 'Incident ID': 'CAD-008', 'Call Source': '911 Emergency Medical', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 46, 'Response Time (min)': 6.4, 'Scene Time (min)': 13.8, 'Transport Time (min)': 12.5 },
+  { 'Incident ID': 'CAD-009', 'Call Source': '911 Emergency Medical', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 52, 'Response Time (min)': 14.2, 'Scene Time (min)': 15.0, 'Transport Time (min)': 13.0 },
+
+  // 911 Non-Urgent Response
+  { 'Incident ID': 'CAD-010', 'Call Source': '911 Non-Urgent Response', 'Disposition': 'Refusal of Care', 'Dispatch Time (sec)': 120, 'Response Time (min)': 13.5, 'Scene Time (min)': 10.5, 'Transport Time (min)': 0 },
+  { 'Incident ID': 'CAD-011', 'Call Source': '911 Non-Urgent Response', 'Disposition': 'Refusal of Care', 'Dispatch Time (sec)': 110, 'Response Time (min)': 15.0, 'Scene Time (min)': 9.0, 'Transport Time (min)': 0 },
+  { 'Incident ID': 'CAD-012', 'Call Source': '911 Non-Urgent Response', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 130, 'Response Time (min)': 16.5, 'Scene Time (min)': 11.2, 'Transport Time (min)': 18.0 },
+  { 'Incident ID': 'CAD-013', 'Call Source': '911 Non-Urgent Response', 'Disposition': 'Refusal of Care', 'Dispatch Time (sec)': 95, 'Response Time (min)': 12.0, 'Scene Time (min)': 8.5, 'Transport Time (min)': 0 },
+  { 'Incident ID': 'CAD-014', 'Call Source': '911 Non-Urgent Response', 'Disposition': 'Refusal of Care', 'Dispatch Time (sec)': 105, 'Response Time (min)': 14.2, 'Scene Time (min)': 9.8, 'Transport Time (min)': 0 },
+  { 'Incident ID': 'CAD-015', 'Call Source': '911 Non-Urgent Response', 'Disposition': 'Refusal of Care', 'Dispatch Time (sec)': 115, 'Response Time (min)': 15.8, 'Scene Time (min)': 10.0, 'Transport Time (min)': 0 },
+
+  // Mutual Aid Request
+  { 'Incident ID': 'CAD-016', 'Call Source': 'Mutual Aid Request', 'Disposition': 'Transferred to Partner', 'Dispatch Time (sec)': 85, 'Response Time (min)': 11.5, 'Scene Time (min)': 15.5, 'Transport Time (min)': 12.0 },
+  { 'Incident ID': 'CAD-017', 'Call Source': 'Mutual Aid Request', 'Disposition': 'Transferred to Partner', 'Dispatch Time (sec)': 95, 'Response Time (min)': 13.0, 'Scene Time (min)': 16.8, 'Transport Time (min)': 14.0 },
+  { 'Incident ID': 'CAD-018', 'Call Source': 'Mutual Aid Request', 'Disposition': 'Transferred to Partner', 'Dispatch Time (sec)': 90, 'Response Time (min)': 12.5, 'Scene Time (min)': 16.0, 'Transport Time (min)': 13.5 },
+  { 'Incident ID': 'CAD-019', 'Call Source': 'Mutual Aid Request', 'Disposition': 'Transferred to Partner', 'Dispatch Time (sec)': 100, 'Response Time (min)': 14.0, 'Scene Time (min)': 17.5, 'Transport Time (min)': 15.0 },
+
+  // Inter-Facility Transport
+  { 'Incident ID': 'CAD-020', 'Call Source': 'Inter-Facility Transport', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 180, 'Response Time (min)': 19.5, 'Scene Time (min)': 8.0, 'Transport Time (min)': 22.0 },
+  { 'Incident ID': 'CAD-021', 'Call Source': 'Inter-Facility Transport', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 170, 'Response Time (min)': 18.2, 'Scene Time (min)': 7.5, 'Transport Time (min)': 20.5 },
+  { 'Incident ID': 'CAD-022', 'Call Source': 'Inter-Facility Transport', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 160, 'Response Time (min)': 17.0, 'Scene Time (min)': 8.5, 'Transport Time (min)': 19.5 },
+  { 'Incident ID': 'CAD-023', 'Call Source': 'Inter-Facility Transport', 'Disposition': 'Transported to ER', 'Dispatch Time (sec)': 190, 'Response Time (min)': 22.0, 'Scene Time (min)': 9.0, 'Transport Time (min)': 23.0 }
 ];
 
 // Export pre-loaded workbooks matching the portal files

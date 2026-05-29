@@ -51,7 +51,7 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       { chartType: 'pie', title: 'Share of Annual PEMT Supplement', xAxisColumn: 'Month', yAxisColumn: 'PEMT Supplement', aggregation: 'sum' },
       { chartType: 'scatter', title: 'Correlation: Run Volume vs Total Revenue', xAxisColumn: 'Run Volume', yAxisColumn: 'Total Revenue', aggregation: 'none' },
       { chartType: 'line', title: 'Transport Fee Charge Rates', xAxisColumn: 'Month', yAxisColumn: 'Transport Fee', aggregation: 'avg' },
-      { chartType: 'bar', title: 'Aggregated Annual Operational Totals', xAxisColumn: 'Month', yAxisColumn: 'Total Revenue', aggregation: 'sum' }
+      { chartType: 'bubble', title: 'Operational Correlation: Run Vol vs Total Revenue vs PEMT Size', xAxisColumn: 'Run Volume', yAxisColumn: 'Total Revenue', aggregation: 'none', zAxisColumn: 'PEMT Supplement' }
     ];
   }
 
@@ -64,7 +64,7 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       { chartType: 'pie', title: 'FTE Share by Department Role', xAxisColumn: 'Job Title', yAxisColumn: 'FTE Count', aggregation: 'sum' },
       { chartType: 'bar', title: 'Accumulated Overtime Hours by Job Title', xAxisColumn: 'Job Title', yAxisColumn: 'Overtime Hours', aggregation: 'sum' },
       { chartType: 'scatter', title: 'Correlation: Base Hours vs Base Pay', xAxisColumn: 'Regular Hours', yAxisColumn: 'Total Regular Pay', aggregation: 'none' },
-      { chartType: 'pie', title: 'Overtime Pay Distribution by Role', xAxisColumn: 'Job Title', yAxisColumn: 'Total Overtime Pay', aggregation: 'sum' }
+      { chartType: 'box', title: 'Hourly Rate Spread by Job Title Box Plot', xAxisColumn: 'Job Title', yAxisColumn: 'Avg Hourly Rate', aggregation: 'none' }
     ];
   }
 
@@ -77,7 +77,7 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       { chartType: 'pie', title: 'Incident Frequency Share by Category', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'count' },
       { chartType: 'line', title: 'Response Efficiency Benchmark Index', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'avg' },
       { chartType: 'scatter', title: 'Correlation: Dispatch Latency vs Total Response Time', xAxisColumn: 'Dispatch Time (sec)', yAxisColumn: 'Response Time (min)', aggregation: 'none' },
-      { chartType: 'bar', title: 'Total Accumulated Response Loads', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'sum' }
+      { chartType: 'radar', title: 'CAD Response Profile Radar Analysis', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'avg' }
     ];
   }
 
@@ -188,10 +188,12 @@ function App() {
 
   // Custom Chart Form states
   const [customTitle, setCustomTitle] = useState<string>('');
-  const [customChartType, setCustomChartType] = useState<'bar' | 'line' | 'pie' | 'scatter'>('bar');
+  const [customChartType, setCustomChartType] = useState<'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box'>('bar');
   const [customX, setCustomX] = useState<string>('');
   const [customY, setCustomY] = useState<string>('');
+  const [customZ, setCustomZ] = useState<string>('');
   const [customAggregation, setCustomAggregation] = useState<'sum' | 'avg' | 'count' | 'none'>('sum');
+  const [colorTheme, setColorTheme] = useState<'classic' | 'vibrant'>('vibrant');
 
   // Directly load API key from Vite environment variable
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -426,13 +428,15 @@ function App() {
       title: customTitle,
       xAxisColumn: customX,
       yAxisColumn: customY,
-      aggregation: customAggregation
+      aggregation: customAggregation,
+      zAxisColumn: customChartType === 'bubble' ? customZ : undefined
     };
 
     setAvailableCharts(prev => [...prev, newChart]);
     setSelectedChartTitles(prev => [...prev, newChart.title]);
     setActiveChartTab(newChart.title);
     setCustomTitle('');
+    setCustomZ('');
   };
 
   const handleExportPDF = () => {
@@ -495,14 +499,15 @@ function App() {
                 const gridColumn = isLarge ? 'span 2' : 'span 1';
                 const height = isLarge ? '400px' : '330px';
                 return (
-                  <div key={idx} style={{ gridColumn }}>
-                    <InsightChart
-                      chartSpec={chart}
-                      rows={rows}
-                      borderless={true}
-                      height={height}
-                    />
-                  </div>
+                   <div key={idx} style={{ gridColumn }}>
+                     <InsightChart
+                       chartSpec={chart}
+                       rows={rows}
+                       borderless={true}
+                       height={height}
+                       colorTheme={colorTheme}
+                     />
+                   </div>
                 );
               })}
             </div>
@@ -533,6 +538,7 @@ function App() {
                       rows={rows}
                       borderless={true}
                       height={height}
+                      colorTheme={colorTheme}
                     />
                   </div>
                 );
@@ -1059,12 +1065,24 @@ function App() {
                           className="filter-select" 
                           style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '6px' }}
                           value={customChartType}
-                          onChange={e => setCustomChartType(e.target.value as any)}
+                          onChange={e => {
+                            const val = e.target.value as any;
+                            setCustomChartType(val);
+                            if (val === 'scatter' || val === 'bubble' || val === 'box' || val === 'radar') {
+                              setCustomAggregation('none');
+                            } else {
+                              setCustomAggregation('sum');
+                            }
+                          }}
                         >
-                          <option value="bar">Bar</option>
+                          <option value="bar">Vertical Bar</option>
+                          <option value="horizontalBar">Horizontal Bar</option>
                           <option value="line">Line</option>
                           <option value="pie">Pie</option>
                           <option value="scatter">Scatter</option>
+                          <option value="bubble">Bubble</option>
+                          <option value="radar">Radar (Spider)</option>
+                          <option value="box">Box Plot (Distribution)</option>
                         </select>
                       </div>
 
@@ -1118,6 +1136,24 @@ function App() {
                       </div>
                     </div>
 
+                    {customChartType === 'bubble' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Z-Axis (Bubble Size)</span>
+                        <select 
+                          className="filter-select" 
+                          style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '6px' }}
+                          value={customZ}
+                          onChange={e => setCustomZ(e.target.value)}
+                          required
+                        >
+                          <option value="">-- Select --</option>
+                          {activeSheet?.columns.filter(c => c.type === 'number').map((c, i) => (
+                            <option key={i} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     <button 
                       type="submit"
                       className="btn btn-primary" 
@@ -1126,6 +1162,31 @@ function App() {
                       + Add Custom Chart
                     </button>
                   </form>
+                </div>
+
+                {/* 4.5 Color Palette Theme Toggle */}
+                <div style={{ borderTop: '1.5px dashed var(--LightGray)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', flexShrink: 0 }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Dashboard Palette
+                  </span>
+                  <div style={{ display: 'flex', background: 'var(--ExtraLightGray)', borderRadius: '6px', padding: '3px', border: '1px solid var(--LightGray)' }}>
+                    <button 
+                      type="button"
+                      className="btn" 
+                      style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: colorTheme === 'classic' ? 'white' : 'transparent', color: colorTheme === 'classic' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: colorTheme === 'classic' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', fontWeight: colorTheme === 'classic' ? 'bold' : 'normal' }}
+                      onClick={() => setColorTheme('classic')}
+                    >
+                      Classic PCG Blue
+                    </button>
+                    <button 
+                      type="button"
+                      className="btn" 
+                      style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: colorTheme === 'vibrant' ? 'white' : 'transparent', color: colorTheme === 'vibrant' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: colorTheme === 'vibrant' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', fontWeight: colorTheme === 'vibrant' ? 'bold' : 'normal' }}
+                      onClick={() => setColorTheme('vibrant')}
+                    >
+                      Vibrant Domain
+                    </button>
+                  </div>
                 </div>
 
                 {/* 5. Presentation Controls & PDF Action */}
@@ -1316,12 +1377,13 @@ function App() {
                     </div>
                   )}
 
-                  {/* KPI Statistics Row (Floating white cards) */}
+                  {/* KPI Statistics Row (Floating white cards with left border accents) */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
                     <div 
                       style={{ 
                         border: '1px solid var(--border-light)', 
-                        background: 'white', 
+                        borderLeft: colorTheme === 'classic' ? '1px solid var(--border-light)' : '4px solid #0052BD',
+                        background: colorTheme === 'classic' ? 'white' : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
                         borderRadius: '10px', 
                         padding: '1rem', 
                         display: 'flex', 
@@ -1337,12 +1399,24 @@ function App() {
                     </div>
                     {activeSheet?.columns.filter(c => c.type === 'number').slice(0, 3).map((col, idx) => {
                       const avg = getFilteredAverage(col.name);
+                      // Dynamic harmonic palettes: Emerald Green, Indigo Purple, Amber Gold
+                      const isClassic = colorTheme === 'classic';
+                      const cardThemes = isClassic 
+                        ? Array(3).fill({ bg: 'white', border: '1px solid var(--border-light)' })
+                        : [
+                            { bg: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)', border: '4px solid #10b981' },
+                            { bg: 'linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)', border: '4px solid #6366f1' },
+                            { bg: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)', border: '4px solid #f59e0b' }
+                          ];
+                      const theme = cardThemes[idx % cardThemes.length];
+                      
                       return (
                         <div 
                           key={idx} 
                           style={{ 
                             border: '1px solid var(--border-light)', 
-                            background: 'white', 
+                            borderLeft: theme.border,
+                            background: theme.bg, 
                             borderRadius: '10px', 
                             padding: '1rem', 
                             display: 'flex', 
@@ -1407,6 +1481,7 @@ function App() {
                                 rows={filteredRows}
                                 borderless={true}
                                 height="400px"
+                                colorTheme={colorTheme}
                               />
                             </div>
                           )}
@@ -1452,6 +1527,7 @@ function App() {
                                 rows={filteredRows}
                                 borderless={true}
                                 height="400px"
+                                colorTheme={colorTheme}
                               />
                             </div>
                           )}

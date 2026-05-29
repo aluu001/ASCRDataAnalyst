@@ -127,10 +127,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   };
 
   const defaultSuggestions = [
-    'What are the core trends or patterns in this sheet?',
-    'Give me a summary statistics report of key numbers.',
-    'Are there any anomalies, outliers, or missing values?',
-    'Recommend some chart visualizations to explore.'
+    'Would you like me to analyze the core trends and patterns in this sheet?',
+    'Shall I generate a summary statistics report of your key numeric fields?',
+    'Should we audit the worksheet to identify anomalies, outliers, or missing values?',
+    'Would you like me to recommend and automatically build visualizations for you?'
   ];
 
   return (
@@ -236,15 +236,22 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     <span>{msg.content}</span>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                     {msg.analystResponse?.thinking && (
                       <ThinkingAccordion thinking={msg.analystResponse.thinking} />
                     )}
-                    <ul style={{ margin: 0, padding: 0 }}>
-                      {msg.analystResponse?.insights.map((insight, idx) => (
-                        <div key={idx}>{formatMarkdown(insight)}</div>
-                      ))}
-                    </ul>
+                    {msg.analystResponse?.conversationalResponse && (
+                      <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45, color: '#1e293b', fontWeight: 500 }}>
+                        {msg.analystResponse.conversationalResponse}
+                      </p>
+                    )}
+                    {msg.analystResponse?.insights && msg.analystResponse.insights.length > 0 && (
+                      <ul style={{ margin: 0, padding: 0 }}>
+                        {msg.analystResponse.insights.map((insight, idx) => (
+                          <div key={idx}>{formatMarkdown(insight)}</div>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 )}
               </div>
