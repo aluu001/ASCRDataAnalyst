@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { Database, Hash, Calendar, ToggleLeft, Type as LetterText, Eye, ChevronLeft, ChevronRight, BarChart2 } from 'lucide-react';
+import { Database, Hash, Calendar, ToggleLeft, Type as LetterText, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { WorkbookData } from '../utils/dataEngine';
 
 interface DataPreviewProps {
   workbookData: WorkbookData;
   activeSheetName: string;
   onSheetChange: (name: string) => void;
+  compact?: boolean;
 }
 
 export const DataPreview: React.FC<DataPreviewProps> = ({
   workbookData,
   activeSheetName,
-  onSheetChange
+  onSheetChange,
+  compact = false
 }) => {
   const [viewMode, setViewMode] = useState<'preview' | 'schema'>('preview');
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,52 +49,58 @@ export const DataPreview: React.FC<DataPreviewProps> = ({
   };
 
   return (
-    <div className="glass-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+    <div className={compact ? "" : "glass-card"} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: compact ? '0' : undefined, border: compact ? 'none' : undefined, background: compact ? 'transparent' : undefined, boxShadow: compact ? 'none' : undefined }}>
       {/* Sheet Tabs */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Database size={18} style={{ color: 'hsl(var(--primary))' }} />
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'var(--font-display)' }}>Workbook Sheets</h3>
-        </div>
+      {!compact && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Database size={18} style={{ color: 'hsl(var(--primary))' }} />
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'var(--font-display)' }}>Workbook Sheets</h3>
+          </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {workbookData.sheets.map(sheet => (
-            <button
-              key={sheet.name}
-              className={`btn ${activeSheetName === sheet.name ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-              onClick={() => {
-                onSheetChange(sheet.name);
-                setCurrentPage(1); // Reset page
-              }}
-            >
-              {sheet.name}
-              <span style={{ opacity: 0.6, fontSize: '0.75rem', marginLeft: '0.25rem' }}>({sheet.rowCount} rows)</span>
-            </button>
-          ))}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {workbookData.sheets.map(sheet => (
+              <button
+                key={sheet.name}
+                className={`btn ${activeSheetName === sheet.name ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                onClick={() => {
+                  onSheetChange(sheet.name);
+                  setCurrentPage(1); // Reset page
+                }}
+              >
+                {sheet.name}
+                <span style={{ opacity: 0.6, fontSize: '0.75rem', marginLeft: '0.25rem' }}>({sheet.rowCount} rows)</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Grid Toolbar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <span style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>
-          Showing sheet <strong>{activeSheet.name}</strong> • {activeSheet.rowCount} rows × {activeSheet.columns.length} columns
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? '0.5rem' : '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <span style={{ fontSize: compact ? '0.725rem' : '0.85rem', color: 'hsl(var(--text-secondary))' }}>
+          {compact ? (
+            <span>Sheet: <strong>{activeSheet.name}</strong> • {activeSheet.rowCount} rows</span>
+          ) : (
+            <span>Showing sheet <strong>{activeSheet.name}</strong> • {activeSheet.rowCount} rows × {activeSheet.columns.length} columns</span>
+          )}
         </span>
 
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'hsl(var(--bg-input))', padding: '0.25rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+        <div style={{ display: 'flex', gap: '0.25rem', background: 'hsl(var(--bg-input))', padding: '0.15rem', borderRadius: '6px', border: '1px solid var(--border-light)' }}>
           <button
             className={`btn ${viewMode === 'preview' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ padding: '0.3rem 0.75rem', fontSize: '0.75rem', borderRadius: '6px' }}
+            style={{ padding: compact ? '0.2rem 0.5rem' : '0.3rem 0.75rem', fontSize: compact ? '0.7rem' : '0.75rem', borderRadius: '4px' }}
             onClick={() => setViewMode('preview')}
           >
-            <Eye size={12} /> Data Preview
+            {compact ? 'Data' : 'Data Preview'}
           </button>
           <button
             className={`btn ${viewMode === 'schema' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ padding: '0.3rem 0.75rem', fontSize: '0.75rem', borderRadius: '6px' }}
+            style={{ padding: compact ? '0.2rem 0.5rem' : '0.3rem 0.75rem', fontSize: compact ? '0.7rem' : '0.75rem', borderRadius: '4px' }}
             onClick={() => setViewMode('schema')}
           >
-            <BarChart2 size={12} /> Column Statistics
+            {compact ? 'Stats' : 'Column Statistics'}
           </button>
         </div>
       </div>
@@ -182,9 +190,9 @@ export const DataPreview: React.FC<DataPreviewProps> = ({
 
       {/* Pagination controls for preview */}
       {viewMode === 'preview' && totalPages > 1 && (
-        <div className="table-pagination">
-          <span style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
-            Page <strong>{currentPage}</strong> of {totalPages} ({activeSheet.rows.length} total rows)
+        <div className="table-pagination" style={{ padding: compact ? '0.5rem 0 0 0' : undefined, background: compact ? 'transparent' : undefined, borderTop: compact ? '1px dashed var(--LightGray)' : undefined }}>
+          <span style={{ fontSize: compact ? '0.725rem' : '0.8rem', color: 'hsl(var(--text-secondary))' }}>
+            Page <strong>{currentPage}</strong> of {totalPages} {compact ? '' : `(${activeSheet.rows.length} total rows)`}
           </span>
 
           <div style={{ display: 'flex', gap: '0.5rem' }}>

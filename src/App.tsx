@@ -163,12 +163,10 @@ function App() {
   // Visualizations states
   const [availableCharts, setAvailableCharts] = useState<ChartSpecification[]>([]);
   const [selectedChartTitles, setSelectedChartTitles] = useState<string[]>([]);
-  const [isSelectorOpen, setIsSelectorOpen] = useState<boolean>(true);
-
   // Collapse / Expand Workspace states
   const [isChatCollapsed, setIsChatCollapsed] = useState<boolean>(false);
   const [isInsightsCollapsed, setIsInsightsCollapsed] = useState<boolean>(false);
-  const [workspaceView, setWorkspaceView] = useState<'dashboard' | 'grid'>('dashboard');
+  const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState<boolean>(false);
   
   // Presentation modes: 'grid' | 'carousel' | 'tabbed'
   const [layoutMode, setLayoutMode] = useState<'grid' | 'carousel' | 'tabbed'>('grid');
@@ -478,28 +476,15 @@ function App() {
               File: {currentDocName}
             </span>
             
-            {/* Global Sheet Tabs - Always visible */}
-            <div style={{ display: 'flex', gap: '0.35rem', background: 'var(--ExtraLightGray)', padding: '2px', borderRadius: '6px', border: '1px solid var(--LightGray)', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--DarkGray)', padding: '0 0.25rem', textTransform: 'uppercase' }}>Sheets:</span>
-              {workbookData.sheets.map(sheet => (
-                <button
-                  key={sheet.name}
-                  className="btn"
-                  style={{
-                    padding: '0.2rem 0.5rem',
-                    fontSize: '0.75rem',
-                    borderRadius: '4px',
-                    background: activeSheetName === sheet.name ? 'var(--LabelBG)' : 'transparent',
-                    color: activeSheetName === sheet.name ? 'white' : 'var(--DarkGray)',
-                    border: 'none',
-                    fontWeight: activeSheetName === sheet.name ? 'bold' : 'normal'
-                  }}
-                  onClick={() => handleSheetChange(sheet.name)}
-                >
-                  {sheet.name}
-                </button>
-              ))}
-            </div>
+            {isLeftPanelCollapsed && (
+              <button 
+                className="btn btn-secondary" 
+                style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                onClick={() => setIsLeftPanelCollapsed(false)}
+              >
+                <Sliders size={14} /> Show Controls
+              </button>
+            )}
 
             <button className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }} onClick={handleCloseWorkspace}>
               <ArrowLeft size={14} /> Close & Upload New
@@ -669,440 +654,562 @@ function App() {
           /* ==========================================
              ACTIVE ANALYSIS WORKSPACE (MAXIMIZED FOR DATA VIS)
              ========================================== */
-          <div className="dashboard-grid" style={{ height: '100%', padding: '1rem 1.5rem', gridTemplateColumns: isChatCollapsed ? '1fr' : undefined }}>
-            
-            {/* Left Column - Large visual dashboard and data tables */}
-            <div className="main-content-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', gap: '1rem' }}>
-              
-              {/* Workspace View Switcher Tabs */}
-              <div className="workspace-switcher-tabs" style={{ display: 'flex', background: 'white', border: '1.5px solid var(--LightGray)', borderRadius: '8px', padding: '4px', gap: '4px', flexShrink: 0 }}>
-                <button
-                  className="btn"
-                  style={{
-                    flex: 1,
-                    padding: '0.4rem 1rem',
-                    fontSize: '0.825rem',
-                    borderRadius: '6px',
-                    background: workspaceView === 'dashboard' ? 'var(--LabelBG)' : 'transparent',
-                    color: workspaceView === 'dashboard' ? 'white' : 'var(--DarkGray)',
-                    border: 'none',
-                    fontWeight: workspaceView === 'dashboard' ? 'bold' : '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    boxShadow: workspaceView === 'dashboard' ? '0 2px 4px rgba(0,33,133,0.12)' : 'none',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onClick={() => setWorkspaceView('dashboard')}
-                >
-                  <BarChart2 size={15} /> 📊 Executive Dashboard
-                </button>
-                <button
-                  className="btn"
-                  style={{
-                    flex: 1,
-                    padding: '0.4rem 1rem',
-                    fontSize: '0.825rem',
-                    borderRadius: '6px',
-                    background: workspaceView === 'grid' ? 'var(--LabelBG)' : 'transparent',
-                    color: workspaceView === 'grid' ? 'white' : 'var(--DarkGray)',
-                    border: 'none',
-                    fontWeight: workspaceView === 'grid' ? 'bold' : '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    boxShadow: workspaceView === 'grid' ? '0 2px 4px rgba(0,33,133,0.12)' : 'none',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onClick={() => setWorkspaceView('grid')}
-                >
-                  <FileSpreadsheet size={15} /> 📋 Tabular Sheet Data
-                </button>
-              </div>
-
-              {/* 1. Workbook Sheet & Tabular Grid Explorer (Full workspace height, hidden when in dashboard view) */}
-              <div className="tabular-preview-panel" style={{ flex: 1, display: workspaceView === 'grid' ? 'flex' : 'none', flexDirection: 'column', minHeight: 0 }}>
-                <DataPreview
-                  workbookData={workbookData}
-                  activeSheetName={activeSheetName}
-                  onSheetChange={handleSheetChange}
-                />
-              </div>
-
-              {/* 2. Executive Dashboard Canvas (Full workspace height, hidden when in grid view) */}
-              <div className="glass-card dashboard-canvas-panel" style={{ flex: 1, display: workspaceView === 'dashboard' ? 'flex' : 'none', flexDirection: 'column', overflow: 'hidden', padding: '1.25rem', gap: '1rem', minHeight: 0 }}>
-                
-                {/* Canvas Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid var(--LightGray)', paddingBottom: '0.75rem' }}>
+          <div 
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'row', 
+              height: '100%', 
+              width: '100%',
+              padding: '1rem 1.5rem', 
+              gap: '0', 
+              overflow: 'hidden',
+              background: 'var(--DashboardBG)',
+              boxSizing: 'border-box'
+            }}
+          >
+            {/* Left Column - Collapsible Drawer (Settings & Data Explorer) */}
+            <div 
+              className="sidebar-panel left-sidebar-panel" 
+              style={{ 
+                width: isLeftPanelCollapsed ? '0px' : '460px',
+                opacity: isLeftPanelCollapsed ? 0 : 1,
+                pointerEvents: isLeftPanelCollapsed ? 'none' : 'auto',
+                transform: isLeftPanelCollapsed ? 'translateX(-100%)' : 'translateX(0)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                marginRight: isLeftPanelCollapsed ? '0' : '1.25rem',
+                border: isLeftPanelCollapsed ? 'none' : undefined,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                flexShrink: 0
+              }}
+            >
+              {/* Inner wrapper to enforce width and enable independent vertical scrolling */}
+              <div 
+                style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  height: '100%', 
+                  width: '460px', 
+                  minWidth: '460px', 
+                  padding: '1.25rem', 
+                  gap: '1.25rem', 
+                  overflowY: 'auto',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {/* Drawer Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid var(--LightGray)', paddingBottom: '0.75rem', flexShrink: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <BarChart2 size={20} style={{ color: 'var(--BannerGB)' }} />
-                    <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)' }}>
-                      Executive Summary & Visual Dashboard
-                    </h2>
+                    <Sliders size={18} style={{ color: 'var(--BannerGB)' }} />
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontWeight: 'bold' }}>
+                      Dashboard Controls
+                    </h3>
                   </div>
-                  <div className="layout-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {/* Presentation Selector */}
-                    <div style={{ display: 'flex', background: 'var(--ExtraLightGray)', borderRadius: '6px', padding: '2px', border: '1px solid var(--LightGray)' }}>
+                  <button 
+                    className="btn btn-ghost" 
+                    style={{ padding: '0.25rem', borderRadius: '4px' }}
+                    onClick={() => setIsLeftPanelCollapsed(true)}
+                    title="Collapse Panel"
+                  >
+                    <ChevronLeft size={18} style={{ color: 'var(--DarkGray)' }} />
+                  </button>
+                </div>
+
+                {/* 1. Global Sheet Selector */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Database size={14} style={{ color: 'var(--BannerGB)' }} />
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Worksheets</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {workbookData.sheets.map(sheet => (
+                      <button
+                        key={sheet.name}
+                        className="btn"
+                        style={{
+                          padding: '0.3rem 0.6rem',
+                          fontSize: '0.75rem',
+                          borderRadius: '4px',
+                          background: activeSheetName === sheet.name ? 'var(--LabelBG)' : 'white',
+                          color: activeSheetName === sheet.name ? 'white' : 'var(--DarkGray)',
+                          border: activeSheetName === sheet.name ? 'none' : '1px solid var(--LightGray)',
+                          fontWeight: activeSheetName === sheet.name ? 'bold' : 'normal',
+                          boxShadow: activeSheetName === sheet.name ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                        }}
+                        onClick={() => handleSheetChange(sheet.name)}
+                      >
+                        {sheet.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Compact Tabular Spreadsheet Preview */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <FileSpreadsheet size={14} style={{ color: 'var(--BannerGB)' }} />
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Spreadsheet Data</span>
+                  </div>
+                  <div 
+                    style={{ 
+                      height: '300px', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      border: '1px solid var(--LightGray)', 
+                      borderRadius: '8px', 
+                      padding: '0.75rem', 
+                      background: 'white', 
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <DataPreview
+                      compact={true}
+                      workbookData={workbookData}
+                      activeSheetName={activeSheetName}
+                      onSheetChange={handleSheetChange}
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Toggle Active Dashboard Charts Checklist */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Active Visualizations ({selectedChartTitles.length}/{availableCharts.length})
+                  </span>
+                  <div 
+                    style={{ 
+                      maxHeight: '160px', 
+                      overflowY: 'auto', 
+                      border: '1px solid var(--LightGray)', 
+                      borderRadius: '8px', 
+                      padding: '0.75rem', 
+                      background: 'white',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.4rem'
+                    }}
+                  >
+                    {availableCharts.map((chart, idx) => {
+                      const isChecked = selectedChartTitles.includes(chart.title);
+                      return (
+                        <label 
+                          key={idx} 
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '0.5rem', 
+                            fontSize: '0.75rem',
+                            color: 'var(--LabelBG)',
+                            cursor: 'pointer',
+                            padding: '0.15rem 0',
+                            userSelect: 'none'
+                          }}
+                        >
+                          <input 
+                            type="checkbox" 
+                            checked={isChecked} 
+                            onChange={() => {
+                              let nextTitles;
+                              if (isChecked) {
+                                nextTitles = selectedChartTitles.filter(t => t !== chart.title);
+                              } else {
+                                nextTitles = [...selectedChartTitles, chart.title];
+                              }
+                              setSelectedChartTitles(nextTitles);
+                              
+                              if (nextTitles.length > 0) {
+                                if (carouselIndex >= nextTitles.length) {
+                                  setCarouselIndex(nextTitles.length - 1);
+                                }
+                                if (!nextTitles.includes(activeChartTab)) {
+                                  setActiveChartTab(nextTitles[0]);
+                                }
+                              }
+                            }}
+                          />
+                          <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={chart.title}>
+                            {chart.title}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Add Custom Chart Builder Form */}
+                <div style={{ borderTop: '1.5px dashed var(--LightGray)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Add New Dynamic Visualization
+                  </span>
+                  <form onSubmit={handleCreateCustomChart} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Chart Title</span>
+                      <input 
+                        type="text"
+                        className="form-input"
+                        style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '6px' }}
+                        placeholder="e.g. Overtime Total"
+                        value={customTitle}
+                        onChange={e => setCustomTitle(e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Type</span>
+                        <select 
+                          className="filter-select" 
+                          style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '6px' }}
+                          value={customChartType}
+                          onChange={e => setCustomChartType(e.target.value as any)}
+                        >
+                          <option value="bar">Bar</option>
+                          <option value="line">Line</option>
+                          <option value="pie">Pie</option>
+                          <option value="scatter">Scatter</option>
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Rollup</span>
+                        <select 
+                          className="filter-select" 
+                          style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '6px' }}
+                          value={customAggregation}
+                          onChange={e => setCustomAggregation(e.target.value as any)}
+                        >
+                          <option value="sum">Sum</option>
+                          <option value="avg">Average</option>
+                          <option value="count">Count</option>
+                          <option value="none">None</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>X-Axis</span>
+                        <select 
+                          className="filter-select" 
+                          style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '6px' }}
+                          value={customX}
+                          onChange={e => setCustomX(e.target.value)}
+                          required
+                        >
+                          <option value="">-- Select --</option>
+                          {activeSheet?.columns.map((c, i) => (
+                            <option key={i} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Y-Axis</span>
+                        <select 
+                          className="filter-select" 
+                          style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '6px' }}
+                          value={customY}
+                          onChange={e => setCustomY(e.target.value)}
+                          required
+                        >
+                          <option value="">-- Select --</option>
+                          {activeSheet?.columns.map((c, i) => (
+                            <option key={i} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <button 
+                      type="submit"
+                      className="btn btn-primary" 
+                      style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', borderRadius: '6px', marginTop: '0.25rem' }}
+                    >
+                      + Add Custom Chart
+                    </button>
+                  </form>
+                </div>
+
+                {/* 5. Presentation Controls & PDF Action */}
+                <div style={{ borderTop: '1.5px dashed var(--LightGray)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Presentation Layout
+                    </span>
+                    <div style={{ display: 'flex', background: 'var(--ExtraLightGray)', borderRadius: '6px', padding: '3px', border: '1px solid var(--LightGray)' }}>
                       <button 
                         className="btn" 
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: layoutMode === 'grid' ? 'white' : 'transparent', color: layoutMode === 'grid' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: layoutMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                        style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: layoutMode === 'grid' ? 'white' : 'transparent', color: layoutMode === 'grid' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: layoutMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', fontWeight: layoutMode === 'grid' ? 'bold' : 'normal' }}
                         onClick={() => setLayoutMode('grid')}
                       >
                         Grid
                       </button>
                       <button 
                         className="btn" 
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: layoutMode === 'carousel' ? 'white' : 'transparent', color: layoutMode === 'carousel' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: layoutMode === 'carousel' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                        style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: layoutMode === 'carousel' ? 'white' : 'transparent', color: layoutMode === 'carousel' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: layoutMode === 'carousel' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', fontWeight: layoutMode === 'carousel' ? 'bold' : 'normal' }}
                         onClick={() => setLayoutMode('carousel')}
                       >
                         Carousel
                       </button>
                       <button 
                         className="btn" 
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: layoutMode === 'tabbed' ? 'white' : 'transparent', color: layoutMode === 'tabbed' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: layoutMode === 'tabbed' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                        style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: layoutMode === 'tabbed' ? 'white' : 'transparent', color: layoutMode === 'tabbed' ? 'var(--LabelBG)' : 'var(--DarkGray)', border: 'none', boxShadow: layoutMode === 'tabbed' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', fontWeight: layoutMode === 'tabbed' ? 'bold' : 'normal' }}
                         onClick={() => setLayoutMode('tabbed')}
                       >
                         Tabs
                       </button>
                     </div>
-
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                      onClick={handleExportPDF}
-                    >
-                      <Printer size={12} /> PDF Report
-                    </button>
                   </div>
+
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', borderRadius: '6px' }}
+                    onClick={handleExportPDF}
+                  >
+                    <Printer size={14} /> Export landscape PDF Report
+                  </button>
                 </div>
 
-                {/* Canvas Scrollable Content */}
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', paddingRight: '0.5rem' }}>
-                  
-                  {/* Executive Summary Card (Collapsible) */}
-                  {latestInsights.length > 0 && (
-                    <div style={{ background: 'var(--WidgetBG)', border: '1.5px solid rgba(0,82,189,0.12)', borderLeft: '4px solid var(--BannerGB)', padding: '1rem', borderRadius: '8px' }}>
-                      <div 
-                        onClick={() => setIsInsightsCollapsed(!isInsightsCollapsed)}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <TrendingUp size={16} style={{ color: 'var(--BannerGB)' }} />
-                          <strong style={{ fontSize: '0.9rem', color: 'var(--LabelBG)' }}>Analysis Insights Summary</strong>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--BannerGB)', fontWeight: 'bold', fontSize: '0.75rem' }}>
-                          <span>{isInsightsCollapsed ? 'Expand' : 'Collapse'}</span>
-                          {isInsightsCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-                        </div>
-                      </div>
-                      
-                      {!isInsightsCollapsed && (
-                        <ul style={{ margin: '0.5rem 0 0 0', paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--HeaderText)', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                          {latestInsights.map((insight, idx) => (
-                            <li key={idx} dangerouslySetInnerHTML={{ __html: inlineMarkdown(insight) }} />
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
+              </div>
+            </div>
 
-                  {/* KPI Statistics Row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
-                    <div style={{ border: '1px solid var(--LightGray)', background: 'var(--ExtraLightGray)', borderRadius: '6px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Records</span>
-                      <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>{workbookData.sheets[0].rowCount.toLocaleString()} rows</span>
-                    </div>
-                    {workbookData.sheets[0].columns.filter(c => c.type === 'number').slice(0, 3).map((col, idx) => (
-                      <div key={idx} style={{ border: '1px solid var(--LightGray)', background: 'var(--ExtraLightGray)', borderRadius: '6px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg {col.name}</span>
-                        <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
-                          {typeof col.avg === 'number' ? col.avg.toLocaleString() : 'N/A'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Chart Control Center Toolbar */}
-                  <div className="chart-control-center-panel" style={{ border: '1px solid var(--LightGray)', background: 'var(--WidgetBG)', borderRadius: '8px', padding: '1rem' }}>
-                    <div 
-                      onClick={() => setIsSelectorOpen(!isSelectorOpen)}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderBottom: isSelectorOpen ? '1px dashed var(--LightGray)' : 'none', paddingBottom: isSelectorOpen ? '0.5rem' : '0' }}
+            {/* Center Column - Large visual dashboard (spacious canvas, borderless float style) */}
+            <div 
+              className="dashboard-canvas-panel" 
+              style={{ 
+                flex: 1, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                overflow: 'hidden', 
+                gap: '1rem', 
+                minHeight: 0 
+              }}
+            >
+              {/* Canvas Header */}
+              <div 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  borderBottom: '1.5px solid var(--LightGray)', 
+                  paddingBottom: '0.75rem',
+                  flexShrink: 0
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {isLeftPanelCollapsed && (
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem', borderRadius: '6px', marginRight: '0.5rem' }}
+                      onClick={() => setIsLeftPanelCollapsed(false)}
+                      title="Open Control Panel"
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Sliders size={16} style={{ color: 'var(--BannerGB)' }} />
-                        <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
-                          Dashboard Customizer ({selectedChartTitles.length}/{availableCharts.length} Visualizations Active)
-                        </span>
+                      <Sliders size={14} /> Control & Data Panel
+                    </button>
+                  )}
+                  <BarChart2 size={20} style={{ color: 'var(--BannerGB)' }} />
+                  <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)' }}>
+                    Executive Summary & Visual Dashboard
+                  </h2>
+                </div>
+              </div>
+
+              {/* Canvas Scrollable Content */}
+              <div 
+                style={{ 
+                  flex: 1, 
+                  overflowY: 'auto', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '1.25rem', 
+                  paddingRight: '0.5rem' 
+                }}
+              >
+                {/* Executive Summary Card (Collapsible, Floating Card) */}
+                {latestInsights.length > 0 && (
+                  <div style={{ background: 'var(--WidgetBG)', border: '1.5px solid rgba(0,82,189,0.12)', borderLeft: '4px solid var(--BannerGB)', padding: '1.25rem', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+                    <div 
+                      onClick={() => setIsInsightsCollapsed(!isInsightsCollapsed)}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <TrendingUp size={16} style={{ color: 'var(--BannerGB)' }} />
+                        <strong style={{ fontSize: '0.9rem', color: 'var(--LabelBG)' }}>Analysis Insights Summary</strong>
                       </div>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--BannerGB)', fontWeight: 'bold' }}>
-                        {isSelectorOpen ? 'Hide Selection Menu' : 'Configure Visualizations'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--BannerGB)', fontWeight: 'bold', fontSize: '0.75rem' }}>
+                        <span>{isInsightsCollapsed ? 'Expand' : 'Collapse'}</span>
+                        {isInsightsCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                      </div>
+                    </div>
+                    
+                    {!isInsightsCollapsed && (
+                      <ul style={{ margin: '0.75rem 0 0 0', paddingLeft: '1.25rem', fontSize: '0.85rem', color: 'var(--HeaderText)', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        {latestInsights.map((insight, idx) => (
+                          <li key={idx} dangerouslySetInnerHTML={{ __html: inlineMarkdown(insight) }} />
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
+                {/* KPI Statistics Row (Floating white cards) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                  <div 
+                    style={{ 
+                      border: '1px solid var(--border-light)', 
+                      background: 'white', 
+                      borderRadius: '10px', 
+                      padding: '1rem', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '0.25rem',
+                      boxShadow: 'var(--shadow-sm)' 
+                    }}
+                  >
+                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Records</span>
+                    <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>{workbookData.sheets[0].rowCount.toLocaleString()} rows</span>
+                  </div>
+                  {workbookData.sheets[0].columns.filter(c => c.type === 'number').slice(0, 3).map((col, idx) => (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        border: '1px solid var(--border-light)', 
+                        background: 'white', 
+                        borderRadius: '10px', 
+                        padding: '1rem', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '0.25rem',
+                        boxShadow: 'var(--shadow-sm)' 
+                      }}
+                    >
+                      <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg {col.name}</span>
+                      <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
+                        {typeof col.avg === 'number' ? col.avg.toLocaleString(undefined, { maximumFractionDigits: 2 }) : 'N/A'}
                       </span>
                     </div>
+                  ))}
+                </div>
 
-                    {isSelectorOpen && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.75rem' }}>
-                        {/* Multi-Select Checks */}
-                        <div>
-                          <div style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--DarkGray)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            Toggle Active Dashboard Charts (Select or Deselect)
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                            {availableCharts.map((chart, idx) => {
-                              const isChecked = selectedChartTitles.includes(chart.title);
-                              return (
-                                <label 
-                                  key={idx} 
-                                  className="suggestion-chip" 
-                                  style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '0.3rem', 
-                                    background: isChecked ? 'var(--WidgetBG)' : 'white',
-                                    borderColor: isChecked ? 'var(--BannerGB)' : 'var(--LightGray)',
-                                    color: isChecked ? 'var(--LabelBG)' : 'var(--DarkGray)',
-                                    fontWeight: isChecked ? 'bold' : 'normal',
-                                    cursor: 'pointer',
-                                    userSelect: 'none',
-                                    padding: '0.25rem 0.6rem',
-                                    borderRadius: '12px'
-                                  }}
-                                >
-                                  <input 
-                                    type="checkbox" 
-                                    checked={isChecked} 
-                                    onChange={() => {
-                                      let nextTitles;
-                                      if (isChecked) {
-                                        nextTitles = selectedChartTitles.filter(t => t !== chart.title);
-                                      } else {
-                                        nextTitles = [...selectedChartTitles, chart.title];
-                                      }
-                                      setSelectedChartTitles(nextTitles);
-                                      
-                                      if (nextTitles.length > 0) {
-                                        if (carouselIndex >= nextTitles.length) {
-                                          setCarouselIndex(nextTitles.length - 1);
-                                        }
-                                        if (!nextTitles.includes(activeChartTab)) {
-                                          setActiveChartTab(nextTitles[0]);
-                                        }
-                                      }
-                                    }}
-                                    style={{ display: 'none' }}
-                                  />
-                                  <span style={{ fontSize: '0.75rem', color: 'var(--BannerGB)' }}>
-                                    {isChecked ? '✓' : '+'}
-                                  </span>
-                                  <span style={{ fontSize: '0.725rem' }}>{chart.title}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
+                {/* Dynamic Visualizations Area */}
+                {chartsToRender.length === 0 ? (
+                  <div style={{ background: 'white', border: '1.5px dashed var(--LightGray)', borderRadius: '10px', padding: '4rem 1rem', textAlign: 'center', color: 'var(--DarkGray)', fontSize: '0.85rem' }}>
+                    {availableCharts.length === 0 
+                      ? (isLoading ? 'AI Copilot is auditing spreadsheet and designing dashboard charts...' : 'Upload data to begin.') 
+                      : 'No charts active. Select configurations in the Dashboard Control Panel to populate this section.'}
+                  </div>
+                ) : (
+                  <div style={{ width: '100%' }}>
+                    {/* ==========================================
+                       PRESENTATION MODE: GRID (Dynamic Tile Layout)
+                       ========================================== */}
+                    {layoutMode === 'grid' && renderGroupedGrid(chartsToRender)}
+
+                    {/* ==========================================
+                       PRESENTATION MODE: CAROUSEL (Slider Frame)
+                       ========================================== */}
+                    {layoutMode === 'carousel' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+                        <div className="carousel-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                            onClick={() => setCarouselIndex(prev => (prev > 0 ? prev - 1 : chartsToRender.length - 1))}
+                          >
+                            <ChevronLeft size={14} /> Prev
+                          </button>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
+                            Chart {carouselIndex + 1} of {chartsToRender.length} • {chartsToRender[carouselIndex]?.title}
+                          </span>
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                            onClick={() => setCarouselIndex(prev => (prev < chartsToRender.length - 1 ? prev + 1 : 0))}
+                          >
+                            Next <ChevronRight size={14} />
+                          </button>
                         </div>
-
-                        {/* Creator form */}
-                        <div style={{ borderTop: '1px dashed var(--LightGray)', paddingTop: '0.75rem' }}>
-                          <div style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--DarkGray)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            Add New Dynamic Visualization
+                        {chartsToRender[carouselIndex] && (
+                          <div className="dashboard-section-card" style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.25rem', boxShadow: 'var(--shadow-md)' }}>
+                            <InsightChart
+                              chartSpec={chartsToRender[carouselIndex]}
+                              rows={activeSheet?.rows || []}
+                              borderless={true}
+                            />
                           </div>
-                          <form onSubmit={handleCreateCustomChart} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'end' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: '1 1 150px' }}>
-                              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Chart Title</span>
-                              <input 
-                                type="text"
-                                className="form-input"
-                                style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}
-                                placeholder="e.g. Overtime Total"
-                                value={customTitle}
-                                onChange={e => setCustomTitle(e.target.value)}
-                                required
-                              />
-                            </div>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', width: '90px' }}>
-                              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Type</span>
-                              <select 
-                                className="filter-select" 
-                                style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}
-                                value={customChartType}
-                                onChange={e => setCustomChartType(e.target.value as any)}
-                              >
-                                <option value="bar">Bar</option>
-                                <option value="line">Line</option>
-                                <option value="pie">Pie</option>
-                                <option value="scatter">Scatter</option>
-                              </select>
-                            </div>
+                        )}
+                        
+                        {/* Print Fallback (Always prints all grids grouped) */}
+                        <div style={{ display: 'none' }} className="print-fallback-only">
+                          {renderGroupedGrid(chartsToRender)}
+                        </div>
+                      </div>
+                    )}
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: '1 1 100px' }}>
-                              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>X-Axis</span>
-                              <select 
-                                className="filter-select" 
-                                style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}
-                                value={customX}
-                                onChange={e => setCustomX(e.target.value)}
-                                required
-                              >
-                                <option value="">-- Select --</option>
-                                {activeSheet?.columns.map((c, i) => (
-                                  <option key={i} value={c.name}>{c.name}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: '1 1 100px' }}>
-                              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Y-Axis</span>
-                              <select 
-                                className="filter-select" 
-                                style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}
-                                value={customY}
-                                onChange={e => setCustomY(e.target.value)}
-                                required
-                              >
-                                <option value="">-- Select --</option>
-                                {activeSheet?.columns.map((c, i) => (
-                                  <option key={i} value={c.name}>{c.name}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', width: '90px' }}>
-                              <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Rollup</span>
-                              <select 
-                                className="filter-select" 
-                                style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}
-                                value={customAggregation}
-                                onChange={e => setCustomAggregation(e.target.value as any)}
-                              >
-                                <option value="sum">Sum</option>
-                                <option value="avg">Average</option>
-                                <option value="count">Count</option>
-                                <option value="none">None</option>
-                              </select>
-                            </div>
-
-                            <button 
-                              type="submit"
-                              className="btn btn-primary" 
-                              style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', height: '28px' }}
+                    {/* ==========================================
+                       PRESENTATION MODE: TABS (Selector Row)
+                       ========================================== */}
+                    {layoutMode === 'tabbed' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+                        <div className="tabs-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', borderBottom: '1.5px solid var(--LightGray)', paddingBottom: '0.5rem' }}>
+                          {chartsToRender.map((chart, idx) => (
+                            <button
+                              key={idx}
+                              className="btn"
+                              style={{
+                                padding: '0.3rem 0.6rem',
+                                fontSize: '0.75rem',
+                                borderRadius: '6px',
+                                background: activeChartTab === chart.title ? 'var(--LabelBG)' : 'white',
+                                color: activeChartTab === chart.title ? 'white' : 'var(--DarkGray)',
+                                border: activeChartTab === chart.title ? 'none' : '1px solid var(--LightGray)',
+                                fontWeight: activeChartTab === chart.title ? 'bold' : 'normal',
+                                boxShadow: activeChartTab === chart.title ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                              }}
+                              onClick={() => setActiveChartTab(chart.title)}
                             >
-                              Add
+                              {chart.title}
                             </button>
-                          </form>
+                          ))}
+                        </div>
+                        {chartsToRender.find(c => c.title === activeChartTab) && (
+                          <div className="dashboard-section-card" style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.25rem', boxShadow: 'var(--shadow-md)' }}>
+                            <InsightChart
+                              chartSpec={chartsToRender.find(c => c.title === activeChartTab)!}
+                              rows={activeSheet?.rows || []}
+                              borderless={true}
+                            />
+                          </div>
+                        )}
+
+                        {/* Print Fallback (Always prints all grids grouped) */}
+                        <div style={{ display: 'none' }} className="print-fallback-only">
+                          {renderGroupedGrid(chartsToRender)}
                         </div>
                       </div>
                     )}
                   </div>
+                )}
 
-                  {/* Dynamic Visualizations Area */}
-                  {chartsToRender.length === 0 ? (
-                    <div style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--DarkGray)', fontSize: '0.85rem' }}>
-                      {availableCharts.length === 0 
-                        ? (isLoading ? 'AI Copilot is auditing spreadsheet and designing dashboard charts...' : 'Upload data to begin.') 
-                        : 'No charts active. Select configurations in the Dashboard Customizer to populate this section.'}
-                    </div>
-                  ) : (
-                    <div style={{ width: '100%', borderTop: '1px solid var(--LightGray)', paddingTop: '1rem' }}>
-                      {/* ==========================================
-                         PRESENTATION MODE: GRID (Dynamic Tile Layout)
-                         ========================================== */}
-                      {layoutMode === 'grid' && renderGroupedGrid(chartsToRender)}
-
-                      {/* ==========================================
-                         PRESENTATION MODE: CAROUSEL (Slider Frame)
-                         ========================================== */}
-                      {layoutMode === 'carousel' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
-                          <div className="carousel-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--WidgetBG)', padding: '0.4rem 0.75rem', borderRadius: '6px', border: '1px solid rgba(0,82,189,0.08)' }}>
-                            <button 
-                              className="btn btn-secondary" 
-                              style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}
-                              onClick={() => setCarouselIndex(prev => (prev > 0 ? prev - 1 : chartsToRender.length - 1))}
-                            >
-                              <ChevronLeft size={12} /> Prev
-                            </button>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
-                              Chart {carouselIndex + 1} of {chartsToRender.length} • {chartsToRender[carouselIndex]?.title}
-                            </span>
-                            <button 
-                              className="btn btn-secondary" 
-                              style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}
-                              onClick={() => setCarouselIndex(prev => (prev < chartsToRender.length - 1 ? prev + 1 : 0))}
-                            >
-                              Next <ChevronRight size={12} />
-                            </button>
-                          </div>
-                          {chartsToRender[carouselIndex] && (
-                            <div className="dashboard-section-card">
-                              <InsightChart
-                                chartSpec={chartsToRender[carouselIndex]}
-                                rows={activeSheet?.rows || []}
-                                borderless={true}
-                              />
-                            </div>
-                          )}
-                          
-                          {/* Print Fallback (Always prints all grids grouped) */}
-                          <div style={{ display: 'none' }} className="print-fallback-only">
-                            {renderGroupedGrid(chartsToRender)}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* ==========================================
-                         PRESENTATION MODE: TABS (Selector Row)
-                         ========================================== */}
-                      {layoutMode === 'tabbed' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
-                          <div className="tabs-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', borderBottom: '1px solid var(--LightGray)', paddingBottom: '0.25rem' }}>
-                            {chartsToRender.map((chart, idx) => (
-                              <button
-                                key={idx}
-                                className="btn"
-                                style={{
-                                  padding: '0.25rem 0.5rem',
-                                  fontSize: '0.7rem',
-                                  borderRadius: '4px',
-                                  background: activeChartTab === chart.title ? 'var(--LabelBG)' : 'transparent',
-                                  color: activeChartTab === chart.title ? 'white' : 'var(--DarkGray)',
-                                  border: activeChartTab === chart.title ? 'none' : '1px solid var(--LightGray)',
-                                  fontWeight: activeChartTab === chart.title ? 'bold' : 'normal'
-                                }}
-                                onClick={() => setActiveChartTab(chart.title)}
-                              >
-                                {chart.title}
-                              </button>
-                            ))}
-                          </div>
-                          {chartsToRender.find(c => c.title === activeChartTab) && (
-                            <div className="dashboard-section-card">
-                              <InsightChart
-                                chartSpec={chartsToRender.find(c => c.title === activeChartTab)!}
-                                rows={activeSheet?.rows || []}
-                                borderless={true}
-                              />
-                            </div>
-                          )}
-
-                          {/* Print Fallback (Always prints all grids grouped) */}
-                          <div style={{ display: 'none' }} className="print-fallback-only">
-                            {renderGroupedGrid(chartsToRender)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                </div>
               </div>
-
             </div>
 
-            {/* Right Column - Chat Assistant Drawer */}
+            {/* Right Column - Chat Assistant Drawer (420px fixed) */}
             {!isChatCollapsed && (
-              <div className="sidebar-panel">
+              <div 
+                className="sidebar-panel" 
+                style={{ 
+                  width: '420px', 
+                  flexShrink: 0, 
+                  marginLeft: '1.25rem',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
                 <ChatPanel
                   messages={messages}
                   onSendMessage={handleSendMessage}
