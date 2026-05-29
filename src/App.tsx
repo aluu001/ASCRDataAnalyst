@@ -355,8 +355,36 @@ function App() {
 
   // Render grouped financial vs operational grid panels dynamically
   const renderGroupedGrid = (charts: ChartSpecification[]) => {
+    const isLargeChart = (chart: ChartSpecification, rows: any[]): boolean => {
+      if (chart.chartType === 'pie') return false;
+      const lowerX = (chart.xAxisColumn || '').toLowerCase();
+      const lowerTitle = (chart.title || '').toLowerCase();
+      if (chart.chartType === 'line') return true;
+      if (
+        lowerX.includes('month') || 
+        lowerX.includes('date') || 
+        lowerX.includes('year') || 
+        lowerX.includes('time') ||
+        lowerTitle.includes('trend') || 
+        lowerTitle.includes('timeline') || 
+        lowerTitle.includes('monthly') ||
+        lowerTitle.includes('overtime') ||
+        lowerTitle.includes('response time')
+      ) {
+        return true;
+      }
+      if (rows && rows.length > 0 && chart.xAxisColumn) {
+        const uniqueVals = new Set(rows.map(r => r[chart.xAxisColumn]).filter(v => v !== undefined && v !== null));
+        if (uniqueVals.size > 5) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     const financialCharts = charts.filter(c => classifyChart(c.title) === 'financial');
     const operationalCharts = charts.filter(c => classifyChart(c.title) === 'operational');
+    const rows = activeSheet?.rows || [];
 
     return (
       <div className="print-charts-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
@@ -369,20 +397,21 @@ function App() {
               className="dashboard-section-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: financialCharts.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
                 gap: '1.25rem'
               }}
             >
               {financialCharts.map((chart, idx) => {
-                const spanStyle = (financialCharts.length % 2 !== 0 && idx === 0 && financialCharts.length > 1) 
-                  ? { gridColumn: 'span 2' } 
-                  : {};
+                const isLarge = isLargeChart(chart, rows);
+                const gridColumn = isLarge ? 'span 2' : 'span 1';
+                const height = isLarge ? '400px' : '330px';
                 return (
-                  <div key={idx} style={spanStyle}>
+                  <div key={idx} style={{ gridColumn }}>
                     <InsightChart
                       chartSpec={chart}
-                      rows={activeSheet?.rows || []}
+                      rows={rows}
                       borderless={true}
+                      height={height}
                     />
                   </div>
                 );
@@ -400,20 +429,21 @@ function App() {
               className="dashboard-section-grid"
               style={{
                 display: 'grid',
-                gridTemplateColumns: operationalCharts.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
                 gap: '1.25rem'
               }}
             >
               {operationalCharts.map((chart, idx) => {
-                const spanStyle = (operationalCharts.length % 2 !== 0 && idx === 0 && operationalCharts.length > 1) 
-                  ? { gridColumn: 'span 2' } 
-                  : {};
+                const isLarge = isLargeChart(chart, rows);
+                const gridColumn = isLarge ? 'span 2' : 'span 1';
+                const height = isLarge ? '400px' : '330px';
                 return (
-                  <div key={idx} style={spanStyle}>
+                  <div key={idx} style={{ gridColumn }}>
                     <InsightChart
                       chartSpec={chart}
-                      rows={activeSheet?.rows || []}
+                      rows={rows}
                       borderless={true}
+                      height={height}
                     />
                   </div>
                 );
@@ -749,32 +779,121 @@ function App() {
                   </div>
                 </div>
 
-                {/* 2. Compact Tabular Spreadsheet Preview */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <FileSpreadsheet size={14} style={{ color: 'var(--BannerGB)' }} />
-                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Spreadsheet Data</span>
+                {/* 2. Worksheet Metadata Summary Card */}
+                {activeSheet && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <FileSpreadsheet size={14} style={{ color: 'var(--BannerGB)' }} />
+                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Active Worksheet Summary
+                      </span>
+                    </div>
+                    <div 
+                      style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        border: '1px solid var(--border-light)', 
+                        borderRadius: '10px', 
+                        padding: '1rem', 
+                        background: 'white',
+                        boxShadow: 'var(--shadow-sm)',
+                        gap: '0.75rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: 'rgba(0, 33, 133, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Database size={16} style={{ color: 'var(--LabelBG)' }} />
+                        </div>
+                        <div style={{ overflow: 'hidden' }}>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--LabelBG)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                            {activeSheet.name}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--DarkGray)' }}>
+                            Active worksheet schema & size
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Row/Col stats badges */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                        <div style={{ background: 'var(--ExtraLightGray)', border: '1px solid var(--LightGray)', borderRadius: '6px', padding: '0.4rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                          <span style={{ fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--DarkGray)', fontWeight: 'bold' }}>Total Rows</span>
+                          <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{activeSheet.rowCount.toLocaleString()}</strong>
+                        </div>
+                        <div style={{ background: 'var(--ExtraLightGray)', border: '1px solid var(--LightGray)', borderRadius: '6px', padding: '0.4rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                          <span style={{ fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--DarkGray)', fontWeight: 'bold' }}>Columns Count</span>
+                          <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{activeSheet.columns.length} cols</strong>
+                        </div>
+                      </div>
+
+                      {/* Column Types preview list */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                          Detected Fields ({activeSheet.columns.length})
+                        </span>
+                        <div 
+                          style={{ 
+                            maxHeight: '110px', 
+                            overflowY: 'auto', 
+                            border: '1px solid var(--LightGray)', 
+                            borderRadius: '6px', 
+                            padding: '0.4rem 0.5rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.3rem',
+                            background: 'var(--ExtraLightGray)'
+                          }}
+                        >
+                          {activeSheet.columns.map((c, i) => {
+                            let typeLabel = 'Text';
+                            let typeColor = '#0052BD'; // Blue
+                            if (c.type === 'number') {
+                              typeLabel = 'Num';
+                              typeColor = '#10b981'; // Green
+                            } else if (c.type === 'date') {
+                              typeLabel = 'Date';
+                              typeColor = '#f59e0b'; // Amber
+                            } else if (c.type === 'boolean') {
+                              typeLabel = 'Bool';
+                              typeColor = '#6366f1'; // Purple
+                            }
+
+                            return (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.7rem' }}>
+                                <span style={{ fontWeight: 500, color: 'var(--LabelBG)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '250px' }} title={c.name}>
+                                  {c.name}
+                                </span>
+                                <span style={{ fontSize: '0.65rem', background: 'white', color: typeColor, border: `1px solid ${typeColor}`, borderRadius: '4px', padding: '0px 4px', fontWeight: 'bold' }}>
+                                  {typeLabel}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Direct jump to dedicated tab button */}
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        style={{ 
+                          width: '100%', 
+                          padding: '0.45rem', 
+                          fontSize: '0.75rem', 
+                          borderRadius: '6px', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '0.4rem', 
+                          marginTop: '0.25rem' 
+                        }}
+                        onClick={() => setActiveWorkspaceTab('spreadsheet')}
+                      >
+                        <FileSpreadsheet size={14} /> Open Full Spreadsheet Grid
+                      </button>
+                    </div>
                   </div>
-                  <div 
-                    style={{ 
-                      height: '300px', 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      border: '1px solid var(--LightGray)', 
-                      borderRadius: '8px', 
-                      padding: '0.75rem', 
-                      background: 'white', 
-                      overflow: 'hidden'
-                    }}
-                  >
-                    <DataPreview
-                      compact={true}
-                      workbookData={workbookData}
-                      activeSheetName={activeSheetName}
-                      onSheetChange={handleSheetChange}
-                    />
-                  </div>
-                </div>
+                )}
 
                 {/* 3. Toggle Active Dashboard Charts Checklist */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>

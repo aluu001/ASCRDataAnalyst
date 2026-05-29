@@ -23,6 +23,7 @@ interface InsightChartProps {
   chartSpec: ChartSpecification;
   rows: any[];
   borderless?: boolean;
+  height?: number | string;
 }
 
 const PIE_COLORS = [
@@ -98,7 +99,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, borderless = false }) => {
+export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, borderless = false, height }) => {
   const data = useMemo(() => {
     try {
       return aggregateDataset(rows, chartSpec);
@@ -242,7 +243,10 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
   };
 
   return (
-    <div className={`chart-container-widget ${borderless ? 'borderless' : ''}`}>
+    <div 
+      className={`chart-container-widget ${borderless ? 'borderless' : ''}`}
+      style={height ? { height } : undefined}
+    >
       <div className="chart-header-widget">
         <div className="chart-title-widget">{chartSpec.title}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
