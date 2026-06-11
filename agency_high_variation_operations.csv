@@ -1,0 +1,101 @@
+Employee ID,Month,Job Title,Call Source,FTE Count,Regular Hours,Overtime Hours,Total Regular Pay,Total Overtime Pay,Run Volume,Avg Cost Per Transport,Total Revenue,PEMT Supplement,Dispatch Time (sec),Response Time (min),Scene Time (min),Transport Time (min)
+EMP-117,July 2024,EMT-Basic,Critical Care Transport,1.5,273.4,0,6231,0,232,2363,474262,162450,46,13.3,40.7,43.6
+EMP-108,August 2024,Dispatcher,Disaster Response,1.2,205.2,32.6,3583,854,346,1575,333071,95788,90,21,31.2,11.9
+EMP-116,August 2024,Paramedic,911 Emergency Medical,0.5,79.7,3,2670,151,123,1113,121637,38847,50,10,25.1,19.2
+EMP-114,September 2024,Captain/Shift Supervisor,Critical Care Transport,1,171.1,0,7219,0,37,1495,38102,8573,50,9.9,18.6,17.7
+EMP-110,September 2024,EMT-Basic,Standby / Non-Emergency,1.2,189.9,0,3812,0,168,269,34779,8470,173,29.6,16.6,35.4
+EMP-118,September 2024,EMT-Basic,911 Emergency Medical,0.8,151.2,2.1,2867,60,36,816,20627,5328,56,5.2,14.9,22.2
+EMP-114,September 2024,Firefighter/EMT,911 Emergency Medical,1.2,213.1,23.3,5485,900,172,969,156125,26028,59,8.3,20,32.8
+EMP-103,September 2024,Paramedic,Critical Care Transport,1.2,207.1,20.8,6571,990,110,2467,165112,68287,59,18,22.5,39.3
+EMP-106,October 2024,Dispatcher,911 Emergency Medical,0.8,129.1,0,2482,0,115,935,78048,18598,33,5.6,31.9,9.4
+EMP-112,October 2024,Dispatcher,Interfacility Transfer,1.2,218.3,19.6,4272,575,167,495,55465,26670,69,13.7,42.5,13.6
+EMP-105,October 2024,EMT-Basic,911 Emergency Medical,1,187.5,30.1,4211,1014,132,922,93239,44295,78,14.4,38.1,24.7
+EMP-117,November 2024,Captain/Shift Supervisor,Critical Care Transport,1.2,212.7,33.3,9833,2309,93,1348,76180,23859,59,13.8,33.9,30.8
+EMP-113,November 2024,Captain/Shift Supervisor,Critical Care Transport,1,168.2,43.1,8847,3400,90,1497,102726,42633,41,9,32.5,9
+EMP-117,November 2024,Captain/Shift Supervisor,Disaster Response,0.8,148.9,41.8,6213,2616,148,990,117111,44034,98,41.4,46.7,43.7
+EMP-113,November 2024,Paramedic,Interfacility Transfer,1.5,277.2,33.1,10749,1925,68,685,33158,11045,124,10.6,17.2,20.1
+EMP-112,December 2024,Captain/Shift Supervisor,Standby / Non-Emergency,1.5,247.2,0,12887,0,244,330,51271,15601,277,33.5,38.8,20.9
+EMP-118,December 2024,Dispatcher,Interfacility Transfer,0.5,86.4,0,1623,0,87,403,24098,9437,68,21.7,40,21.1
+EMP-118,January 2025,Captain/Shift Supervisor,Interfacility Transfer,2,349.3,0,16616,0,126,494,56994,24692,92,14.4,19.6,44.2
+EMP-106,January 2025,Captain/Shift Supervisor,Standby / Non-Emergency,0.5,89.9,9.1,4139,628,120,216,19460,5772,175,16.5,37.6,44.6
+EMP-104,January 2025,EMT-Basic,Critical Care Transport,1.5,248.7,40,5391,1301,318,2320,700310,328467,34,8.2,28,12.4
+EMP-108,January 2025,Firefighter/EMT,Disaster Response,1,185,41.1,5785,1928,60,942,43052,14504,91,26.7,36.7,22.5
+EMP-102,January 2025,Firefighter/EMT,Standby / Non-Emergency,1.2,208.6,0.8,5402,31,73,268,14639,3962,117,30.1,35.3,16.8
+EMP-116,January 2025,Paramedic,Critical Care Transport,1,165.5,46.8,5833,2474,172,2360,359666,140941,35,15.6,28.5,12.9
+EMP-118,January 2025,Paramedic,Critical Care Transport,0.8,129.4,4.1,5158,245,139,1394,178484,88205,48,15.4,17.6,30.6
+EMP-110,February 2025,Dispatcher,Interfacility Transfer,0.8,144.1,12.6,2786,365,86,515,28761,4780,112,15.1,34.6,32
+EMP-108,February 2025,Paramedic,Disaster Response,0.5,90.1,39,2752,1787,32,928,27961,4351,38,31.7,38.4,8.7
+EMP-103,February 2025,Paramedic,Interfacility Transfer,1.2,212.2,29.8,7730,1628,184,471,57008,16953,157,22.4,36.1,46.6
+EMP-106,March 2025,Captain/Shift Supervisor,Interfacility Transfer,1,187.2,0,8536,0,145,558,56320,16359,130,20.9,23.5,52.2
+EMP-106,March 2025,Captain/Shift Supervisor,Critical Care Transport,2,317.7,34.6,17001,2777,128,1840,161055,35290,40,12.8,31,47.4
+EMP-111,March 2025,EMT-Basic,Disaster Response,1.2,194,14.6,4849,547,31,1580,45807,15592,50,40.3,40.7,44.2
+EMP-119,March 2025,Paramedic,Disaster Response,0.8,146.1,41.5,5278,2249,47,1175,40919,11848,80,26,33.6,34
+EMP-111,April 2025,Dispatcher,Critical Care Transport,1.2,188.1,9.3,4047,300,135,2260,212392,84733,49,15.7,11.4,34.3
+EMP-113,April 2025,EMT-Basic,Interfacility Transfer,1,188.1,0.5,4658,19,106,504,35605,14187,158,15.6,16.1,9.9
+EMP-106,April 2025,EMT-Basic,Critical Care Transport,2,337.3,41.9,7756,1445,162,2234,286058,71396,59,19.1,11.5,8.6
+EMP-107,April 2025,Firefighter/EMT,Interfacility Transfer,2,352.5,25.3,9363,1008,277,562,138770,38152,167,13.8,31.9,50.6
+EMP-113,April 2025,Firefighter/EMT,911 Emergency Medical,0.8,149.6,24.7,3849,953,113,869,67864,24773,75,6.3,41.4,19.5
+EMP-110,April 2025,Firefighter/EMT,911 Emergency Medical,1.2,217,31.8,6794,1493,205,846,150169,62948,76,12.4,39.5,46.3
+EMP-120,April 2025,Paramedic,Critical Care Transport,1.5,244.5,0,9040,0,129,2459,264684,125661,46,8.2,42.3,14
+EMP-111,May 2025,Captain/Shift Supervisor,911 Emergency Medical,2,317.6,31,16381,2398,112,772,70028,13555,33,8.1,26.6,49.8
+EMP-105,May 2025,EMT-Basic,911 Emergency Medical,0.8,125,0,3069,0,50,889,37455,6974,48,5.4,21.3,15.5
+EMP-114,May 2025,EMT-Basic,Standby / Non-Emergency,0.5,82.8,12.3,1952,435,26,248,4981,1514,101,30.2,43.7,16.7
+EMP-109,May 2025,Firefighter/EMT,Disaster Response,2,355.9,42.8,9296,1677,178,1750,207181,85402,116,38.7,11.6,48.2
+EMP-105,May 2025,Firefighter/EMT,Disaster Response,1,184.5,44.3,4526,1630,156,1571,208677,55684,60,44.4,11.6,33.4
+EMP-102,May 2025,Paramedic,Disaster Response,1.5,253.2,15.4,9306,849,64,1375,62456,25871,114,24.6,38.9,42
+EMP-106,June 2025,Captain/Shift Supervisor,Interfacility Transfer,1,158.3,8.2,8278,643,110,648,62368,29157,158,20.2,48.6,30.9
+EMP-104,June 2025,Captain/Shift Supervisor,Standby / Non-Emergency,2,319.5,0,15119,0,214,212,32091,11925,271,32.5,27.6,35.5
+EMP-120,June 2025,Captain/Shift Supervisor,Interfacility Transfer,0.5,78.4,0.6,3460,40,22,423,7651,3019,178,12.4,49.6,17.4
+EMP-106,June 2025,EMT-Basic,Interfacility Transfer,1.2,227.7,0,5678,0,175,624,96066,18304,129,21.8,40.9,30.5
+EMP-101,June 2025,Paramedic,Standby / Non-Emergency,1.5,250.2,16.4,8478,834,177,155,18149,8964,153,18.3,33.8,20.8
+EMP-119,June 2025,Paramedic,Disaster Response,1.5,265.5,38.9,9106,2001,214,1753,301553,98644,77,20.9,18.3,24.6
+EMP-104,July 2025,Captain/Shift Supervisor,911 Emergency Medical,1.5,237.4,11,12988,903,63,813,36171,5502,68,9.4,15,31.8
+EMP-105,July 2025,Dispatcher,Standby / Non-Emergency,1,185.2,48.9,4142,1641,56,218,10000,4742,193,33.7,19.3,50.7
+EMP-107,July 2025,Firefighter/EMT,Interfacility Transfer,1.2,227,20.4,6154,830,195,657,93157,32589,169,23.3,18.7,39.9
+EMP-104,July 2025,Firefighter/EMT,Standby / Non-Emergency,2,328.5,0,10561,0,251,285,58456,9676,218,23.7,33.2,9.9
+EMP-110,July 2025,Paramedic,Interfacility Transfer,0.8,138.5,40.1,5508,2392,53,677,29925,5858,105,19.4,47.1,19.1
+EMP-120,August 2025,EMT-Basic,911 Emergency Medical,0.5,91.1,0,2107,0,122,1121,107883,30157,64,10.9,10.5,20.4
+EMP-108,August 2025,EMT-Basic,Disaster Response,1.2,221.7,0,4277,0,95,1455,82979,20859,69,28.9,15.3,31.3
+EMP-103,August 2025,Paramedic,Disaster Response,0.5,93.3,1.4,3040,68,130,1233,127363,56752,112,25,35.8,36.6
+EMP-103,September 2025,Captain/Shift Supervisor,Critical Care Transport,0.8,126.2,45.5,6136,3318,115,2218,195591,77023,30,11.9,41.2,27.2
+EMP-112,September 2025,Captain/Shift Supervisor,Interfacility Transfer,0.8,127.7,30.5,5559,1992,59,555,23477,9031,127,20.4,38.9,46.2
+EMP-108,September 2025,Dispatcher,Critical Care Transport,0.5,94.5,28.4,1818,820,41,2287,69261,11401,21,18.7,46.4,9.4
+EMP-102,September 2025,EMT-Basic,Standby / Non-Emergency,2,375.8,44.9,8387,1503,171,256,33908,14313,300,34.4,32.5,27.5
+EMP-108,September 2025,EMT-Basic,Interfacility Transfer,1.2,187.3,20,3578,573,135,680,80872,29464,140,18.8,38.8,29.4
+EMP-110,September 2025,Paramedic,Interfacility Transfer,0.5,80.6,36.2,2689,1811,33,434,8742,1623,168,12.2,10.4,17.2
+EMP-106,October 2025,Captain/Shift Supervisor,Standby / Non-Emergency,1,188,11.2,9155,818,174,206,32289,6894,221,20.7,47.9,29.2
+EMP-115,October 2025,Dispatcher,Standby / Non-Emergency,1.2,216,38.9,4627,1250,116,340,34850,11491,164,21.2,35,23.8
+EMP-110,October 2025,Paramedic,Disaster Response,0.8,132.6,23.8,5146,1385,35,1365,36939,8740,91,43.5,27.1,20
+EMP-109,October 2025,Paramedic,911 Emergency Medical,1,184.5,46.6,6878,2606,92,743,41019,9099,74,9.7,14,10.9
+EMP-112,November 2025,Dispatcher,Disaster Response,0.8,145.6,2.3,3279,78,67,1181,66763,32741,93,24.1,18.7,26.9
+EMP-102,November 2025,Paramedic,911 Emergency Medical,1.2,220.1,14.4,6655,653,91,847,70742,28172,76,13,39.2,18.1
+EMP-105,December 2025,Captain/Shift Supervisor,Interfacility Transfer,0.8,125.4,46.1,6746,3720,152,491,66806,15091,168,14.3,44,50
+EMP-102,December 2025,Dispatcher,Critical Care Transport,2,334.3,16.4,6114,450,195,2310,376384,174916,56,16.2,28.4,13.6
+EMP-109,December 2025,Dispatcher,Disaster Response,1,181.8,11.4,4021,378,132,1410,154510,59616,45,41.5,20,44.8
+EMP-107,January 2026,Captain/Shift Supervisor,911 Emergency Medical,1,159.6,27,7350,1865,241,775,127797,61188,87,8.3,36.5,14.4
+EMP-103,January 2026,EMT-Basic,911 Emergency Medical,2,326.2,31.1,6378,912,428,990,292007,142820,66,8.5,35.5,49.8
+EMP-113,January 2026,EMT-Basic,Standby / Non-Emergency,1.5,241.5,33.3,4529,937,213,181,33341,6691,118,33.5,20.9,32
+EMP-104,January 2026,Firefighter/EMT,Critical Care Transport,1.5,256.7,53.3,7362,2293,174,1561,240927,38458,60,16.3,16.9,22.8
+EMP-109,February 2026,Captain/Shift Supervisor,911 Emergency Medical,0.8,148.1,1.1,6347,71,23,730,15380,4812,43,6.7,44,15.1
+EMP-103,February 2026,Captain/Shift Supervisor,Standby / Non-Emergency,0.5,89.1,0,4562,0,14,201,1963,838,123,34.7,40.2,28.4
+EMP-118,February 2026,Dispatcher,Standby / Non-Emergency,0.8,148.9,0,2894,0,56,201,6952,2665,213,31.5,32.2,16
+EMP-102,February 2026,EMT-Basic,Interfacility Transfer,0.8,151.1,35.7,3542,1255,42,524,14091,2718,119,12.9,16.1,23.8
+EMP-108,February 2026,Firefighter/EMT,Disaster Response,0.8,126.8,0,3927,0,70,1667,91511,28918,65,16.6,43.8,43.9
+EMP-104,February 2026,Firefighter/EMT,Critical Care Transport,1.2,218.2,44.2,5861,1781,188,1489,204522,74931,57,17.9,18.5,20.7
+EMP-110,February 2026,Paramedic,Disaster Response,1.2,223.3,0,7222,0,128,1453,165732,71571,114,21.9,34.3,51.6
+EMP-119,March 2026,Dispatcher,Critical Care Transport,1.2,201,37.3,4589,1277,74,2380,128127,45347,35,14.1,16.3,18.1
+EMP-112,March 2026,Firefighter/EMT,Interfacility Transfer,2,374.8,45.1,11054,1995,98,638,54196,17771,135,18.9,35.5,8.8
+EMP-114,April 2026,EMT-Basic,Disaster Response,0.8,150.7,0,3308,0,99,1285,110565,25613,53,41.9,46.5,39
+EMP-114,April 2026,EMT-Basic,Standby / Non-Emergency,0.5,83,4,1598,115,21,162,2208,386,146,34,41.4,8.3
+EMP-105,April 2026,Paramedic,Disaster Response,1,164.1,53.8,6604,3248,63,1737,68900,24418,106,36.9,49.3,40.4
+EMP-115,May 2026,EMT-Basic,Disaster Response,2,322.8,0,7822,0,183,1291,155251,35530,17,44.9,17.1,31.8
+EMP-106,May 2026,EMT-Basic,Critical Care Transport,1.2,203.3,44.5,5099,1674,93,1693,107368,27829,54,18.5,44.4,42.5
+EMP-112,May 2026,Firefighter/EMT,Disaster Response,1.5,255.9,14.7,6899,594,187,1579,205748,81198,45,29.8,40,9.4
+EMP-118,May 2026,Paramedic,Disaster Response,0.8,126.2,45.6,4192,2272,51,916,34908,9513,87,35.8,20.8,16.1
+EMP-101,June 2026,Captain/Shift Supervisor,Standby / Non-Emergency,1.2,192.9,39.2,10255,3126,172,212,30728,8157,262,24.3,26.6,32.8
+EMP-103,June 2026,Dispatcher,Interfacility Transfer,0.5,82.8,0,1519,0,56,525,24452,5520,164,10.9,26.1,34.7
+EMP-108,June 2026,EMT-Basic,Disaster Response,1.5,242.1,18.9,5070,594,160,1775,178832,75247,94,45,37.5,35.1
+EMP-105,June 2026,EMT-Basic,911 Emergency Medical,0.8,126.7,23.4,2815,780,36,924,24595,9428,77,5.7,32.8,40.6
+EMP-104,June 2026,EMT-Basic,911 Emergency Medical,1.5,254.4,19.7,5934,689,207,1108,150608,68762,61,6.5,39.4,45.7
+EMP-106,June 2026,Firefighter/EMT,Standby / Non-Emergency,0.8,132.4,0,3470,0,55,228,8681,2832,140,19,14.4,11.8
+EMP-118,June 2026,Paramedic,Critical Care Transport,0.5,82.6,7.4,3094,416,79,2211,141495,27676,45,9.6,15.5,42.3

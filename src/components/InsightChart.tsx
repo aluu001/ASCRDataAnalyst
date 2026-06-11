@@ -21,7 +21,7 @@ import {
   PolarRadiusAxis,
   Radar
 } from 'recharts';
-import { Info, X } from 'lucide-react';
+import { Info, EyeOff, Maximize2 } from 'lucide-react';
 import { aggregateDataset } from '../utils/dataEngine';
 import type { ChartSpecification } from '../utils/gemini';
 
@@ -32,6 +32,7 @@ interface InsightChartProps {
   height?: number | string;
   colorTheme?: 'classic' | 'vibrant';
   onRemove?: () => void;
+  onExpand?: () => void;
 }
 
 const PIE_COLORS = [
@@ -438,7 +439,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, borderless = false, height, colorTheme = 'vibrant', onRemove }) => {
+export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, borderless = false, height, colorTheme = 'vibrant', onRemove, onExpand }) => {
   const data = useMemo(() => {
     try {
       return aggregateDataset(rows, chartSpec);
@@ -722,29 +723,73 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
             {chartSpec.chartType}
           </div>
 
+          {onExpand && (
+            <button
+              type="button"
+              className="chart-expand-btn"
+              onClick={onExpand}
+              title="Expand Visual"
+              style={{
+                background: 'rgba(0, 82, 189, 0.06)',
+                border: '1px solid rgba(0, 82, 189, 0.12)',
+                cursor: 'pointer',
+                color: 'var(--BannerGB)',
+                padding: '3px 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                fontSize: '0.65rem',
+                fontWeight: 'bold',
+                borderRadius: '4px',
+                transition: 'all 0.15s ease',
+                marginLeft: '0.25rem'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 82, 189, 0.12)';
+                e.currentTarget.style.color = 'var(--LabelBG)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 82, 189, 0.06)';
+                e.currentTarget.style.color = 'var(--BannerGB)';
+              }}
+            >
+              <Maximize2 size={11} />
+              <span>Expand</span>
+            </button>
+          )}
+
           {onRemove && (
             <button
               type="button"
               className="chart-remove-btn"
               onClick={onRemove}
-              title="Remove Visual"
+              title="Hide Visual"
               style={{
-                background: 'transparent',
-                border: 'none',
+                background: 'rgba(148, 163, 184, 0.08)',
+                border: '1px solid rgba(148, 163, 184, 0.15)',
                 cursor: 'pointer',
-                color: '#94a3b8',
-                padding: '2px',
+                color: '#64748b',
+                padding: '3px 8px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease',
+                gap: '0.25rem',
+                fontSize: '0.65rem',
+                fontWeight: 'bold',
                 borderRadius: '4px',
+                transition: 'all 0.15s ease',
                 marginLeft: '0.25rem'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(148, 163, 184, 0.15)';
+                e.currentTarget.style.color = 'var(--LabelBG)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(148, 163, 184, 0.08)';
+                e.currentTarget.style.color = '#64748b';
+              }}
             >
-              <X size={14} />
+              <EyeOff size={11} />
+              <span>Hide</span>
             </button>
           )}
         </div>

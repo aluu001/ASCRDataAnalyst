@@ -16,7 +16,8 @@ import {
   Users,
   Clock,
   DollarSign,
-  ShieldCheck
+  ShieldCheck,
+  Minimize2
 } from 'lucide-react';
 import { FileUploader } from './components/FileUploader';
 import { DataPreview } from './components/DataPreview';
@@ -38,8 +39,6 @@ function inlineMarkdown(text: string): string {
 // Smart helper to generate 8+ default charts based on sheet columns
 function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecification[] {
   const numericCols = sheet.columns.filter(c => c.type === 'number');
-  const catCols = sheet.columns.filter(c => c.type === 'string' || c.type === 'date');
-  const catCol = catCols[0]?.name || '';
 
   // 1. If it's a known mock file, return pre-configured highly specific metrics
   if (docName.includes('PEMT Data') || sheet.name.includes('PEMT Reimbursement')) {
@@ -81,23 +80,158 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
     ];
   }
 
-  // 2. Fallback dynamic generator for user-uploaded custom sheets
-  if (numericCols.length > 0) {
-    const y1 = numericCols[0].name;
-    const y2 = numericCols[1]?.name || y1;
-    const y3 = numericCols[2]?.name || y1;
-    const cat = catCol || sheet.columns[0]?.name || '';
+  // 2. Smart dynamic generator for user-uploaded custom sheets
+  // First, find the best categorical column (unique count 2-15 or matching keywords)
+  const getSmartCatCol = (): string => {
+    const preferredNames = [/job title|title|role|dept|department|category|month|source|incident|type|call source/i];
+    for (const regex of preferredNames) {
+      const col = sheet.columns.find(c => (c.type === 'string' || c.type === 'date') && regex.test(c.name));
+      if (col) return col.name;
+    }
+    const okCol = sheet.columns.find(c => (c.type === 'string' || c.type === 'date') && c.uniqueCount >= 2 && c.uniqueCount <= 15);
+    if (okCol) return okCol.name;
 
-    return [
-      { chartType: 'bar', title: `Distribution of ${y1} by ${cat}`, xAxisColumn: cat, yAxisColumn: y1, aggregation: 'sum' },
-      { chartType: 'bar', title: `Distribution of ${y2} by ${cat}`, xAxisColumn: cat, yAxisColumn: y2, aggregation: 'sum' },
-      { chartType: 'line', title: `Average of ${y1} over ${cat}`, xAxisColumn: cat, yAxisColumn: y1, aggregation: 'avg' },
-      { chartType: 'line', title: `Average of ${y2} over ${cat}`, xAxisColumn: cat, yAxisColumn: y2, aggregation: 'avg' },
-      { chartType: 'pie', title: `Share of ${y1} by Category`, xAxisColumn: cat, yAxisColumn: y1, aggregation: 'sum' },
-      { chartType: 'pie', title: `Share of ${y3} by Category`, xAxisColumn: cat, yAxisColumn: y3, aggregation: 'sum' },
-      { chartType: 'scatter', title: `Correlation: ${y1} vs ${y2}`, xAxisColumn: y1, yAxisColumn: y2, aggregation: 'none' },
-      { chartType: 'bar', title: `Count of Records by ${cat}`, xAxisColumn: cat, yAxisColumn: y1, aggregation: 'count' }
-    ];
+    const stringCol = sheet.columns.find(c => c.type === 'string' || c.type === 'date');
+    if (stringCol) return stringCol.name;
+
+    return sheet.columns[0]?.name || '';
+  };
+
+  const cat = getSmartCatCol();
+
+  if (numericCols.length > 0) {
+    // Look for a date/time/month column for line charts
+    const timeCol = sheet.columns.find(c => (c.type === 'string' || c.type === 'date') && /month|date|year/i.test(c.name))?.name || cat;
+
+    // Identify specific metric matches to build highly intuitive presets
+    const volumeCol = numericCols.find(c => /volume|count|transports|runs|cases/i.test(c.name))?.name;
+    const costCol = numericCols.find(c => /cost|expense|fee|charge/i.test(c.name))?.name;
+    const payCol = numericCols.find(c => /pay|salary|wages|rate/i.test(c.name))?.name;
+    const revCol = numericCols.find(c => /revenue|receipts|supplement/i.test(c.name))?.name;
+    const timeMetricCol = numericCols.find(c => /time|delay|lag|duration/i.test(c.name))?.name;
+
+    const y1 = volumeCol || revCol || payCol || numericCols[0]?.name || '';
+    const y2 = costCol || payCol || timeMetricCol || numericCols[1]?.name || y1;
+    const y3 = revCol || timeMetricCol || numericCols[2]?.name || y1;
+
+    const list: ChartSpecification[] = [];
+
+    // Chart 1: Main aggregation Bar chart
+    if (y1) {
+      list.push({
+        chartType: 'bar',
+        title: `Total ${y1} by ${cat}`,
+        xAxisColumn: cat,
+        yAxisColumn: y1,
+        aggregation: 'sum'
+      });
+    }
+
+    // Chart 2: Time trend Line chart (if date exists) or Average Bar chart
+    if (y2) {
+      if (timeCol && timeCol !== cat) {
+        list.push({
+          chartType: 'line',
+          title: `Average ${y2} Trend over ${timeCol}`,
+          xAxisColumn: timeCol,
+          yAxisColumn: y2,
+          aggregation: 'avg'
+        });
+      } else {
+        list.push({
+          chartType: 'line',
+          title: `Average ${y2} by ${cat}`,
+          xAxisColumn: cat,
+          yAxisColumn: y2,
+          aggregation: 'avg'
+        });
+      }
+    }
+
+    // Chart 3: Allocation Pie chart
+    if (y3) {
+      list.push({
+        chartType: 'pie',
+        title: `${y3} Distribution Share by ${cat}`,
+        xAxisColumn: cat,
+        yAxisColumn: y3,
+        aggregation: 'sum'
+      });
+    }
+
+    // Chart 4: Correlation Scatter chart
+    if (y1 && y2) {
+      list.push({
+        chartType: 'scatter',
+        title: `Correlation Analysis: ${y1} vs ${y2}`,
+        xAxisColumn: y1,
+        yAxisColumn: y2,
+        aggregation: 'none'
+      });
+    }
+
+    // Chart 5: Box Plot for range distribution (extremely intuitive for cost/pay/times)
+    if (y2) {
+      list.push({
+        chartType: 'box',
+        title: `${y2} Range Spread by ${cat}`,
+        xAxisColumn: cat,
+        yAxisColumn: y2,
+        aggregation: 'none'
+      });
+    }
+
+    // Chart 6: Rankings Horizontal Bar chart (good for long labels)
+    if (y1) {
+      list.push({
+        chartType: 'horizontalBar',
+        title: `Average ${y1} Comparison Rankings by ${cat}`,
+        xAxisColumn: cat,
+        yAxisColumn: y1,
+        aggregation: 'avg'
+      });
+    }
+
+    // Chart 7: Dispatch/Response Times or second scatter
+    const scatter2X = numericCols.find(c => c.name !== y1 && c.name !== y2)?.name;
+    if (scatter2X && timeMetricCol) {
+      list.push({
+        chartType: 'scatter',
+        title: `Correlation: ${scatter2X} vs ${timeMetricCol}`,
+        xAxisColumn: scatter2X,
+        yAxisColumn: timeMetricCol,
+        aggregation: 'none'
+      });
+    } else if (y3 && y1) {
+      list.push({
+        chartType: 'bar',
+        title: `Average ${y3} by ${cat}`,
+        xAxisColumn: cat,
+        yAxisColumn: y3,
+        aggregation: 'avg'
+      });
+    }
+
+    // Chart 8: Radar Chart or Record Count
+    if (y1 && cat && list.length < 8) {
+      list.push({
+        chartType: 'radar',
+        title: `${y1} Profile Analysis by ${cat}`,
+        xAxisColumn: cat,
+        yAxisColumn: y1,
+        aggregation: 'avg'
+      });
+    } else {
+      list.push({
+        chartType: 'bar',
+        title: `Record Volume Count by ${cat}`,
+        xAxisColumn: cat,
+        yAxisColumn: y1 || numericCols[0]?.name,
+        aggregation: 'count'
+      });
+    }
+
+    return list.slice(0, 8);
   }
 
   return [];
@@ -186,6 +320,7 @@ function App() {
   const [layoutMode, setLayoutMode] = useState<'grid' | 'carousel' | 'tabbed'>('grid');
   const [carouselIndex, setCarouselIndex] = useState<number>(0);
   const [activeChartTab, setActiveChartTab] = useState<string>('');
+  const [expandedChart, setExpandedChart] = useState<ChartSpecification | null>(null);
 
   interface CalculationMapping {
     pemtVolume: string | 'auto';
@@ -887,6 +1022,7 @@ function App() {
                        height={height}
                        colorTheme={colorTheme}
                        onRemove={() => handleRemoveChart(chart.title)}
+                       onExpand={() => setExpandedChart(chart)}
                      />
                    </div>
                 );
@@ -921,6 +1057,7 @@ function App() {
                       height={height}
                       colorTheme={colorTheme}
                       onRemove={() => handleRemoveChart(chart.title)}
+                      onExpand={() => setExpandedChart(chart)}
                     />
                   </div>
                 );
@@ -1305,6 +1442,36 @@ function App() {
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                             <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Dispatch Response Time Logs</strong>
                             <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>CAD response times, transit durations, & incident scene benchmarks</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span className="badge badge-cyan" style={{ fontSize: '0.65rem', textTransform: 'none' }}>CSV data</span>
+                          <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
+                        </div>
+                      </div>
+
+                      <div 
+                        className="clickable-row" 
+                        onClick={() => handleLoadSample('agency_high_variation_operations.csv', 'High Variation')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '1rem',
+                          background: 'var(--ExtraLightGray)',
+                          border: '1.5px solid var(--LightGray)',
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                          <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
+                            <Database size={18} />
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>High-Variation Operations Dummy Data</strong>
+                            <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>100 rows of diverse operations with high variation for distribution testing</span>
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -2385,6 +2552,7 @@ function App() {
                                   height="400px"
                                   colorTheme={colorTheme}
                                   onRemove={() => handleRemoveChart(chartsToRender[carouselIndex].title)}
+                                  onExpand={() => setExpandedChart(chartsToRender[carouselIndex])}
                                 />
                               </div>
                             )}
@@ -2426,6 +2594,7 @@ function App() {
                                   height="400px"
                                   colorTheme={colorTheme}
                                   onRemove={() => handleRemoveChart(activeChartTab)}
+                                  onExpand={() => setExpandedChart(chartsToRender.find(c => c.title === activeChartTab)!)}
                                 />
                               </div>
                             )}
@@ -3181,6 +3350,88 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Expanded Chart Overlay Modal */}
+      {expandedChart && (
+        <div 
+          className="expanded-modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+          onClick={() => setExpandedChart(null)}
+        >
+          <div 
+            className="expanded-modal-container"
+            style={{
+              background: 'white',
+              width: '100%',
+              maxWidth: '1000px',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 40px rgba(0, 0, 0, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.8)',
+              padding: '2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--LightGray)', paddingBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--LabelBG)', margin: 0 }}>
+                {expandedChart.title}
+              </h3>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setExpandedChart(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.4rem 0.8rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 'bold',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Minimize2 size={14} /> Close View
+              </button>
+            </div>
+            <div style={{ flex: 1, minHeight: '450px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <InsightChart
+                chartSpec={expandedChart}
+                rows={filteredRows}
+                borderless={true}
+                height="450px"
+                colorTheme={colorTheme}
+              />
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--DarkGray)', borderTop: '1px solid var(--LightGray)', paddingTop: '0.75rem', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+              <span><strong>X-Axis:</strong> {expandedChart.xAxisColumn}</span>
+              <span><strong>Y-Axis:</strong> {expandedChart.yAxisColumn}</span>
+              {expandedChart.zAxisColumn && <span><strong>Z-Axis:</strong> {expandedChart.zAxisColumn}</span>}
+              <span><strong>Aggregation:</strong> {expandedChart.aggregation}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
