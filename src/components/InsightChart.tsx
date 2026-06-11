@@ -32,7 +32,7 @@ interface InsightChartProps {
   height?: number | string;
   colorTheme?: 'classic' | 'vibrant';
   onRemove?: () => void;
-  onExpand?: () => void;
+  onExpand?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 const PIE_COLORS = [

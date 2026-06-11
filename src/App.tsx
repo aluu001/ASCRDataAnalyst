@@ -321,6 +321,7 @@ function App() {
   const [carouselIndex, setCarouselIndex] = useState<number>(0);
   const [activeChartTab, setActiveChartTab] = useState<string>('');
   const [expandedChart, setExpandedChart] = useState<ChartSpecification | null>(null);
+  const [expandedChartOrigin, setExpandedChartOrigin] = useState<{ x: number; y: number } | null>(null);
 
   interface CalculationMapping {
     pemtVolume: string | 'auto';
@@ -1021,8 +1022,14 @@ function App() {
                        borderless={true}
                        height={height}
                        colorTheme={colorTheme}
-                       onRemove={() => handleRemoveChart(chart.title)}
-                       onExpand={() => setExpandedChart(chart)}
+                       onExpand={(e) => {
+                         const rect = e.currentTarget.getBoundingClientRect();
+                         setExpandedChartOrigin({
+                           x: rect.left + rect.width / 2,
+                           y: rect.top + rect.height / 2
+                         });
+                         setExpandedChart(chart);
+                       }}
                      />
                    </div>
                 );
@@ -1057,7 +1064,14 @@ function App() {
                       height={height}
                       colorTheme={colorTheme}
                       onRemove={() => handleRemoveChart(chart.title)}
-                      onExpand={() => setExpandedChart(chart)}
+                      onExpand={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setExpandedChartOrigin({
+                          x: rect.left + rect.width / 2,
+                          y: rect.top + rect.height / 2
+                        });
+                        setExpandedChart(chart);
+                      }}
                     />
                   </div>
                 );
@@ -1420,35 +1434,7 @@ function App() {
                         </div>
                       </div>
 
-                      <div 
-                        className="clickable-row" 
-                        onClick={() => handleLoadSample('Dispatch_CAD_Response_Benchmarks.xlsx', 'Arrival Time')}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '1rem',
-                          background: 'var(--ExtraLightGray)',
-                          border: '1.5px solid var(--LightGray)',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                          <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
-                            <Database size={18} />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Dispatch_CAD_Response_Benchmarks.xlsx</strong>
-                            <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>CAD response times, transit durations, & incident scene benchmarks</span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
-                          <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
-                        </div>
-                      </div>
+
 
                       <div 
                         className="clickable-row" 
@@ -2552,7 +2538,14 @@ function App() {
                                   height="400px"
                                   colorTheme={colorTheme}
                                   onRemove={() => handleRemoveChart(chartsToRender[carouselIndex].title)}
-                                  onExpand={() => setExpandedChart(chartsToRender[carouselIndex])}
+                                  onExpand={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setExpandedChartOrigin({
+                                      x: rect.left + rect.width / 2,
+                                      y: rect.top + rect.height / 2
+                                    });
+                                    setExpandedChart(chartsToRender[carouselIndex]);
+                                  }}
                                 />
                               </div>
                             )}
@@ -2594,7 +2587,14 @@ function App() {
                                   height="400px"
                                   colorTheme={colorTheme}
                                   onRemove={() => handleRemoveChart(activeChartTab)}
-                                  onExpand={() => setExpandedChart(chartsToRender.find(c => c.title === activeChartTab)!)}
+                                  onExpand={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setExpandedChartOrigin({
+                                      x: rect.left + rect.width / 2,
+                                      y: rect.top + rect.height / 2
+                                    });
+                                    setExpandedChart(chartsToRender.find(c => c.title === activeChartTab)!);
+                                  }}
                                 />
                               </div>
                             )}
@@ -3389,7 +3389,8 @@ function App() {
               flexDirection: 'column',
               gap: '1rem',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              transformOrigin: expandedChartOrigin ? `${expandedChartOrigin.x}px ${expandedChartOrigin.y}px` : 'center center'
             }}
             onClick={(e) => e.stopPropagation()}
           >

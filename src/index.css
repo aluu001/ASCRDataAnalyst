@@ -1546,11 +1546,11 @@ code {
 @keyframes modalContainerScaleIn {
   from {
     opacity: 0;
-    transform: scale(0.93) translateY(30px);
+    transform: scale(0.01);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
   }
 }
 
