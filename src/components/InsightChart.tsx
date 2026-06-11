@@ -597,8 +597,8 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               nameKey="name"
               cx="50%"
               cy="50%"
-              outerRadius={95}
-              innerRadius={50}
+              outerRadius="72%"
+              innerRadius="40%"
               paddingAngle={3}
               label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
               labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}

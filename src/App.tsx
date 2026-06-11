@@ -1362,7 +1362,7 @@ function App() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, justifyContent: 'center' }}>
                       <div 
                         className="clickable-row" 
-                        onClick={() => handleLoadSample('PEMT Data 7-1-24 - 6-30-25.xlsx', 'PEMT Data')}
+                        onClick={() => handleLoadSample('EMS_Public_Reimbursement_Model.xlsx', 'PEMT Data')}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1380,7 +1380,7 @@ function App() {
                             <Database size={18} />
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Alachua County PEMT Data</strong>
+                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>EMS_Public_Reimbursement_Model.xlsx</strong>
                             <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>PEMT volumes, transport fees, & supplemental funding totals</span>
                           </div>
                         </div>
@@ -1392,7 +1392,7 @@ function App() {
 
                       <div 
                         className="clickable-row" 
-                        onClick={() => handleLoadSample('Personnel Hours and Pay.xlsx', 'Personnel Hours')}
+                        onClick={() => handleLoadSample('Payroll_FTE_Expenditures_Audit.xlsx', 'Personnel Hours')}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1410,7 +1410,7 @@ function App() {
                             <Database size={18} />
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Personnel Hours and Pay Details</strong>
+                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Payroll_FTE_Expenditures_Audit.xlsx</strong>
                             <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>FTE counts, base pay, and overtime expenditures by job title</span>
                           </div>
                         </div>
@@ -1422,7 +1422,7 @@ function App() {
 
                       <div 
                         className="clickable-row" 
-                        onClick={() => handleLoadSample('Emergency Room Arrival Time.xlsx', 'Arrival Time')}
+                        onClick={() => handleLoadSample('Dispatch_CAD_Response_Benchmarks.xlsx', 'Arrival Time')}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1440,8 +1440,38 @@ function App() {
                             <Database size={18} />
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Dispatch Response Time Logs</strong>
+                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Dispatch_CAD_Response_Benchmarks.xlsx</strong>
                             <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>CAD response times, transit durations, & incident scene benchmarks</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
+                          <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
+                        </div>
+                      </div>
+
+                      <div 
+                        className="clickable-row" 
+                        onClick={() => handleLoadSample('Hospital_Clinical_Performance_Metrics.xlsx', 'Hospital Performance')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '1rem',
+                          background: 'var(--ExtraLightGray)',
+                          border: '1.5px solid var(--LightGray)',
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                          <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
+                            <Database size={18} />
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Hospital_Clinical_Performance_Metrics.xlsx</strong>
+                            <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>Patient admissions, stay durations, satisfaction rates, staff pay, & overhead cost models</span>
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
