@@ -180,7 +180,7 @@ function App() {
   const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
 
   // Sub-tab selection in Methodology page
-  const [activeMethodologySubTab, setActiveMethodologySubTab] = useState<'pemt' | 'fte' | 'cad'>('pemt');
+  const [activeMethodologySubTab, setActiveMethodologySubTab] = useState<'pemt' | 'fte' | 'cad' | 'general'>('pemt');
 
   // Presentation modes: 'grid' | 'carousel' | 'tabbed'
   const [layoutMode, setLayoutMode] = useState<'grid' | 'carousel' | 'tabbed'>('grid');
@@ -264,6 +264,8 @@ function App() {
       setActiveMethodologySubTab('fte');
     } else if (name.includes('cad') || name.includes('arrival') || name.includes('dispatch') || cols.includes('response time') || cols.includes('dispatch time') || name.includes('response')) {
       setActiveMethodologySubTab('cad');
+    } else {
+      setActiveMethodologySubTab('general');
     }
   }, [activeSheetName, activeSheet]);
 
@@ -305,20 +307,52 @@ function App() {
     return detected ? `Auto-Detect (${detected})` : 'Auto-Detect (Not Found)';
   };
 
+  const isPemtRelevant = useMemo(() => {
+    if (!activeSheet) return false;
+    const name = activeSheet.name.toLowerCase();
+    const cols = activeSheet.columns.map(c => c.name.toLowerCase()).join(' ');
+    return name.includes('pemt') || name.includes('reimbursement') || cols.includes('supplement') || cols.includes('reimbursement');
+  }, [activeSheet]);
+
+  const isFteRelevant = useMemo(() => {
+    if (!activeSheet) return false;
+    const name = activeSheet.name.toLowerCase();
+    const cols = activeSheet.columns.map(c => c.name.toLowerCase()).join(' ');
+    return name.includes('personnel') || name.includes('fte') || name.includes('expenses') || cols.includes('hourly rate') || cols.includes('fte') || name.includes('hours');
+  }, [activeSheet]);
+
+  const isCadRelevant = useMemo(() => {
+    if (!activeSheet) return false;
+    const name = activeSheet.name.toLowerCase();
+    const cols = activeSheet.columns.map(c => c.name.toLowerCase()).join(' ');
+    return name.includes('cad') || name.includes('arrival') || name.includes('dispatch') || cols.includes('response time') || cols.includes('dispatch time') || name.includes('response');
+  }, [activeSheet]);
+
   // Dynamic values for the Methodology & Calculations tab (updates in real time)
   const dynamicMethodologyData = useMemo(() => {
     const fallback = {
       pemtVolume: 1450,
       pemtAvgCost: 850,
       pemtRevenues: 650000,
+      pemtVolumeFallback: true,
+      pemtAvgCostFallback: true,
+      pemtRevenuesFallback: true,
       fteRegHours: 2080,
       fteOtHours: 520,
       fteTotalPay: 85800,
+      fteRegHoursFallback: true,
+      fteOtHoursFallback: true,
+      fteTotalPayFallback: true,
       cadCount: 23,
       cadAvgDispatch: 92.8,
       cadAvgResponse: 12.3,
       cadAvgScene: 13.2,
-      cadAvgTransport: 9.7
+      cadAvgTransport: 9.7,
+      cadDispatchFallback: true,
+      cadResponseFallback: true,
+      cadSceneFallback: true,
+      cadTransportFallback: true,
+      generalStats: [] as Array<{ columnName: string; sum: number; avg: number; count: number }>
     };
 
     if (!processedActiveSheet || !filteredRows || filteredRows.length === 0) {
@@ -476,18 +510,48 @@ function App() {
     const cadAvgScene = cadSceneCount > 0 ? Number((cadSceneSum / cadSceneCount).toFixed(1)) : getFallbackAvg(2, 14.2);
     const cadAvgTransport = cadTransportCount > 0 ? Number((cadTransportSum / cadTransportCount).toFixed(1)) : getFallbackAvg(3, 11.5);
 
+    const generalStats = numericCols.map(col => {
+      let sum = 0;
+      let count = 0;
+      rows.forEach(r => {
+        const val = Number(r[col.name]);
+        if (!isNaN(val) && val !== null && val !== undefined) {
+          sum += val;
+          count++;
+        }
+      });
+      const avg = count > 0 ? sum / count : 0;
+      return {
+        columnName: col.name,
+        sum: Number(sum.toFixed(2)),
+        avg: Number(avg.toFixed(2)),
+        count
+      };
+    });
+
     return {
       pemtVolume,
       pemtAvgCost,
       pemtRevenues,
+      pemtVolumeFallback: !volumeCol,
+      pemtAvgCostFallback: !costCol,
+      pemtRevenuesFallback: !revenueCol,
       fteRegHours: Math.round(fteRegHours),
       fteOtHours: Math.round(fteOtHours),
       fteTotalPay: Math.round(fteTotalPay),
+      fteRegHoursFallback: !regHoursCol,
+      fteOtHoursFallback: !otHoursCol,
+      fteTotalPayFallback: !ftePayCol,
       cadCount,
       cadAvgDispatch,
       cadAvgResponse,
       cadAvgScene,
-      cadAvgTransport
+      cadAvgTransport,
+      cadDispatchFallback: !dispatchCol,
+      cadResponseFallback: !responseCol,
+      cadSceneFallback: !sceneCol,
+      cadTransportFallback: !transportCol,
+      generalStats
     };
   }, [processedActiveSheet, filteredRows, columnMappings]);
 
@@ -746,6 +810,19 @@ function App() {
     window.print();
   };
 
+  const handleRemoveChart = (title: string) => {
+    const nextTitles = selectedChartTitles.filter(t => t !== title);
+    setSelectedChartTitles(nextTitles);
+    if (nextTitles.length > 0) {
+      if (carouselIndex >= nextTitles.length) {
+        setCarouselIndex(nextTitles.length - 1);
+      }
+      if (!nextTitles.includes(activeChartTab)) {
+        setActiveChartTab(nextTitles[0]);
+      }
+    }
+  };
+
   // Filter available charts based on multi-select state
   const chartsToRender = availableCharts.filter(c => selectedChartTitles.includes(c.title));
 
@@ -809,6 +886,7 @@ function App() {
                        borderless={true}
                        height={height}
                        colorTheme={colorTheme}
+                       onRemove={() => handleRemoveChart(chart.title)}
                      />
                    </div>
                 );
@@ -842,6 +920,7 @@ function App() {
                       borderless={true}
                       height={height}
                       colorTheme={colorTheme}
+                      onRemove={() => handleRemoveChart(chart.title)}
                     />
                   </div>
                 );
@@ -1731,8 +1810,6 @@ function App() {
                     </div>
                   </div>
                 )}
-
-                {/* Step 3. Toggle Active Dashboard Charts Checklist */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0, border: '1px solid var(--border-light)', borderRadius: '10px', padding: '1.25rem', background: 'white', boxShadow: 'var(--shadow-sm)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <div style={{ background: 'var(--BannerGB)', color: 'white', width: '18px', height: '18px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 'bold' }}>3</div>
@@ -1744,7 +1821,17 @@ function App() {
                     Toggle individual charts on or off to customize your active canvas.
                   </p>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginTop: '0.25rem' }}>
+                  <div 
+                    style={{ 
+                      maxHeight: '180px', 
+                      overflowY: 'auto', 
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.35rem', 
+                      marginTop: '0.25rem',
+                      paddingRight: '0.25rem'
+                    }}
+                  >
                     {availableCharts.map((chart, idx) => {
                       const isChecked = selectedChartTitles.includes(chart.title);
                       return (
@@ -1753,15 +1840,15 @@ function App() {
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.4rem',
-                            padding: '0.45rem 0.6rem',
-                            borderRadius: '8px',
-                            background: isChecked ? 'rgba(0, 82, 189, 0.06)' : 'white',
-                            border: isChecked ? '1.5px solid var(--BannerGB)' : '1px solid var(--LightGray)',
+                            justifyContent: 'space-between',
+                            gap: '0.5rem',
+                            padding: '0.4rem 0.65rem',
+                            borderRadius: '6px',
+                            background: isChecked ? 'rgba(0, 82, 189, 0.04)' : 'var(--ExtraLightGray)',
+                            border: isChecked ? '1px solid var(--BannerGB)' : '1px solid var(--LightGray)',
                             cursor: 'pointer',
                             userSelect: 'none',
                             transition: 'all 0.15s ease',
-                            boxShadow: 'var(--shadow-sm)'
                           }}
                           onClick={() => {
                             let nextTitles;
@@ -1782,25 +1869,43 @@ function App() {
                             }
                           }}
                         >
-                          <input 
-                            type="checkbox" 
-                            checked={isChecked} 
-                            readOnly
-                            style={{ accentColor: 'var(--BannerGB)', cursor: 'pointer' }}
-                          />
                           <span 
                             style={{ 
-                              fontSize: '0.7rem', 
+                              fontSize: '0.725rem', 
                               fontWeight: isChecked ? 'bold' : 'normal',
                               color: 'var(--LabelBG)',
                               textOverflow: 'ellipsis', 
                               overflow: 'hidden', 
-                              whiteSpace: 'nowrap' 
+                              whiteSpace: 'nowrap',
+                              flex: 1,
+                              minWidth: 0
                             }} 
                             title={chart.title}
                           >
                             {chart.title}
                           </span>
+                          
+                          {/* Modern switch */}
+                          <div style={{
+                            width: '28px',
+                            height: '16px',
+                            borderRadius: '10px',
+                            background: isChecked ? 'var(--BannerGB)' : '#cbd5e1',
+                            position: 'relative',
+                            transition: 'background-color 0.2s ease',
+                            flexShrink: 0
+                          }}>
+                            <div style={{
+                              width: '12px',
+                              height: '12px',
+                              borderRadius: '50%',
+                              background: 'white',
+                              position: 'absolute',
+                              top: '2px',
+                              left: isChecked ? '14px' : '2px',
+                              transition: 'left 0.2s ease'
+                            }} />
+                          </div>
                         </div>
                       );
                     })}
@@ -2279,6 +2384,7 @@ function App() {
                                   borderless={true}
                                   height="400px"
                                   colorTheme={colorTheme}
+                                  onRemove={() => handleRemoveChart(chartsToRender[carouselIndex].title)}
                                 />
                               </div>
                             )}
@@ -2319,6 +2425,7 @@ function App() {
                                   borderless={true}
                                   height="400px"
                                   colorTheme={colorTheme}
+                                  onRemove={() => handleRemoveChart(activeChartTab)}
                                 />
                               </div>
                             )}
@@ -2577,6 +2684,75 @@ function App() {
 
                   {/* Methodology Sub-Tabs Navigation */}
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', borderBottom: '1px solid var(--LightGray)', paddingBottom: '0.75rem', flexShrink: 0 }}>
+                    {isPemtRelevant && (
+                      <button
+                        type="button"
+                        className="btn"
+                        style={{
+                          padding: '0.4rem 0.85rem',
+                          fontSize: '0.8rem',
+                          borderRadius: '20px',
+                          background: activeMethodologySubTab === 'pemt' ? 'var(--LabelBG)' : 'white',
+                          color: activeMethodologySubTab === 'pemt' ? 'white' : 'var(--DarkGray)',
+                          border: activeMethodologySubTab === 'pemt' ? 'none' : '1px solid var(--LightGray)',
+                          fontWeight: activeMethodologySubTab === 'pemt' ? 'bold' : 'normal',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          boxShadow: activeMethodologySubTab === 'pemt' ? 'var(--shadow-sm)' : 'none',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setActiveMethodologySubTab('pemt')}
+                      >
+                        <DollarSign size={14} /> PEMT Supplemental Reimbursement
+                      </button>
+                    )}
+                    {isFteRelevant && (
+                      <button
+                        type="button"
+                        className="btn"
+                        style={{
+                          padding: '0.4rem 0.85rem',
+                          fontSize: '0.8rem',
+                          borderRadius: '20px',
+                          background: activeMethodologySubTab === 'fte' ? 'var(--LabelBG)' : 'white',
+                          color: activeMethodologySubTab === 'fte' ? 'white' : 'var(--DarkGray)',
+                          border: activeMethodologySubTab === 'fte' ? 'none' : '1px solid var(--LightGray)',
+                          fontWeight: activeMethodologySubTab === 'fte' ? 'bold' : 'normal',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          boxShadow: activeMethodologySubTab === 'fte' ? 'var(--shadow-sm)' : 'none',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setActiveMethodologySubTab('fte')}
+                      >
+                        <Users size={14} /> Personnel Hours & FTEs
+                      </button>
+                    )}
+                    {isCadRelevant && (
+                      <button
+                        type="button"
+                        className="btn"
+                        style={{
+                          padding: '0.4rem 0.85rem',
+                          fontSize: '0.8rem',
+                          borderRadius: '20px',
+                          background: activeMethodologySubTab === 'cad' ? 'var(--LabelBG)' : 'white',
+                          color: activeMethodologySubTab === 'cad' ? 'white' : 'var(--DarkGray)',
+                          border: activeMethodologySubTab === 'cad' ? 'none' : '1px solid var(--LightGray)',
+                          fontWeight: activeMethodologySubTab === 'cad' ? 'bold' : 'normal',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          boxShadow: activeMethodologySubTab === 'cad' ? 'var(--shadow-sm)' : 'none',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setActiveMethodologySubTab('cad')}
+                      >
+                        <Clock size={14} /> CAD Dispatch Time Benchmarks
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="btn"
@@ -2584,61 +2760,19 @@ function App() {
                         padding: '0.4rem 0.85rem',
                         fontSize: '0.8rem',
                         borderRadius: '20px',
-                        background: activeMethodologySubTab === 'pemt' ? 'var(--LabelBG)' : 'white',
-                        color: activeMethodologySubTab === 'pemt' ? 'white' : 'var(--DarkGray)',
-                        border: activeMethodologySubTab === 'pemt' ? 'none' : '1px solid var(--LightGray)',
-                        fontWeight: activeMethodologySubTab === 'pemt' ? 'bold' : 'normal',
+                        background: activeMethodologySubTab === 'general' ? 'var(--LabelBG)' : 'white',
+                        color: activeMethodologySubTab === 'general' ? 'white' : 'var(--DarkGray)',
+                        border: activeMethodologySubTab === 'general' ? 'none' : '1px solid var(--LightGray)',
+                        fontWeight: activeMethodologySubTab === 'general' ? 'bold' : 'normal',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.35rem',
-                        boxShadow: activeMethodologySubTab === 'pemt' ? 'var(--shadow-sm)' : 'none',
+                        boxShadow: activeMethodologySubTab === 'general' ? 'var(--shadow-sm)' : 'none',
                         cursor: 'pointer'
                       }}
-                      onClick={() => setActiveMethodologySubTab('pemt')}
+                      onClick={() => setActiveMethodologySubTab('general')}
                     >
-                      <DollarSign size={14} /> PEMT Supplemental Reimbursement
-                    </button>
-                    <button
-                      type="button"
-                      className="btn"
-                      style={{
-                        padding: '0.4rem 0.85rem',
-                        fontSize: '0.8rem',
-                        borderRadius: '20px',
-                        background: activeMethodologySubTab === 'fte' ? 'var(--LabelBG)' : 'white',
-                        color: activeMethodologySubTab === 'fte' ? 'white' : 'var(--DarkGray)',
-                        border: activeMethodologySubTab === 'fte' ? 'none' : '1px solid var(--LightGray)',
-                        fontWeight: activeMethodologySubTab === 'fte' ? 'bold' : 'normal',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        boxShadow: activeMethodologySubTab === 'fte' ? 'var(--shadow-sm)' : 'none',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => setActiveMethodologySubTab('fte')}
-                    >
-                      <Users size={14} /> Personnel Hours & FTEs
-                    </button>
-                    <button
-                      type="button"
-                      className="btn"
-                      style={{
-                        padding: '0.4rem 0.85rem',
-                        fontSize: '0.8rem',
-                        borderRadius: '20px',
-                        background: activeMethodologySubTab === 'cad' ? 'var(--LabelBG)' : 'white',
-                        color: activeMethodologySubTab === 'cad' ? 'white' : 'var(--DarkGray)',
-                        border: activeMethodologySubTab === 'cad' ? 'none' : '1px solid var(--LightGray)',
-                        fontWeight: activeMethodologySubTab === 'cad' ? 'bold' : 'normal',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        boxShadow: activeMethodologySubTab === 'cad' ? 'var(--shadow-sm)' : 'none',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => setActiveMethodologySubTab('cad')}
-                    >
-                      <Clock size={14} /> CAD Dispatch Time Benchmarks
+                      <BarChart2 size={14} /> Dataset Summary & Averages
                     </button>
                   </div>
 
@@ -2681,14 +2815,29 @@ function App() {
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>RUN VOLUME</div>
                               <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.pemtVolume.toLocaleString()} transports</strong>
+                              {dynamicMethodologyData.pemtVolumeFallback && (
+                                <div style={{ fontSize: '0.55rem', color: '#b45309', background: '#fef3c7', padding: '2px 4px', borderRadius: '4px', marginTop: '0.25rem', width: 'fit-content', fontWeight: 'bold' }}>
+                                  ⚠️ Fallback Value (Unmapped)
+                                </div>
+                              )}
                             </div>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>AVG COST PER RUN</div>
                               <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>${dynamicMethodologyData.pemtAvgCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                              {dynamicMethodologyData.pemtAvgCostFallback && (
+                                <div style={{ fontSize: '0.55rem', color: '#b45309', background: '#fef3c7', padding: '2px 4px', borderRadius: '4px', marginTop: '0.25rem', width: 'fit-content', fontWeight: 'bold' }}>
+                                  ⚠️ Fallback Value (Unmapped)
+                                </div>
+                              )}
                             </div>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>NET BASELINE REVENUES</div>
                               <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>${dynamicMethodologyData.pemtRevenues.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                              {dynamicMethodologyData.pemtRevenuesFallback && (
+                                <div style={{ fontSize: '0.55rem', color: '#b45309', background: '#fef3c7', padding: '2px 4px', borderRadius: '4px', marginTop: '0.25rem', width: 'fit-content', fontWeight: 'bold' }}>
+                                  ⚠️ Fallback Value (Unmapped)
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div style={{ background: 'white', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(0, 82, 189, 0.12)', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
@@ -2788,14 +2937,29 @@ function App() {
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>REGULAR HOURS</div>
                               <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.fteRegHours.toLocaleString()} hours</strong>
+                              {dynamicMethodologyData.fteRegHoursFallback && (
+                                <div style={{ fontSize: '0.55rem', color: '#b45309', background: '#fef3c7', padding: '2px 4px', borderRadius: '4px', marginTop: '0.25rem', width: 'fit-content', fontWeight: 'bold' }}>
+                                  ⚠️ Fallback Value (Unmapped)
+                                </div>
+                              )}
                             </div>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>OVERTIME HOURS</div>
                               <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.fteOtHours.toLocaleString()} hours</strong>
+                              {dynamicMethodologyData.fteOtHoursFallback && (
+                                <div style={{ fontSize: '0.55rem', color: '#b45309', background: '#fef3c7', padding: '2px 4px', borderRadius: '4px', marginTop: '0.25rem', width: 'fit-content', fontWeight: 'bold' }}>
+                                  ⚠️ Fallback Value (Unmapped)
+                                </div>
+                              )}
                             </div>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>TOTAL PAY (REG + OT)</div>
                               <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>${dynamicMethodologyData.fteTotalPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                              {dynamicMethodologyData.fteTotalPayFallback && (
+                                <div style={{ fontSize: '0.55rem', color: '#b45309', background: '#fef3c7', padding: '2px 4px', borderRadius: '4px', marginTop: '0.25rem', width: 'fit-content', fontWeight: 'bold' }}>
+                                  ⚠️ Fallback Value (Unmapped)
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div style={{ background: 'white', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(0, 82, 189, 0.12)', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
@@ -2868,14 +3032,29 @@ function App() {
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>AVG DISPATCH DELAY</div>
                               <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.cadAvgDispatch} seconds</strong>
+                              {dynamicMethodologyData.cadDispatchFallback && (
+                                <div style={{ fontSize: '0.55rem', color: '#b45309', background: '#fef3c7', padding: '2px 4px', borderRadius: '4px', marginTop: '0.25rem', width: 'fit-content', fontWeight: 'bold' }}>
+                                  ⚠️ Fallback Value (Unmapped)
+                                </div>
+                              )}
                             </div>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>AVG TURNOUT / CHUTE TIME</div>
                               <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.cadAvgTransport} minutes</strong>
+                              {dynamicMethodologyData.cadTransportFallback && (
+                                <div style={{ fontSize: '0.55rem', color: '#b45309', background: '#fef3c7', padding: '2px 4px', borderRadius: '4px', marginTop: '0.25rem', width: 'fit-content', fontWeight: 'bold' }}>
+                                  ⚠️ Fallback Value (Unmapped)
+                                </div>
+                              )}
                             </div>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>AVG SCENE ARRIVAL TIME</div>
                               <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.cadAvgResponse} minutes</strong>
+                              {dynamicMethodologyData.cadResponseFallback && (
+                                <div style={{ fontSize: '0.55rem', color: '#b45309', background: '#fef3c7', padding: '2px 4px', borderRadius: '4px', marginTop: '0.25rem', width: 'fit-content', fontWeight: 'bold' }}>
+                                  ⚠️ Fallback Value (Unmapped)
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -2911,6 +3090,63 @@ function App() {
                               Depart Scene − Arrived Scene
                             </code>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeMethodologySubTab === 'general' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div style={{ background: 'white', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          📊 Dataset Summary & Calculations
+                        </h4>
+                        <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.825rem', color: 'var(--DarkGray)', lineHeight: '1.5' }}>
+                          This page displays the real-time aggregations, calculations, and formulas automatically generated for the numerical columns of <strong>{activeSheetName}</strong>.
+                        </p>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          {dynamicMethodologyData.generalStats && dynamicMethodologyData.generalStats.length > 0 ? (
+                            dynamicMethodologyData.generalStats.map((stat, idx) => (
+                              <div key={idx} style={{ border: '1px solid var(--LightGray)', borderRadius: '10px', padding: '1rem', background: 'var(--ExtraLightGray)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px dashed var(--LightGray)', paddingBottom: '0.5rem' }}>
+                                  <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Column: {stat.columnName}</strong>
+                                  <span style={{ fontSize: '0.65rem', background: 'var(--BannerGB)', color: 'white', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                                    Numeric Metric
+                                  </span>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '0.5rem' }}>
+                                  <div style={{ background: 'white', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                                    <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>SUM TOTAL</div>
+                                    <strong style={{ fontSize: '1rem', color: 'var(--LabelBG)' }}>{stat.sum.toLocaleString()}</strong>
+                                    <div style={{ fontSize: '0.65rem', color: 'var(--DarkGray)', marginTop: '0.25rem' }}>
+                                      Formula: <code>Σ ({stat.columnName})</code>
+                                    </div>
+                                  </div>
+
+                                  <div style={{ background: 'white', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                                    <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>ARITHMETIC AVERAGE</div>
+                                    <strong style={{ fontSize: '1rem', color: 'var(--LabelBG)' }}>{stat.avg.toLocaleString()}</strong>
+                                    <div style={{ fontSize: '0.65rem', color: 'var(--DarkGray)', marginTop: '0.25rem' }}>
+                                      Formula: <code>Total Sum / Record Count</code>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div style={{ background: 'white', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)', marginTop: '0.75rem', fontSize: '0.75rem' }}>
+                                  <strong style={{ color: 'var(--LabelBG)' }}>Real-Time Walkthrough Calculation:</strong>
+                                  <div style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: 'var(--BannerGB)', marginTop: '0.25rem' }}>
+                                    Average = {stat.sum.toLocaleString()} (sum) / {stat.count.toLocaleString()} (records) = {stat.avg.toLocaleString()}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div style={{ fontSize: '0.8rem', color: 'var(--DarkGray)', fontStyle: 'italic', textAlign: 'center', padding: '2rem' }}>
+                              No numeric columns detected in worksheet <strong>{activeSheetName}</strong> to perform summary calculations.
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

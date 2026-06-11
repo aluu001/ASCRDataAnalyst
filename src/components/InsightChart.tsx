@@ -21,7 +21,7 @@ import {
   PolarRadiusAxis,
   Radar
 } from 'recharts';
-import { Info } from 'lucide-react';
+import { Info, X } from 'lucide-react';
 import { aggregateDataset } from '../utils/dataEngine';
 import type { ChartSpecification } from '../utils/gemini';
 
@@ -31,6 +31,7 @@ interface InsightChartProps {
   borderless?: boolean;
   height?: number | string;
   colorTheme?: 'classic' | 'vibrant';
+  onRemove?: () => void;
 }
 
 const PIE_COLORS = [
@@ -437,7 +438,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, borderless = false, height, colorTheme = 'vibrant' }) => {
+export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, borderless = false, height, colorTheme = 'vibrant', onRemove }) => {
   const data = useMemo(() => {
     try {
       return aggregateDataset(rows, chartSpec);
@@ -478,9 +479,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
     const hasManyLabels = data.length > 5;
     const bottom = (hasLongLabel || hasManyLabels) ? 55 : 20;
     return { top: 10, right: 20, left: 10, bottom };
-  }, [data]);
-
-  const renderChart = () => {
+  }, [data]);  const renderChart = (isPrint: boolean = false) => {
     if (chartSpec.chartType !== 'box' && data.length === 0) {
       return (
         <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -490,11 +489,13 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
     }
 
     const { chartType, yAxisColumn } = chartSpec;
+    const w = isPrint ? 480 : undefined;
+    const h = isPrint ? 180 : undefined;
 
     switch (chartType) {
       case 'bar':
         return (
-          <BarChart data={data} margin={chartMargin}>
+          <BarChart width={w} height={h} data={data} margin={chartMargin}>
             <defs>
               <linearGradient id={`barGradient-${uniqueId}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.9} />
@@ -524,7 +525,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       case 'horizontalBar':
         return (
-          <BarChart layout="vertical" data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+          <BarChart layout="vertical" width={w} height={h} data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
             <defs>
               <linearGradient id={`barHorizGradient-${uniqueId}`} x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.9} />
@@ -556,7 +557,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       case 'line':
         return (
-          <LineChart data={data} margin={chartMargin}>
+          <LineChart width={w} height={h} data={data} margin={chartMargin}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis
               dataKey="name"
@@ -588,7 +589,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       case 'pie':
         return (
-          <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <PieChart width={w} height={h} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
             <Pie
               data={data}
               dataKey="value"
@@ -611,7 +612,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       case 'scatter':
         return (
-          <ScatterChart margin={chartMargin}>
+          <ScatterChart width={w} height={h} margin={chartMargin}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis
               type="category"
@@ -638,7 +639,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       case 'bubble':
         return (
-          <ScatterChart margin={chartMargin}>
+          <ScatterChart width={w} height={h} margin={chartMargin}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis
               type="category"
@@ -671,7 +672,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       case 'radar':
         return (
-          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data} width={w} height={h} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
             <PolarGrid stroke="#cbd5e1" />
             <PolarAngleAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
             <PolarRadiusAxis angle={30} domain={[0, 'auto']} stroke="#cbd5e1" fontSize={8} tickLine={false} />
@@ -720,16 +721,49 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
           <div className={`badge ${colors.badgeClass}`} style={{ fontSize: '0.65rem', textTransform: 'capitalize' }}>
             {chartSpec.chartType}
           </div>
+
+          {onRemove && (
+            <button
+              type="button"
+              className="chart-remove-btn"
+              onClick={onRemove}
+              title="Remove Visual"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#94a3b8',
+                padding: '2px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                borderRadius: '4px',
+                marginLeft: '0.25rem'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
-      <div className="chart-wrapper">
+      
+      {/* Screen Mode Wrapper */}
+      <div className="chart-wrapper screen-only-chart">
         {chartSpec.chartType === 'box' ? (
-          renderChart()
+          renderChart(false)
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            {renderChart() || <div></div>}
+            {renderChart(false) || <div></div>}
           </ResponsiveContainer>
         )}
+      </div>
+
+      {/* Print Mode Wrapper (Static dimensions, bypasses ResponsiveContainer) */}
+      <div className="chart-wrapper print-only-chart">
+        {renderChart(true)}
       </div>
     </div>
   );
