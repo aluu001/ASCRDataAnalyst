@@ -7,19 +7,23 @@ interface DataPreviewProps {
   activeSheetName: string;
   onSheetChange: (name: string) => void;
   compact?: boolean;
+  processedActiveSheet?: any;
+  onExportCSV?: () => void;
 }
 
 export const DataPreview: React.FC<DataPreviewProps> = ({
   workbookData,
   activeSheetName,
   onSheetChange,
-  compact = false
+  compact = false,
+  processedActiveSheet,
+  onExportCSV
 }) => {
   const [viewMode, setViewMode] = useState<'preview' | 'schema'>('preview');
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
-  const activeSheet = workbookData.sheets.find(s => s.name === activeSheetName) || workbookData.sheets[0];
+  const activeSheet = processedActiveSheet || workbookData.sheets.find(s => s.name === activeSheetName) || workbookData.sheets[0];
 
   if (!activeSheet) return null;
 
@@ -87,21 +91,32 @@ export const DataPreview: React.FC<DataPreviewProps> = ({
           )}
         </span>
 
-        <div style={{ display: 'flex', gap: '0.25rem', background: 'hsl(var(--bg-input))', padding: '0.15rem', borderRadius: '6px', border: '1px solid var(--border-light)' }}>
-          <button
-            className={`btn ${viewMode === 'preview' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ padding: compact ? '0.2rem 0.5rem' : '0.3rem 0.75rem', fontSize: compact ? '0.7rem' : '0.75rem', borderRadius: '4px' }}
-            onClick={() => setViewMode('preview')}
-          >
-            {compact ? 'Data' : 'Data Preview'}
-          </button>
-          <button
-            className={`btn ${viewMode === 'schema' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ padding: compact ? '0.2rem 0.5rem' : '0.3rem 0.75rem', fontSize: compact ? '0.7rem' : '0.75rem', borderRadius: '4px' }}
-            onClick={() => setViewMode('schema')}
-          >
-            {compact ? 'Stats' : 'Column Statistics'}
-          </button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {onExportCSV && !compact && (
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+              onClick={onExportCSV}
+            >
+              Export CSV 📥
+            </button>
+          )}
+          <div style={{ display: 'flex', gap: '0.25rem', background: 'hsl(var(--bg-input))', padding: '0.15rem', borderRadius: '6px', border: '1px solid var(--border-light)' }}>
+            <button
+              className={`btn ${viewMode === 'preview' ? 'btn-primary' : 'btn-ghost'}`}
+              style={{ padding: compact ? '0.2rem 0.5rem' : '0.3rem 0.75rem', fontSize: compact ? '0.7rem' : '0.75rem', borderRadius: '4px' }}
+              onClick={() => setViewMode('preview')}
+            >
+              {compact ? 'Data' : 'Data Preview'}
+            </button>
+            <button
+              className={`btn ${viewMode === 'schema' ? 'btn-primary' : 'btn-ghost'}`}
+              style={{ padding: compact ? '0.2rem 0.5rem' : '0.3rem 0.75rem', fontSize: compact ? '0.7rem' : '0.75rem', borderRadius: '4px' }}
+              onClick={() => setViewMode('schema')}
+            >
+              {compact ? 'Stats' : 'Column Statistics'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -113,7 +128,7 @@ export const DataPreview: React.FC<DataPreviewProps> = ({
               <thead>
                 <tr>
                   <th style={{ width: '50px' }}>#</th>
-                  {activeSheet.columns.map(col => (
+                  {activeSheet.columns.map((col: any) => (
                     <th key={col.name}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <span style={{ color: 'hsl(var(--primary))' }}>{getColumnIcon(col.type)}</span>
@@ -124,10 +139,10 @@ export const DataPreview: React.FC<DataPreviewProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {paginatedRows.map((row, idx) => (
+                {paginatedRows.map((row: any, idx: number) => (
                   <tr key={idx}>
                     <td>{startIndex + idx + 1}</td>
-                    {activeSheet.columns.map(col => {
+                    {activeSheet.columns.map((col: any) => {
                       const rawVal = row[col.name];
                       let displayVal = '';
                       if (rawVal !== null && rawVal !== undefined) {
@@ -165,7 +180,7 @@ export const DataPreview: React.FC<DataPreviewProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {activeSheet.columns.map(col => (
+                {activeSheet.columns.map((col: any) => (
                   <tr key={col.name}>
                     <td style={{ fontWeight: 600, color: 'hsl(var(--text-primary))' }}>{col.name}</td>
                     <td>

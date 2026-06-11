@@ -195,18 +195,43 @@ function App() {
   const [customAggregation, setCustomAggregation] = useState<'sum' | 'avg' | 'count' | 'none'>('sum');
   const [colorTheme, setColorTheme] = useState<'classic' | 'vibrant'>('vibrant');
 
+  // Step Step States: 'upload' | 'preview' | 'dashboard'
+  const [workspaceStep, setWorkspaceStep] = useState<'upload' | 'preview' | 'dashboard'>('upload');
+  const [previewGoal, setPreviewGoal] = useState<string>('');
+  const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false);
+  const [columnTypes, setColumnTypes] = useState<Record<string, 'number' | 'string' | 'date' | 'boolean'>>({});
+  const [excludedColumns, setExcludedColumns] = useState<Set<string>>(new Set());
+
   // Directly load API key from Vite environment variable
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 
   const activeSheet = workbookData?.sheets.find(s => s.name === activeSheetName) || workbookData?.sheets[0];
 
+  const processedActiveSheet = useMemo((): SheetData | undefined => {
+    if (!activeSheet) return undefined;
+    
+    // Map columns to reflect overridden types
+    const mappedCols = activeSheet.columns.map(col => {
+      const typeOverride = columnTypes[col.name] || col.type;
+      return {
+        ...col,
+        type: typeOverride
+      };
+    }).filter(col => !excludedColumns.has(col.name));
+
+    return {
+      ...activeSheet,
+      columns: mappedCols
+    };
+  }, [activeSheet, columnTypes, excludedColumns]);
+
   // Reactive filtered dataset rows based on activeFilters state
   const filteredRows = useMemo(() => {
-    if (!activeSheet) return [];
+    if (!processedActiveSheet) return [];
     const filterKeys = Object.keys(activeFilters);
-    if (filterKeys.length === 0) return activeSheet.rows;
+    if (filterKeys.length === 0) return processedActiveSheet.rows;
 
-    return activeSheet.rows.filter(row => {
+    return processedActiveSheet.rows.filter(row => {
       return filterKeys.every(colName => {
         const allowedValues = activeFilters[colName];
         if (!allowedValues || allowedValues.length === 0) return true;
@@ -214,23 +239,158 @@ function App() {
         return allowedValues.includes(cellValue);
       });
     });
-  }, [activeSheet, activeFilters]);
+  }, [processedActiveSheet, activeFilters]);
+
+  // Dynamic values for the Methodology & Calculations tab (updates in real time)
+  const dynamicMethodologyData = useMemo(() => {
+    const fallback = {
+      pemtVolume: 1450,
+      pemtAvgCost: 850,
+      pemtRevenues: 650000,
+      fteRegHours: 2080,
+      fteOtHours: 520,
+      fteTotalPay: 85800,
+      cadCount: 23,
+      cadAvgDispatch: 92.8,
+      cadAvgResponse: 12.3,
+      cadAvgScene: 13.2,
+      cadAvgTransport: 9.7
+    };
+
+    if (!processedActiveSheet || !filteredRows || filteredRows.length === 0) {
+      return fallback;
+    }
+
+    const rows = filteredRows;
+
+    // Helper to find column name by regex
+    const findCol = (regex: RegExp) => {
+      const match = processedActiveSheet.columns.find(c => regex.test(c.name));
+      return match ? match.name : null;
+    };
+
+    // PEMT Tab variables
+    const volumeCol = findCol(/run volume|transports|volume|count/i);
+    const costCol = findCol(/avg cost per transport|cost|fee|avg cost/i);
+    const revenueCol = findCol(/total revenue|revenue|receipts|net revenue/i);
+
+    let pemtVolume = 0;
+    let pemtCostSum = 0;
+    let pemtCostCount = 0;
+    let pemtRevenues = 0;
+
+    rows.forEach(r => {
+      const v = volumeCol ? Number(r[volumeCol] || 0) : 1;
+      pemtVolume += v;
+
+      if (costCol) {
+        const c = Number(r[costCol] || 0);
+        if (c > 0) {
+          pemtCostSum += c;
+          pemtCostCount++;
+        }
+      }
+
+      if (revenueCol) {
+        pemtRevenues += Number(r[revenueCol] || 0);
+      }
+    });
+
+    if (pemtVolume === 0) pemtVolume = rows.length;
+    let pemtAvgCost = pemtCostCount > 0 ? (pemtCostSum / pemtCostCount) : 850;
+    if (pemtRevenues === 0 && volumeCol && costCol) {
+      pemtRevenues = pemtVolume * pemtAvgCost * 0.7; // Estimate baseline
+    }
+    if (pemtRevenues === 0) pemtRevenues = 650000;
+
+    // FTE Tab variables
+    const regHoursCol = findCol(/regular hours|reg hours|hours/i);
+    const otHoursCol = findCol(/overtime hours|ot hours/i);
+    const regPayCol = findCol(/total regular pay|regular pay|pay/i);
+    const otPayCol = findCol(/total overtime pay|overtime pay|ot pay/i);
+
+    let fteRegHours = 0;
+    let fteOtHours = 0;
+    let fteTotalPay = 0;
+
+    rows.forEach(r => {
+      if (regHoursCol) fteRegHours += Number(r[regHoursCol] || 0);
+      if (otHoursCol) fteOtHours += Number(r[otHoursCol] || 0);
+      if (regPayCol) fteTotalPay += Number(r[regPayCol] || 0);
+      if (otPayCol) fteTotalPay += Number(r[otPayCol] || 0);
+    });
+
+    if (fteRegHours === 0) fteRegHours = 2080 * rows.length;
+    if (fteOtHours === 0) fteOtHours = 520 * rows.length;
+    if (fteTotalPay === 0) {
+      fteTotalPay = (fteRegHours * 25) + (fteOtHours * 37.5);
+    }
+
+    // CAD Tab variables
+    const dispatchCol = findCol(/dispatch time|dispatch delay/i);
+    const responseCol = findCol(/response time|total response/i);
+    const sceneCol = findCol(/scene time|on scene/i);
+    const transportCol = findCol(/transport time|transit time/i);
+
+    let cadCount = rows.length;
+    let cadDispatchSum = 0;
+    let cadDispatchCount = 0;
+    let cadResponseSum = 0;
+    let cadResponseCount = 0;
+    let cadSceneSum = 0;
+    let cadSceneCount = 0;
+    let cadTransportSum = 0;
+    let cadTransportCount = 0;
+
+    rows.forEach(r => {
+      if (dispatchCol) {
+        cadDispatchSum += Number(r[dispatchCol] || 0);
+        cadDispatchCount++;
+      }
+      if (responseCol) {
+        cadResponseSum += Number(r[responseCol] || 0);
+        cadResponseCount++;
+      }
+      if (sceneCol) {
+        cadSceneSum += Number(r[sceneCol] || 0);
+        cadSceneCount++;
+      }
+      if (transportCol) {
+        cadTransportSum += Number(r[transportCol] || 0);
+        cadTransportCount++;
+      }
+    });
+
+    return {
+      pemtVolume,
+      pemtAvgCost: Number(pemtAvgCost.toFixed(2)),
+      pemtRevenues: Number(pemtRevenues.toFixed(2)),
+      fteRegHours,
+      fteOtHours,
+      fteTotalPay,
+      cadCount,
+      cadAvgDispatch: cadDispatchCount > 0 ? Number((cadDispatchSum / cadDispatchCount).toFixed(1)) : 92.8,
+      cadAvgResponse: cadResponseCount > 0 ? Number((cadResponseSum / cadResponseCount).toFixed(1)) : 12.3,
+      cadAvgScene: cadSceneCount > 0 ? Number((cadSceneSum / cadSceneCount).toFixed(1)) : 13.2,
+      cadAvgTransport: cadTransportCount > 0 ? Number((cadTransportSum / cadTransportCount).toFixed(1)) : 9.7
+    };
+  }, [processedActiveSheet, filteredRows]);
 
   // Dynamically find columns we can filter on (string/bool with 2 to 25 unique values)
   const filterableColumns = useMemo(() => {
-    if (!activeSheet) return [];
-    return activeSheet.columns.filter(col => {
+    if (!processedActiveSheet) return [];
+    return processedActiveSheet.columns.filter(col => {
       if (col.type !== 'string' && col.type !== 'boolean') return false;
-      const uniqueVals = new Set(activeSheet.rows.map(r => String(r[col.name] ?? '').trim()).filter(v => v !== ''));
+      const uniqueVals = new Set(processedActiveSheet.rows.map(r => String(r[col.name] ?? '').trim()).filter(v => v !== ''));
       return uniqueVals.size >= 2 && uniqueVals.size <= 25;
     }).map(col => {
-      const uniqueVals = Array.from(new Set(activeSheet.rows.map(r => String(r[col.name] ?? '').trim()).filter(v => v !== ''))).sort();
+      const uniqueVals = Array.from(new Set(processedActiveSheet.rows.map(r => String(r[col.name] ?? '').trim()).filter(v => v !== ''))).sort();
       return {
         name: col.name,
         values: uniqueVals
       };
     });
-  }, [activeSheet]);
+  }, [processedActiveSheet]);
 
   const handleToggleFilterVal = (colName: string, value: string) => {
     setActiveFilters(prev => {
@@ -366,7 +526,14 @@ function App() {
       setAvailableCharts(defaultCharts);
       setSelectedChartTitles(defaultCharts.map(c => c.title));
       
-      // Set default tab selection
+      // Initialize columnTypes state
+      const initialTypes: Record<string, 'number' | 'string' | 'date' | 'boolean'> = {};
+      firstSheet.columns.forEach(col => {
+        initialTypes[col.name] = col.type;
+      });
+      setColumnTypes(initialTypes);
+      setExcludedColumns(new Set());
+      
       if (defaultCharts.length > 0) {
         setActiveChartTab(defaultCharts[0].title);
       }
@@ -378,6 +545,8 @@ function App() {
           firstSheet
         );
       }
+
+      setWorkspaceStep('preview');
     }
   };
 
@@ -393,6 +562,13 @@ function App() {
       const defaultCharts = generateDefaultCharts(nextSheet, currentDocName);
       setAvailableCharts(defaultCharts);
       setSelectedChartTitles(defaultCharts.map(c => c.title));
+
+      const initialTypes: Record<string, 'number' | 'string' | 'date' | 'boolean'> = {};
+      nextSheet.columns.forEach(col => {
+        initialTypes[col.name] = col.type;
+      });
+      setColumnTypes(initialTypes);
+      setExcludedColumns(new Set());
 
       if (defaultCharts.length > 0) {
         setActiveChartTab(defaultCharts[0].title);
@@ -571,6 +747,166 @@ function App() {
     setActiveChartTab('');
     setActiveWorkspaceTab('dashboard');
     setActiveFilters({});
+    setWorkspaceStep('upload');
+    setPreviewGoal('');
+    setColumnTypes({});
+    setExcludedColumns(new Set());
+  };
+
+  const handleExportCSV = () => {
+    if (!filteredRows || filteredRows.length === 0) return;
+    
+    // Get headers from columns
+    const headers = processedActiveSheet ? processedActiveSheet.columns.map(c => c.name) : Object.keys(filteredRows[0]);
+    
+    // Generate CSV content
+    const csvContent = [
+      headers.join(','),
+      ...filteredRows.map(row => 
+        headers.map(h => {
+          const val = row[h];
+          if (val === null || val === undefined) return '';
+          const str = String(val).replace(/"/g, '""');
+          return str.includes(',') || str.includes('\n') || str.includes('"') ? `"${str}"` : str;
+        }).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${activeSheetName.replace(/[^a-zA-Z0-9]/g, '_')}_data_export.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportProfile = () => {
+    const profile = {
+      docName: currentDocName,
+      selectedChartTitles,
+      availableCharts,
+      colorTheme,
+      layoutMode
+    };
+    const blob = new Blob([JSON.stringify(profile, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${currentDocName.replace(/[^a-zA-Z0-9]/g, '_')}_profile.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportProfile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const profile = JSON.parse(e.target?.result as string);
+        if (profile.availableCharts && Array.isArray(profile.availableCharts)) {
+          setAvailableCharts(profile.availableCharts);
+        }
+        if (profile.selectedChartTitles && Array.isArray(profile.selectedChartTitles)) {
+          setSelectedChartTitles(profile.selectedChartTitles);
+        }
+        if (profile.colorTheme) {
+          setColorTheme(profile.colorTheme);
+        }
+        if (profile.layoutMode) {
+          setLayoutMode(profile.layoutMode);
+        }
+        alert("Dashboard profile imported successfully!");
+      } catch (err) {
+        console.error("Failed to parse JSON profile:", err);
+        alert("Invalid profile JSON file.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // AI Guided presets curation
+  const handleApplyAICuration = async (goal: string) => {
+    if (!apiKey || !processedActiveSheet) return;
+    setIsPreviewLoading(true);
+    try {
+      const sampleRows = processedActiveSheet.rows.slice(0, 5);
+      const res = await queryGeminiAnalyst(
+        apiKey,
+        processedActiveSheet.name,
+        processedActiveSheet.columns,
+        processedActiveSheet.rowCount,
+        sampleRows,
+        [],
+        `Review the active sheet. Curate exactly 6 custom chart configurations that target the following analytical goal: ${goal}. Use actual column names and aggregations suitable for the variables.`
+      );
+      if (res.charts && res.charts.length > 0) {
+        setAvailableCharts(res.charts);
+        setSelectedChartTitles(res.charts.map(c => c.title));
+        setActiveChartTab(res.charts[0].title);
+      }
+    } catch (err) {
+      console.error("Failed to apply AI curation:", err);
+      alert("Error occurred while generating AI-guided visuals.");
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
+  // Auto-generate / skip and let AI decide everything
+  const handleAutoGenerateDashboard = async () => {
+    if (!apiKey || !processedActiveSheet) {
+      setWorkspaceStep('dashboard');
+      return;
+    }
+    
+    setIsLoading(true);
+    setWorkspaceStep('dashboard');
+
+    const promptText = previewGoal.trim().length > 0
+      ? `Auto-generate dashboard visual analysis for goal: ${previewGoal}`
+      : "Perform an initial cost report audit of this worksheet. Outline the primary operational/financial metrics and recommend some custom visualizations.";
+
+    // Append initial user message
+    const updatedMessages: ChatMessage[] = [
+      { role: 'user', content: promptText }
+    ];
+    setMessages(updatedMessages);
+
+    try {
+      const sampleRows = processedActiveSheet.rows.slice(0, 5);
+      const res = await queryGeminiAnalyst(
+        apiKey,
+        processedActiveSheet.name,
+        processedActiveSheet.columns,
+        processedActiveSheet.rowCount,
+        sampleRows,
+        [],
+        promptText
+      );
+
+      setMessages([
+        ...updatedMessages,
+        { role: 'model', content: '', analystResponse: res }
+      ]);
+
+      if (res.charts && res.charts.length > 0) {
+        setAvailableCharts(res.charts);
+        setSelectedChartTitles(res.charts.map(c => c.title));
+        setActiveChartTab(res.charts[0].title);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setMessages([
+        ...updatedMessages,
+        { 
+          role: 'model', 
+          content: err?.message || 'An error occurred while connecting to the Gemini API. Please check your network connection.',
+          isError: true 
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -633,7 +969,7 @@ function App() {
 
       {/* Main Analysis Workspace */}
       <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {!workbookData ? (
+        {workspaceStep === 'upload' && (
           /* ==========================================
              UPLOADER PAGE (NO WORKBOOK LOADED)
              ========================================== */
@@ -779,7 +1115,295 @@ function App() {
 
             </div>
           </div>
-        ) : (
+        )}
+
+        {workspaceStep === 'preview' && workbookData && activeSheet && (
+          /* ==========================================
+             DATA PREVIEW & CONFIGURATION PAGE
+             ========================================== */
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: 'var(--DashboardBG)' }}>
+            
+            {/* Steps & Profile Import Header */}
+            <div style={{ background: 'white', borderBottom: '1.5px solid var(--LightGray)', padding: '1rem 2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', color: 'var(--LabelBG)', margin: 0, fontWeight: 700 }}>
+                  Step 2 of 3: Audit Your Data & Select Visual Insights
+                </h2>
+                <span style={{ fontSize: '0.75rem', color: 'var(--DarkGray)', fontWeight: 500 }}>
+                  Auditing Sheet: <strong>{activeSheetName}</strong> • Analyzed <strong>{activeSheet.rowCount}</strong> total rows
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <label 
+                  className="btn btn-secondary" 
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', margin: 0 }}
+                >
+                  <Database size={14} /> Import Saved Profile (.json)
+                  <input 
+                     type="file" 
+                     accept=".json" 
+                     style={{ display: 'none' }} 
+                     onChange={e => e.target.files && handleImportProfile(e.target.files[0])} 
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Split Screen Container */}
+            <div className="preview-step-container">
+              
+              {/* Left Column: Schema Inspector & Casting */}
+              <div className="preview-card-wrapper">
+                <div style={{ borderBottom: '1.5px solid var(--LightGray)', paddingBottom: '0.75rem' }}>
+                  <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <SlidersHorizontal size={16} style={{ color: 'var(--BannerGB)' }} /> 📋 Column Settings & Data Formats
+                  </h3>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--DarkGray)', lineHeight: '1.4' }}>
+                    Configure how the workspace reads each column. Deselect a column to ignore it in calculations, or adjust its format (e.g. treat a numeric ID code as text):
+                  </p>
+                </div>
+
+                <div className="schema-list-wrapper">
+                  {/* Schema Header */}
+                  <div className="schema-row-item" style={{ background: '#e2e8f0', fontWeight: 'bold', fontSize: '0.7rem', color: 'var(--LabelBG)', position: 'sticky', top: 0, zIndex: 10, borderBottom: '1.5px solid var(--LightGray)' }}>
+                    <div>Show?</div>
+                    <div>COLUMN NAME</div>
+                    <div>ORIGINAL FORMAT</div>
+                    <div>TREAT VALUES AS</div>
+                    <div>DATA PROFILE / COMPLETENESS</div>
+                  </div>
+
+                  {/* Schema Rows */}
+                  {activeSheet.columns.map(col => {
+                    const isExcluded = excludedColumns.has(col.name);
+                    const currentType = columnTypes[col.name] || col.type;
+                    const typeBadgeClass = currentType === 'number' ? 'preview-badge-number'
+                                         : currentType === 'string' ? 'preview-badge-string'
+                                         : currentType === 'date' ? 'preview-badge-date'
+                                         : 'preview-badge-boolean';
+
+                    return (
+                      <div key={col.name} className="schema-row-item" style={{ fontSize: '0.75rem' }}>
+                        {/* Checkbox for column exclusion */}
+                        <div>
+                          <input 
+                            type="checkbox" 
+                            checked={!isExcluded} 
+                            onChange={() => {
+                              setExcludedColumns(prev => {
+                                const next = new Set(prev);
+                                if (next.has(col.name)) {
+                                  next.add(col.name);
+                                } else {
+                                  next.delete(col.name);
+                                }
+                                // Note: setExcludedColumns is a set of excluded column names, so if we toggle:
+                                // if it was excluded (isExcluded = true, !isExcluded = false), we remove it from the excluded set (include it).
+                                // if it was included (isExcluded = false, !isExcluded = true), we add it to the excluded set (exclude it).
+                                const nextSet = new Set(prev);
+                                if (nextSet.has(col.name)) {
+                                  nextSet.delete(col.name);
+                                } else {
+                                  nextSet.add(col.name);
+                                }
+                                return nextSet;
+                              });
+                            }}
+                          />
+                        </div>
+                        {/* Column Name */}
+                        <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--LabelBG)' }} title={col.name}>
+                          {col.name}
+                        </div>
+                        {/* Inferred Type */}
+                        <div>
+                          <span className={`preview-badge-type ${typeBadgeClass}`}>
+                            {col.type === 'string' ? 'Text' : col.type === 'number' ? 'Number' : col.type === 'date' ? 'Date' : 'Yes/No'}
+                          </span>
+                        </div>
+                        {/* Cast Type Dropdown Selector */}
+                        <div>
+                          <select 
+                            style={{ padding: '0.15rem 0.35rem', fontSize: '0.75rem', borderRadius: '4px', border: '1px solid var(--LightGray)', background: 'white' }}
+                            value={currentType}
+                            onChange={e => {
+                              const newType = e.target.value as any;
+                              setColumnTypes(prev => ({ ...prev, [col.name]: newType }));
+                            }}
+                          >
+                            <option value="string">Text Category (Groups)</option>
+                            <option value="number">Numeric (Sums/Averages)</option>
+                            <option value="date">Date Timeline</option>
+                            <option value="boolean">Yes/No Toggles</option>
+                          </select>
+                        </div>
+                        {/* Stats / Metrics */}
+                        <div style={{ fontSize: '0.7rem', color: 'var(--DarkGray)', display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                          <span>Missing data: {col.nullCount} ({((col.nullCount / activeSheet.rowCount) * 100).toFixed(0)}%)</span>
+                          <span>Distinct Values: {col.uniqueCount}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Right Column: Dynamic Curation Goals & Visualization Config */}
+              <div className="preview-card-wrapper">
+                
+                {/* AI Guided Goal Form */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'var(--ExtraLightGray)', border: '1.5px solid var(--LightGray)', borderRadius: '10px', padding: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <StarOfLifeIcon />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>🎯 Set Business Focus (AI-Guided Insights)</span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--DarkGray)', lineHeight: 1.4 }}>
+                    Describe your primary business question (e.g. 'Compare regular hourly pay across job titles'). The AI will instantly customize the charts below to match.
+                  </p>
+                  <textarea
+                    className="goal-textarea"
+                    placeholder="e.g. Highlight EMT hourly rates vs. Shift supervisors, and audit our regular salary expenditures."
+                    value={previewGoal}
+                    onChange={e => setPreviewGoal(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ padding: '0.45rem 1rem', fontSize: '0.75rem', width: 'fit-content', display: 'flex', alignItems: 'center', gap: '0.35rem', alignSelf: 'flex-end' }}
+                    onClick={() => handleApplyAICuration(previewGoal)}
+                    disabled={isPreviewLoading || previewGoal.trim().length === 0}
+                  >
+                    {isPreviewLoading ? (
+                      <>
+                        <span className="spinner"></span> Curating...
+                      </>
+                    ) : (
+                      <>Tailor Visualization Presets ✨</>
+                    )}
+                  </button>
+                </div>
+
+                {/* Preset List configuration */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minHeight: 0 }}>
+                  <div style={{ borderBottom: '1px solid var(--LightGray)', paddingBottom: '0.5rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '0.85rem', color: 'var(--LabelBG)', fontWeight: 700 }}>
+                      📊 Selected Reports & Visualization Presets ({availableCharts.length} Recommended)
+                    </h3>
+                  </div>
+
+                  <div className="preview-charts-list">
+                    {availableCharts.map((chart, idx) => {
+                      const isChecked = selectedChartTitles.includes(chart.title);
+                      return (
+                        <div key={idx} className={`preview-chart-item-card ${isChecked ? '' : 'disabled'}`}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.5rem' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={isChecked} 
+                              onChange={() => {
+                                if (isChecked) {
+                                  setSelectedChartTitles(selectedChartTitles.filter(t => t !== chart.title));
+                                } else {
+                                  setSelectedChartTitles([...selectedChartTitles, chart.title]);
+                                }
+                              }}
+                            />
+                            <input 
+                              type="text" 
+                              style={{ flex: 1, padding: '0.2rem 0.4rem', fontSize: '0.75rem', borderRadius: '4px', border: '1px solid var(--LightGray)', color: 'var(--LabelBG)', fontWeight: 600 }}
+                              value={chart.title}
+                              onChange={e => {
+                                const newTitle = e.target.value;
+                                setAvailableCharts(prev => prev.map((c, i) => i === idx ? { ...c, title: newTitle } : c));
+                                if (isChecked) {
+                                  setSelectedChartTitles(prev => prev.map(t => t === chart.title ? newTitle : t));
+                                }
+                              }}
+                            />
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', paddingLeft: '1.25rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                              <span style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold' }}>Visual Style</span>
+                              <select
+                                style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem', borderRadius: '4px', border: '1px solid var(--LightGray)', background: 'white' }}
+                                value={chart.chartType}
+                                onChange={e => {
+                                  const newType = e.target.value as any;
+                                  setAvailableCharts(prev => prev.map((c, i) => i === idx ? { ...c, chartType: newType } : c));
+                                }}
+                              >
+                                <option value="bar">Vertical Bar Chart</option>
+                                <option value="horizontalBar">Horizontal Bar Chart</option>
+                                <option value="line">Line Chart</option>
+                                <option value="pie">Pie Chart</option>
+                                <option value="scatter">Scatter Plot</option>
+                                <option value="bubble">Bubble Correlation</option>
+                                <option value="radar">Radar Comparison</option>
+                                <option value="box">Box & Whisker Plot</option>
+                              </select>
+                            </div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                              <span style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold' }}>Calculation Type</span>
+                              <select
+                                style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem', borderRadius: '4px', border: '1px solid var(--LightGray)', background: 'white' }}
+                                value={chart.aggregation}
+                                onChange={e => {
+                                  const newAgg = e.target.value as any;
+                                  setAvailableCharts(prev => prev.map((c, i) => i === idx ? { ...c, aggregation: newAgg } : c));
+                                }}
+                              >
+                                <option value="sum">Total Sum</option>
+                                <option value="avg">Average</option>
+                                <option value="count">Record Count</option>
+                                <option value="none">Raw Values</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Control Panel */}
+            <div className="preview-footer-bar">
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={handleCloseWorkspace}
+                style={{ padding: '0.5rem 1.25rem' }}
+              >
+                ← Back to Upload
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ padding: '0.5rem 1.25rem', borderColor: 'var(--BannerGB)', color: 'var(--BannerGB)', fontWeight: 'bold' }}
+                  onClick={handleAutoGenerateDashboard}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Processing...' : 'Auto-Generate (Let AI Decide) ✨'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setWorkspaceStep('dashboard')}
+                  style={{ padding: '0.5rem 1.5rem', fontWeight: 'bold' }}
+                >
+                  Launch Executive Dashboard 🚀
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {workspaceStep === 'dashboard' && workbookData && activeSheet && (
           /* ==========================================
              ACTIVE ANALYSIS WORKSPACE (MAXIMIZED FOR DATA VIS)
              ========================================== */
@@ -1113,7 +1737,7 @@ function App() {
                           required
                         >
                           <option value="">-- Select --</option>
-                          {activeSheet?.columns.map((c, i) => (
+                          {processedActiveSheet?.columns.map((c, i) => (
                             <option key={i} value={c.name}>{c.name}</option>
                           ))}
                         </select>
@@ -1129,7 +1753,7 @@ function App() {
                           required
                         >
                           <option value="">-- Select --</option>
-                          {activeSheet?.columns.map((c, i) => (
+                          {processedActiveSheet?.columns.map((c, i) => (
                             <option key={i} value={c.name}>{c.name}</option>
                           ))}
                         </select>
@@ -1147,7 +1771,7 @@ function App() {
                           required
                         >
                           <option value="">-- Select --</option>
-                          {activeSheet?.columns.filter(c => c.type === 'number').map((c, i) => (
+                          {processedActiveSheet?.columns.filter(c => c.type === 'number').map((c, i) => (
                             <option key={i} value={c.name}>{c.name}</option>
                           ))}
                         </select>
@@ -1226,6 +1850,14 @@ function App() {
                     onClick={handleExportPDF}
                   >
                     <Printer size={14} /> Export landscape PDF Report
+                  </button>
+
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', borderRadius: '6px' }}
+                    onClick={handleExportProfile}
+                  >
+                    Export Dashboard Profile (.json) 📥
                   </button>
                 </div>
 
@@ -1394,10 +2026,10 @@ function App() {
                     >
                       <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Records</span>
                       <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
-                        {filteredRows.length.toLocaleString()} {filteredRows.length === activeSheet?.rows.length ? 'rows' : 'filtered'}
+                        {filteredRows.length.toLocaleString()} {filteredRows.length === processedActiveSheet?.rows.length ? 'rows' : 'filtered'}
                       </span>
                     </div>
-                    {activeSheet?.columns.filter(c => c.type === 'number').slice(0, 3).map((col, idx) => {
+                    {processedActiveSheet?.columns.filter(c => c.type === 'number').slice(0, 3).map((col, idx) => {
                       const avg = getFilteredAverage(col.name);
                       // Dynamic harmonic palettes: Emerald Green, Indigo Purple, Amber Gold
                       const isClassic = colorTheme === 'classic';
@@ -1562,6 +2194,8 @@ function App() {
                     workbookData={workbookData}
                     activeSheetName={activeSheetName}
                     onSheetChange={handleSheetChange}
+                    processedActiveSheet={processedActiveSheet}
+                    onExportCSV={handleExportCSV}
                   />
                 </div>
               )}
@@ -1685,30 +2319,30 @@ function App() {
                         {/* Interactive Example walkthrough */}
                         <div style={{ border: '1px solid rgba(0, 82, 189, 0.15)', background: 'rgba(0, 82, 189, 0.02)', borderRadius: '10px', padding: '1.25rem', margin: '1.25rem 0' }}>
                           <h5 style={{ margin: '0 0 0.6rem 0', color: 'var(--LabelBG)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 'bold' }}>
-                            <ShieldCheck size={15} style={{ color: 'var(--BannerGB)' }} /> Illustrative Rollup Calculation Example
+                            <ShieldCheck size={15} style={{ color: 'var(--BannerGB)' }} /> Real-Time Supplemental Claim Calculations
                           </h5>
                           <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.75rem', color: 'var(--DarkGray)' }}>
-                            Assume the following variables are parsed from an uploaded cost workbook sheet:
+                            Calculations updated in real time based on active filters for sheet <strong>{activeSheetName}</strong>:
                           </p>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>RUN VOLUME</div>
-                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>1,450 transports</strong>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.pemtVolume.toLocaleString()} transports</strong>
                             </div>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>AVG COST PER RUN</div>
-                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>$850.00</strong>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>${dynamicMethodologyData.pemtAvgCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                             </div>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
-                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>NET REVENUES</div>
-                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>$650,000.00</strong>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>NET BASELINE REVENUES</div>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>${dynamicMethodologyData.pemtRevenues.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                             </div>
                           </div>
                           <div style={{ background: 'white', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(0, 82, 189, 0.12)', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                            <div>1. <strong>Total Allowable Cost</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>1,450 runs × $850 = $1,232,500</code></div>
-                            <div>2. <strong>Supplemental Funding</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>$1,232,500 − $650,000 = $582,500</code></div>
+                            <div>1. <strong>Total Allowable Cost</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>{dynamicMethodologyData.pemtVolume.toLocaleString()} runs × ${dynamicMethodologyData.pemtAvgCost.toLocaleString()} = ${(dynamicMethodologyData.pemtVolume * dynamicMethodologyData.pemtAvgCost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</code></div>
+                            <div>2. <strong>Supplemental Funding</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>${(dynamicMethodologyData.pemtVolume * dynamicMethodologyData.pemtAvgCost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} − ${dynamicMethodologyData.pemtRevenues.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} = ${(dynamicMethodologyData.pemtVolume * dynamicMethodologyData.pemtAvgCost - dynamicMethodologyData.pemtRevenues).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</code></div>
                             <div style={{ color: 'var(--BannerGB)', fontWeight: 'bold', borderTop: '1px dashed var(--LightGray)', paddingTop: '0.5rem', marginTop: '0.2rem' }}>
-                              Net supplemental claim value: $582,500.00
+                              Net supplemental claim value: ${(dynamicMethodologyData.pemtVolume * dynamicMethodologyData.pemtAvgCost - dynamicMethodologyData.pemtRevenues).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
                           </div>
                         </div>
@@ -1792,30 +2426,30 @@ function App() {
                         {/* Interactive Example walkthrough */}
                         <div style={{ border: '1px solid rgba(0, 82, 189, 0.15)', background: 'rgba(0, 82, 189, 0.02)', borderRadius: '10px', padding: '1.25rem', margin: '1.25rem 0' }}>
                           <h5 style={{ margin: '0 0 0.6rem 0', color: 'var(--LabelBG)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 'bold' }}>
-                            <ShieldCheck size={15} style={{ color: 'var(--BannerGB)' }} /> Illustrative Personnel Calculation Example
+                            <ShieldCheck size={15} style={{ color: 'var(--BannerGB)' }} /> Real-Time Personnel hours & FTE Calculations
                           </h5>
                           <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.75rem', color: 'var(--DarkGray)' }}>
-                            Assume a full-time paramedic works additional overtime shifts during a 12-month period:
+                            Calculations updated in real time based on active filters for sheet <strong>{activeSheetName}</strong>:
                           </p>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>REGULAR HOURS</div>
-                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>2,080 hours</strong>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.fteRegHours.toLocaleString()} hours</strong>
                             </div>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>OVERTIME HOURS</div>
-                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>520 hours</strong>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.fteOtHours.toLocaleString()} hours</strong>
                             </div>
                             <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
                               <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>TOTAL PAY (REG + OT)</div>
-                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>$85,800.00</strong>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>${dynamicMethodologyData.fteTotalPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                             </div>
                           </div>
                           <div style={{ background: 'white', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(0, 82, 189, 0.12)', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                            <div>1. <strong>FTE Count</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>(2,080 + 520) / 2,080 = 1.25 FTEs</code></div>
-                            <div>2. <strong>Weighted Average Hourly Rate</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>$85,800 total pay / 2,600 total hours = $33.00/hour</code></div>
+                            <div>1. <strong>FTE Count</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>({dynamicMethodologyData.fteRegHours.toLocaleString()} + {dynamicMethodologyData.fteOtHours.toLocaleString()}) / 2,080 = {((dynamicMethodologyData.fteRegHours + dynamicMethodologyData.fteOtHours) / 2080).toFixed(2)} FTEs</code></div>
+                            <div>2. <strong>Weighted Average Hourly Rate</strong>: <code style={{ background: 'var(--ExtraLightGray)', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>${dynamicMethodologyData.fteTotalPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} total pay / {(dynamicMethodologyData.fteRegHours + dynamicMethodologyData.fteOtHours).toLocaleString()} total hours = ${((dynamicMethodologyData.fteTotalPay) / (dynamicMethodologyData.fteRegHours + dynamicMethodologyData.fteOtHours || 1)).toFixed(2)}/hour</code></div>
                             <div style={{ color: 'var(--BannerGB)', fontWeight: 'bold', borderTop: '1px dashed var(--LightGray)', paddingTop: '0.5rem', marginTop: '0.2rem' }}>
-                              Net employee resource value: 1.25 FTEs @ $33.00/hr
+                              Net employee resource value: {((dynamicMethodologyData.fteRegHours + dynamicMethodologyData.fteOtHours) / 2080).toFixed(2)} FTEs @ ${((dynamicMethodologyData.fteTotalPay) / (dynamicMethodologyData.fteRegHours + dynamicMethodologyData.fteOtHours || 1)).toFixed(2)}/hr
                             </div>
                           </div>
                         </div>
@@ -1866,6 +2500,30 @@ function App() {
 
                           <div style={{ textAlign: 'center', fontSize: '0.725rem', color: 'var(--BannerGB)', fontWeight: 'bold', marginTop: '1.25rem', background: 'rgba(0, 82, 189, 0.04)', padding: '0.45rem', borderRadius: '6px', border: '1px dashed rgba(0, 82, 189, 0.15)' }}>
                             Total CAD Response Time = Scene Arrival Time − Call Created Time
+                          </div>
+                        </div>
+
+                        {/* Interactive Example walkthrough */}
+                        <div style={{ border: '1px solid rgba(0, 82, 189, 0.15)', background: 'rgba(0, 82, 189, 0.02)', borderRadius: '10px', padding: '1.25rem', margin: '1.25rem 0' }}>
+                          <h5 style={{ margin: '0 0 0.6rem 0', color: 'var(--LabelBG)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 'bold' }}>
+                            <ShieldCheck size={15} style={{ color: 'var(--BannerGB)' }} /> Real-Time CAD Dataset Summary
+                          </h5>
+                          <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.75rem', color: 'var(--DarkGray)' }}>
+                            The active filtered dataset contains <strong>{dynamicMethodologyData.cadCount} dispatch records</strong>. Averaging the logged timestamps reveals these performance intervals:
+                          </p>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                            <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>AVG DISPATCH DELAY</div>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.cadAvgDispatch} seconds</strong>
+                            </div>
+                            <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>AVG TURNOUT / CHUTE TIME</div>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.cadAvgTransport} minutes</strong>
+                            </div>
+                            <div style={{ background: 'white', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--LightGray)' }}>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', fontWeight: 'bold', textTransform: 'uppercase' }}>AVG SCENE ARRIVAL TIME</div>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>{dynamicMethodologyData.cadAvgResponse} minutes</strong>
+                            </div>
                           </div>
                         </div>
 

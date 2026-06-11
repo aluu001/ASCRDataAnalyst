@@ -452,8 +452,33 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
   }, [chartSpec.title]);
 
   const colors = useMemo(() => {
-    return getChartColors(chartSpec.title, colorTheme);
-  }, [chartSpec.title, colorTheme]);
+    return getChartColors(chartSpec.title || chartSpec.yAxisColumn, colorTheme);
+  }, [chartSpec.title, chartSpec.yAxisColumn, colorTheme]);
+
+  const xAxisProps = useMemo(() => {
+    if (!data || data.length === 0) return { dy: 10 };
+    const hasLongLabel = data.some(d => String(d.name || '').length > 8);
+    const hasManyLabels = data.length > 5;
+    if (hasLongLabel || hasManyLabels) {
+      return {
+        angle: -35,
+        textAnchor: 'end' as const,
+        height: 60,
+        dx: -5
+      };
+    }
+    return {
+      dy: 10
+    };
+  }, [data]);
+
+  const chartMargin = useMemo(() => {
+    if (!data || data.length === 0) return { top: 10, right: 20, left: 10, bottom: 20 };
+    const hasLongLabel = data.some(d => String(d.name || '').length > 8);
+    const hasManyLabels = data.length > 5;
+    const bottom = (hasLongLabel || hasManyLabels) ? 55 : 20;
+    return { top: 10, right: 20, left: 10, bottom };
+  }, [data]);
 
   const renderChart = () => {
     if (chartSpec.chartType !== 'box' && data.length === 0) {
@@ -469,7 +494,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
     switch (chartType) {
       case 'bar':
         return (
-          <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+          <BarChart data={data} margin={chartMargin}>
             <defs>
               <linearGradient id={`barGradient-${uniqueId}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.9} />
@@ -483,7 +508,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              dy={10}
+              {...xAxisProps}
             />
             <YAxis
               stroke="#64748b"
@@ -531,7 +556,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       case 'line':
         return (
-          <LineChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+          <LineChart data={data} margin={chartMargin}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis
               dataKey="name"
@@ -539,7 +564,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              dy={10}
+              {...xAxisProps}
             />
             <YAxis
               stroke="#64748b"
@@ -586,7 +611,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       case 'scatter':
         return (
-          <ScatterChart margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+          <ScatterChart margin={chartMargin}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis
               type="category"
@@ -595,7 +620,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              dy={10}
+              {...xAxisProps}
             />
             <YAxis
               type="number"
@@ -613,7 +638,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       case 'bubble':
         return (
-          <ScatterChart margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+          <ScatterChart margin={chartMargin}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis
               type="category"
@@ -622,7 +647,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              dy={10}
+              {...xAxisProps}
             />
             <YAxis
               type="number"
