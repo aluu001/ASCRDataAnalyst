@@ -1422,7 +1422,7 @@ function App() {
 
                       <div 
                         className="clickable-row" 
-                        onClick={() => handleLoadSample('Emergency Room Arrival Time.csv', 'Arrival Time')}
+                        onClick={() => handleLoadSample('Emergency Room Arrival Time.xlsx', 'Arrival Time')}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1445,37 +1445,7 @@ function App() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span className="badge badge-cyan" style={{ fontSize: '0.65rem', textTransform: 'none' }}>CSV data</span>
-                          <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
-                        </div>
-                      </div>
-
-                      <div 
-                        className="clickable-row" 
-                        onClick={() => handleLoadSample('agency_high_variation_operations.csv', 'High Variation')}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '1rem',
-                          background: 'var(--ExtraLightGray)',
-                          border: '1.5px solid var(--LightGray)',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                          <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
-                            <Database size={18} />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>High-Variation Operations Dummy Data</strong>
-                            <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>100 rows of diverse operations with high variation for distribution testing</span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span className="badge badge-cyan" style={{ fontSize: '0.65rem', textTransform: 'none' }}>CSV data</span>
+                          <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
                           <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
                         </div>
                       </div>
@@ -3368,7 +3338,7 @@ function App() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '2rem',
+            padding: '1.5rem',
             animation: 'fadeIn 0.2s ease-out'
           }}
           onClick={() => setExpandedChart(null)}
@@ -3377,22 +3347,23 @@ function App() {
             className="expanded-modal-container"
             style={{
               background: 'white',
-              width: '100%',
-              maxWidth: '1000px',
+              width: '95vw',
+              maxWidth: '1450px',
+              height: '92vh',
+              maxHeight: '92vh',
               borderRadius: '16px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 40px rgba(0, 0, 0, 0.03)',
               border: '1px solid rgba(255, 255, 255, 0.8)',
-              padding: '2rem',
+              padding: '1.25rem 1.5rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1.5rem',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              position: 'relative'
+              gap: '1rem',
+              position: 'relative',
+              overflow: 'hidden'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--LightGray)', paddingBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--LightGray)', paddingBottom: '0.75rem', flexShrink: 0 }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--LabelBG)', margin: 0 }}>
                 {expandedChart.title}
               </h3>
@@ -3414,16 +3385,16 @@ function App() {
                 <Minimize2 size={14} /> Close View
               </button>
             </div>
-            <div style={{ flex: 1, minHeight: '450px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', width: '100%', height: '100%', overflow: 'hidden' }}>
               <InsightChart
                 chartSpec={expandedChart}
                 rows={filteredRows}
                 borderless={true}
-                height="450px"
+                height="100%"
                 colorTheme={colorTheme}
               />
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--DarkGray)', borderTop: '1px solid var(--LightGray)', paddingTop: '0.75rem', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--DarkGray)', borderTop: '1px solid var(--LightGray)', paddingTop: '0.75rem', display: 'flex', gap: '1.5rem', flexWrap: 'wrap', flexShrink: 0 }}>
               <span><strong>X-Axis:</strong> {expandedChart.xAxisColumn}</span>
               <span><strong>Y-Axis:</strong> {expandedChart.yAxisColumn}</span>
               {expandedChart.zAxisColumn && <span><strong>Z-Axis:</strong> {expandedChart.zAxisColumn}</span>}
