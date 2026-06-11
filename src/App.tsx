@@ -3390,7 +3390,14 @@ function App() {
               gap: '1rem',
               position: 'relative',
               overflow: 'hidden',
-              transformOrigin: expandedChartOrigin ? `${expandedChartOrigin.x}px ${expandedChartOrigin.y}px` : 'center center'
+              transformOrigin: (() => {
+                if (!expandedChartOrigin) return 'center center';
+                const modalWidth = Math.min(window.innerWidth * 0.95, 1450);
+                const modalHeight = window.innerHeight * 0.92;
+                const leftEdge = (window.innerWidth - modalWidth) / 2;
+                const topEdge = (window.innerHeight - modalHeight) / 2;
+                return `${expandedChartOrigin.x - leftEdge}px ${expandedChartOrigin.y - topEdge}px`;
+              })()
             }}
             onClick={(e) => e.stopPropagation()}
           >
