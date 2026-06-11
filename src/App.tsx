@@ -1022,6 +1022,7 @@ function App() {
                        borderless={true}
                        height={height}
                        colorTheme={colorTheme}
+                       onRemove={() => handleRemoveChart(chart.title)}
                        onExpand={(e) => {
                          const rect = e.currentTarget.getBoundingClientRect();
                          setExpandedChartOrigin({
