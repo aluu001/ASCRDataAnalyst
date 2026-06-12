@@ -1028,14 +1028,15 @@ code {
    ========================================================================== */
 @media print {
   @page {
-    size: landscape;
-    margin: 0.25in;
+    size: letter;
+    margin: 0.4in;
   }
 
   .app-header, 
   .welcome-bar, 
   .sheet-tabs-container, 
   .sidebar-panel, 
+  .canvas-header,
   .chart-header-widget .badge,
   .chart-info-tooltip-container,
   button,
@@ -1062,6 +1063,14 @@ code {
     display: block !important;
   }
 
+  .analysis-insights-card {
+    page-break-inside: avoid !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    margin-bottom: 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+
   .print-only-insights {
     display: flex !important;
     flex-direction: column !important;
@@ -1078,14 +1087,9 @@ code {
     display: none !important;
   }
 
-  .print-only-chart {
-    display: block !important;
-    width: 100% !important;
-    height: 180px !important;
-  }
-
   /* Expand layout heights and reset overflow clipping */
   .app-main-layout, 
+  main,
   .workspace-container, 
   .dashboard-scrollable-content,
   .dashboard-canvas-panel,
@@ -1100,6 +1104,7 @@ code {
     margin: 0 !important;
     background: transparent !important;
     width: 100% !important;
+    page-break-before: avoid !important;
   }
 
   html, body, #root, main {
@@ -1165,31 +1170,6 @@ code {
     font-weight: bold !important;
   }
 
-  .dashboard-section-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 0.5rem !important;
-    width: 100% !important;
-  }
-
-  .chart-container-widget {
-    border: 1px solid #cbd5e1 !important;
-    box-shadow: none !important;
-    background: white !important;
-    height: 220px !important;
-    padding: 0.5rem !important;
-    page-break-inside: avoid !important;
-    border-radius: 6px !important;
-  }
-
-  .chart-container-widget.borderless {
-    border: 1px solid #cbd5e1 !important;
-    box-shadow: none !important;
-    background: white !important;
-    padding: 0.5rem !important;
-    height: 220px !important;
-  }
-
   .chart-header-widget {
     margin-bottom: 0.35rem !important;
   }
@@ -1198,8 +1178,72 @@ code {
     font-size: 0.75rem !important;
   }
 
-  .chart-wrapper {
-    height: 180px !important;
+  /* Default display state of dual print charts */
+  .print-only-portrait-chart {
+    display: none !important;
+  }
+  .print-only-landscape-chart {
+    display: none !important;
+  }
+
+  @media (orientation: portrait) {
+    .print-only-portrait-chart {
+      display: block !important;
+      width: 100% !important;
+      height: 220px !important;
+    }
+    .print-only-landscape-chart {
+      display: none !important;
+    }
+    .dashboard-section-grid {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 1.25rem !important;
+      width: 100% !important;
+    }
+    .chart-container-widget,
+    .chart-container-widget.borderless {
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: none !important;
+      background: white !important;
+      height: 260px !important;
+      padding: 0.5rem !important;
+      page-break-inside: avoid !important;
+      border-radius: 6px !important;
+    }
+    .chart-wrapper {
+      height: 220px !important;
+    }
+  }
+
+  @media (orientation: landscape) {
+    .print-only-portrait-chart {
+      display: none !important;
+    }
+    .print-only-landscape-chart {
+      display: block !important;
+      width: 100% !important;
+      height: 180px !important;
+    }
+    .dashboard-section-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 0.75rem !important;
+      width: 100% !important;
+    }
+    .chart-container-widget,
+    .chart-container-widget.borderless {
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: none !important;
+      background: white !important;
+      height: 220px !important;
+      padding: 0.5rem !important;
+      page-break-inside: avoid !important;
+      border-radius: 6px !important;
+    }
+    .chart-wrapper {
+      height: 180px !important;
+    }
   }
 
   /* Align KPI statistics row side-by-side */

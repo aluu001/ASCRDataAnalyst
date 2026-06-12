@@ -480,7 +480,9 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
     const hasManyLabels = data.length > 5;
     const bottom = (hasLongLabel || hasManyLabels) ? 55 : 20;
     return { top: 10, right: 20, left: 10, bottom };
-  }, [data]);  const renderChart = (isPrint: boolean = false) => {
+  }, [data]);
+
+  const renderChart = (isPrint: boolean = false, printWidth?: number, printHeight?: number) => {
     if (chartSpec.chartType !== 'box' && data.length === 0) {
       return (
         <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -490,8 +492,8 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
     }
 
     const { chartType, yAxisColumn } = chartSpec;
-    const w = isPrint ? 480 : undefined;
-    const h = isPrint ? 180 : undefined;
+    const w = isPrint ? (printWidth || 480) : undefined;
+    const h = isPrint ? (printHeight || 180) : undefined;
 
     switch (chartType) {
       case 'bar':
@@ -806,9 +808,12 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
         )}
       </div>
 
-      {/* Print Mode Wrapper (Static dimensions, bypasses ResponsiveContainer) */}
-      <div className="chart-wrapper print-only-chart">
-        {renderChart(true)}
+      {/* Print Mode Wrapper (Portrait vs Landscape optimized, toggled via CSS orientation) */}
+      <div className="chart-wrapper print-only-chart print-only-portrait-chart">
+        {renderChart(true, 740, 220)}
+      </div>
+      <div className="chart-wrapper print-only-chart print-only-landscape-chart">
+        {renderChart(true, 480, 180)}
       </div>
     </div>
   );

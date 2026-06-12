@@ -2297,6 +2297,7 @@ function App() {
             >
               {/* Canvas Header */}
               <div 
+                className="canvas-header"
                 style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
@@ -2404,7 +2405,7 @@ function App() {
                 >
                   {/* Executive Summary Card (Collapsible, Floating Card) */}
                   {latestInsights.length > 0 && (
-                    <div style={{ background: 'var(--WidgetBG)', border: '1.5px solid rgba(0,82,189,0.12)', borderLeft: '4px solid var(--BannerGB)', padding: '1.25rem', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+                    <div className="analysis-insights-card" style={{ background: 'var(--WidgetBG)', border: '1.5px solid rgba(0,82,189,0.12)', borderLeft: '4px solid var(--BannerGB)', padding: '1.25rem', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
                       <div 
                         onClick={() => setIsInsightsCollapsed(!isInsightsCollapsed)}
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
