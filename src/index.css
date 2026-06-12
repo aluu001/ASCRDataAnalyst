@@ -1267,6 +1267,37 @@ code {
   .kpi-print-row strong {
     font-size: 1rem !important;
   }
+
+  /* PDF Report Builder Preview Layout Overrides */
+  .report-builder-controls {
+    display: none !important;
+  }
+
+  .report-preview-canvas {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    overflow: visible !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .report-preview-document {
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .report-builder-tab-container {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    width: 100% !important;
+  }
 }
 
 /* ==========================================================================

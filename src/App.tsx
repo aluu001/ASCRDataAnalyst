@@ -36,6 +36,99 @@ function inlineMarkdown(text: string): string {
     .replace(/`(.*?)`/g, '<code>$1</code>');
 }
 
+// Smart helper to generate executive-ready AI data summaries for each chart type dynamically
+function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
+  if (!rows || rows.length === 0) return "No data available to generate insights.";
+  
+  const xCol = chart.xAxisColumn;
+  const yCol = chart.yAxisColumn;
+  const agg = chart.aggregation || 'sum';
+  
+  if (chart.chartType === 'box') {
+    const vals = rows.map(r => parseFloat(r[yCol])).filter(v => !isNaN(v)).sort((a, b) => a - b);
+    if (vals.length === 0) {
+      return `Distribution Review: Analyzing numerical dispersion of '${yCol}' grouped by '${xCol}'.`;
+    }
+    const count = vals.length;
+    const max = vals[count - 1];
+    const median = count % 2 === 0 ? (vals[count / 2 - 1] + vals[count / 2]) / 2 : vals[Math.floor(count / 2)];
+    
+    const fmtMedian = median >= 1000000 
+      ? `$${(median / 1000000).toFixed(2)}M` 
+      : median >= 1000 
+        ? `$${(median / 1000).toFixed(1)}k` 
+        : median.toFixed(0);
+
+    const fmtMax = max >= 1000000 
+      ? `$${(max / 1000000).toFixed(2)}M` 
+      : max >= 1000 
+        ? `$${(max / 1000).toFixed(1)}k` 
+        : max.toFixed(0);
+
+    return `Compensation Dispersion Analysis: The distribution of '${yCol}' across categories indicates a median value of ${fmtMedian}, with a maximum value of ${fmtMax} logged in the dataset. Box plot dispersion outlines division variations, suggesting where outlier audits may be helpful for pay equity.`;
+  }
+
+  const groupedData: Record<string, number[]> = {};
+  rows.forEach(row => {
+    const xVal = String(row[xCol] ?? 'Unmapped').trim();
+    const yVal = parseFloat(row[yCol]);
+    if (!isNaN(yVal)) {
+      if (!groupedData[xVal]) groupedData[xVal] = [];
+      groupedData[xVal].push(yVal);
+    }
+  });
+  
+  const aggregated: { name: string; value: number }[] = [];
+  Object.keys(groupedData).forEach(name => {
+    const vals = groupedData[name];
+    let value = 0;
+    if (agg === 'sum') {
+      value = vals.reduce((a, b) => a + b, 0);
+    } else if (agg === 'avg') {
+      value = vals.reduce((a, b) => a + b, 0) / vals.length;
+    } else if (agg === 'count') {
+      value = vals.length;
+    }
+    aggregated.push({ name, value });
+  });
+  
+  if (aggregated.length === 0) {
+    return `Operational Review: Comparing the relationship between '${xCol}' and '${yCol}' in the dataset.`;
+  }
+  
+  const sorted = [...aggregated].sort((a, b) => b.value - a.value);
+  const highest = sorted[0];
+  const lowest = sorted[sorted.length - 1];
+  
+  const fmtHighest = highest.value >= 1000000 
+    ? `$${(highest.value / 1000000).toFixed(2)}M` 
+    : highest.value >= 1000 
+      ? `$${(highest.value / 1000).toFixed(1)}k` 
+      : highest.value.toFixed(0);
+
+  const fmtLowest = lowest.value >= 1000000 
+    ? `$${(lowest.value / 1000000).toFixed(2)}M` 
+    : lowest.value >= 1000 
+      ? `$${(lowest.value / 1000).toFixed(1)}k` 
+      : lowest.value.toFixed(0);
+
+  const titleLower = chart.title.toLowerCase();
+  
+  if (titleLower.includes('revenue') || titleLower.includes('reimbursement') || titleLower.includes('cost') || titleLower.includes('expenditure') || titleLower.includes('pay') || titleLower.includes('finance')) {
+    return `Financial Audit Insights: A cost structure review reveals that '${highest.name}' is the highest reporting category at ${fmtHighest}. Conversely, '${lowest.name}' reports the lowest allocation at ${fmtLowest}. Variance analysis is recommended to optimize departmental budgets.`;
+  }
+  
+  if (titleLower.includes('response') || titleLower.includes('time') || titleLower.includes('duration') || titleLower.includes('turnout') || titleLower.includes('transit') || titleLower.includes('delay')) {
+    return `Operational Performance Analysis: Transit metrics indicate '${highest.name}' reports the longest delay/intervals averaging ${fmtHighest}. The shortest lag was logged for '${lowest.name}' at ${fmtLowest}. Evaluate workflows in '${highest.name}' to align averages with safe thresholds.`;
+  }
+  
+  if (titleLower.includes('admissions') || titleLower.includes('volume') || titleLower.includes('count') || titleLower.includes('runs') || titleLower.includes('transport') || titleLower.includes('ratio')) {
+    return `Capacity & Utilization Review: Volume logs highlight '${highest.name}' has the highest volume activity at ${fmtHighest} records, while '${lowest.name}' records the lowest throughput at ${fmtLowest}. Re-align staffing resources to cover high-volume segments.`;
+  }
+  
+  return `Performance Highlights: Category tracking shows '${highest.name}' represents the maximum logged value (${fmtHighest}) while '${lowest.name}' represents the minimum logged value (${fmtLowest}). Review these bounds for strategic capacity planning.`;
+}
+
 // Smart helper to generate 8+ default charts based on sheet columns
 function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecification[] {
   const numericCols = sheet.columns.filter(c => c.type === 'number');
@@ -307,8 +400,18 @@ function App() {
   const [isInsightsCollapsed, setIsInsightsCollapsed] = useState<boolean>(false);
   const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState<boolean>(false);
   const [isMapperCollapsed, setIsMapperCollapsed] = useState<boolean>(true);
-  // Workspace Tab selection: 'dashboard' | 'spreadsheet' | 'methodology'
-  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'dashboard' | 'spreadsheet' | 'methodology'>('dashboard');
+  // Workspace Tab selection: 'dashboard' | 'spreadsheet' | 'methodology' | 'print-preview'
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'dashboard' | 'spreadsheet' | 'methodology' | 'print-preview'>('dashboard');
+
+  // PDF Report Builder States
+  const [reportTitle, setReportTitle] = useState<string>('ASCR AI Data Analyst - Executive Report');
+  const [reportSubtitle, setReportSubtitle] = useState<string>('Public Consulting Group • Executive Insights');
+  const [includeGlobalInsights, setIncludeGlobalInsights] = useState<boolean>(true);
+  const [includeChartInsights, setIncludeChartInsights] = useState<boolean>(true);
+  const [includeMethodology, setIncludeMethodology] = useState<boolean>(false);
+  const [printOrientation, setPrintOrientation] = useState<'portrait' | 'landscape'>('landscape');
+  const [printChartOrder, setPrintChartOrder] = useState<ChartSpecification[]>([]);
+  const [customChartNotes, setCustomChartNotes] = useState<Record<string, string>>({});
 
   // Dashboard Interactive Filters state: mapping column names to selected values to filter by
   const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
@@ -322,6 +425,8 @@ function App() {
   const [activeChartTab, setActiveChartTab] = useState<string>('');
   const [expandedChart, setExpandedChart] = useState<ChartSpecification | null>(null);
   const [expandedChartOrigin, setExpandedChartOrigin] = useState<{ x: number; y: number } | null>(null);
+
+
 
   interface CalculationMapping {
     pemtVolume: string | 'auto';
@@ -943,7 +1048,7 @@ function App() {
   };
 
   const handleExportPDF = () => {
-    window.print();
+    setActiveWorkspaceTab('print-preview');
   };
 
   const handleRemoveChart = (title: string) => {
@@ -961,6 +1066,15 @@ function App() {
 
   // Filter available charts based on multi-select state
   const chartsToRender = availableCharts.filter(c => selectedChartTitles.includes(c.title));
+
+  // Sync printChartOrder with chartsToRender
+  useEffect(() => {
+    setPrintChartOrder(prev => {
+      const existing = prev.filter(c => chartsToRender.some(ctr => ctr.title === c.title));
+      const added = chartsToRender.filter(ctr => !prev.some(c => c.title === ctr.title));
+      return [...existing, ...added];
+    });
+  }, [chartsToRender]);
 
   // Render grouped financial vs operational grid panels dynamically
   const renderGroupedGrid = (charts: ChartSpecification[]) => {
@@ -2267,7 +2381,7 @@ function App() {
                       style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', background: 'var(--BannerGB)' }}
                       onClick={handleExportPDF}
                     >
-                      <Printer size={14} /> Export landscape PDF Report
+                      <Printer size={14} /> Configure & Preview PDF Report 🖨️
                     </button>
 
                     <button 
@@ -2384,6 +2498,27 @@ function App() {
                       onClick={() => setActiveWorkspaceTab('methodology')}
                     >
                       <TrendingUp size={14} /> Methodology & Calculations
+                    </button>
+                    <button
+                      type="button"
+                      className="btn"
+                      style={{
+                        padding: '0.35rem 0.75rem',
+                        fontSize: '0.775rem',
+                        borderRadius: '6px',
+                        background: activeWorkspaceTab === 'print-preview' ? 'var(--LabelBG)' : 'transparent',
+                        color: activeWorkspaceTab === 'print-preview' ? 'white' : 'var(--DarkGray)',
+                        border: 'none',
+                        fontWeight: activeWorkspaceTab === 'print-preview' ? 'bold' : '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        boxShadow: activeWorkspaceTab === 'print-preview' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onClick={() => setActiveWorkspaceTab('print-preview')}
+                    >
+                      <Printer size={14} /> PDF Report Builder
                     </button>
                   </div>
                 </div>
@@ -3322,6 +3457,429 @@ function App() {
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+
+              {activeWorkspaceTab === 'print-preview' && (
+                /* PDF Report Builder & WYSIWYG Print Preview Tab */
+                <div 
+                  className="report-builder-tab-container"
+                  style={{ 
+                    flex: 1, 
+                    display: 'flex', 
+                    flexDirection: 'row', 
+                    gap: '1.5rem', 
+                    height: '100%', 
+                    overflow: 'hidden',
+                    width: '100%'
+                  }}
+                >
+                  {/* Left Controls Column (Scrollable controls panel for Report settings) */}
+                  <div 
+                    className="report-builder-controls"
+                    style={{ 
+                      width: '400px', 
+                      background: 'white', 
+                      border: '1px solid var(--border-light)', 
+                      borderRadius: '12px', 
+                      padding: '1.25rem', 
+                      boxShadow: 'var(--shadow-sm)', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '1.25rem', 
+                      height: '100%', 
+                      overflowY: 'auto',
+                      flexShrink: 0
+                    }}
+                  >
+                    <div>
+                      <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--LabelBG)', fontSize: '1.05rem', fontWeight: 'bold' }}>🖨️ PDF Report Settings</h3>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--DarkGray)' }}>Customize layout orientation, toggles, and chart orders below before saving.</p>
+                    </div>
+
+                    <div style={{ borderTop: '1px solid var(--LightGray)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Report Title</label>
+                        <input 
+                          type="text" 
+                          value={reportTitle} 
+                          onChange={(e) => setReportTitle(e.target.value)} 
+                          style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', border: '1px solid var(--LightGray)', borderRadius: '6px', width: '100%', boxSizing: 'border-box' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Report Subtitle / Metadata</label>
+                        <input 
+                          type="text" 
+                          value={reportSubtitle} 
+                          onChange={(e) => setReportSubtitle(e.target.value)} 
+                          style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', border: '1px solid var(--LightGray)', borderRadius: '6px', width: '100%', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ borderTop: '1px solid var(--LightGray)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--LabelBG)', margin: 0 }}>Page Orientation (Letter)</label>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button 
+                          type="button"
+                          className="btn"
+                          style={{ 
+                            flex: 1, 
+                            padding: '0.4rem 0.5rem', 
+                            fontSize: '0.75rem', 
+                            borderRadius: '6px',
+                            fontWeight: 'bold',
+                            border: '1px solid var(--LightGray)',
+                            background: printOrientation === 'portrait' ? 'var(--LabelBG)' : 'white',
+                            color: printOrientation === 'portrait' ? 'white' : 'var(--DarkGray)',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => setPrintOrientation('portrait')}
+                        >
+                          Portrait (Vertical)
+                        </button>
+                        <button 
+                          type="button"
+                          className="btn"
+                          style={{ 
+                            flex: 1, 
+                            padding: '0.4rem 0.5rem', 
+                            fontSize: '0.75rem', 
+                            borderRadius: '6px',
+                            fontWeight: 'bold',
+                            border: '1px solid var(--LightGray)',
+                            background: printOrientation === 'landscape' ? 'var(--LabelBG)' : 'white',
+                            color: printOrientation === 'landscape' ? 'white' : 'var(--DarkGray)',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => setPrintOrientation('landscape')}
+                        >
+                          Landscape (Horizontal)
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ borderTop: '1px solid var(--LightGray)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--LabelBG)', margin: '0 0 0.25rem 0' }}>Report Sections</label>
+                      
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--LabelBG)', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={includeGlobalInsights} 
+                          onChange={(e) => setIncludeGlobalInsights(e.target.checked)} 
+                        />
+                        Include Analysis Insights summary
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--LabelBG)', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={includeChartInsights} 
+                          onChange={(e) => setIncludeChartInsights(e.target.checked)} 
+                        />
+                        Include AI Chart Explanations
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--LabelBG)', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={includeMethodology} 
+                          onChange={(e) => setIncludeMethodology(e.target.checked)} 
+                        />
+                        Include Calculation Methodology
+                      </label>
+                    </div>
+
+                    {/* Chart Reordering & Notes mapping */}
+                    <div style={{ borderTop: '1px solid var(--LightGray)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, minHeight: 0 }}>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--LabelBG)', margin: 0 }}>Reorder & Annotate Charts</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', overflowY: 'auto', flex: 1, paddingRight: '0.25rem' }}>
+                        {printChartOrder.map((chart, idx) => {
+                          const customNote = customChartNotes[chart.title] !== undefined 
+                            ? customChartNotes[chart.title] 
+                            : getAIInsightForChart(chart, filteredRows);
+
+                          return (
+                            <div 
+                              key={chart.title} 
+                              style={{ 
+                                background: 'var(--ExtraLightGray)', 
+                                border: '1px solid var(--LightGray)', 
+                                borderRadius: '8px', 
+                                padding: '0.6rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.4rem'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--LabelBG)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }} title={chart.title}>
+                                  {idx + 1}. {chart.title}
+                                </span>
+                                <div style={{ display: 'flex', gap: '0.2rem' }}>
+                                  <button 
+                                    type="button"
+                                    className="btn btn-secondary" 
+                                    style={{ padding: '0.1rem 0.3rem', fontSize: '0.65rem', borderRadius: '4px', cursor: 'pointer' }}
+                                    disabled={idx === 0}
+                                    onClick={() => {
+                                      const nextOrder = [...printChartOrder];
+                                      const temp = nextOrder[idx];
+                                      nextOrder[idx] = nextOrder[idx - 1];
+                                      nextOrder[idx - 1] = temp;
+                                      setPrintChartOrder(nextOrder);
+                                    }}
+                                  >
+                                    ▲
+                                  </button>
+                                  <button 
+                                    type="button"
+                                    className="btn btn-secondary" 
+                                    style={{ padding: '0.1rem 0.3rem', fontSize: '0.65rem', borderRadius: '4px', cursor: 'pointer' }}
+                                    disabled={idx === printChartOrder.length - 1}
+                                    onClick={() => {
+                                      const nextOrder = [...printChartOrder];
+                                      const temp = nextOrder[idx];
+                                      nextOrder[idx] = nextOrder[idx + 1];
+                                      nextOrder[idx + 1] = temp;
+                                      setPrintChartOrder(nextOrder);
+                                    }}
+                                  >
+                                    ▼
+                                  </button>
+                                </div>
+                              </div>
+
+                              {includeChartInsights && (
+                                <textarea 
+                                  value={customNote}
+                                  onChange={(e) => setCustomChartNotes(prev => ({ ...prev, [chart.title]: e.target.value }))}
+                                  placeholder="AI Explanation for stakeholders..."
+                                  rows={3}
+                                  style={{ 
+                                    fontSize: '0.7rem', 
+                                    padding: '0.3rem 0.4rem', 
+                                    border: '1px solid var(--LightGray)', 
+                                    borderRadius: '4px', 
+                                    resize: 'vertical',
+                                    fontFamily: 'inherit',
+                                    width: '100%',
+                                    boxSizing: 'border-box'
+                                  }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ borderTop: '1px solid var(--LightGray)', paddingTop: '0.85rem' }}>
+                      <button 
+                        type="button"
+                        className="btn btn-primary" 
+                        onClick={() => window.print()} 
+                        style={{ 
+                          width: '100%', 
+                          padding: '0.65rem', 
+                          fontSize: '0.85rem', 
+                          fontWeight: 'bold', 
+                          background: 'var(--BannerGB)',
+                          borderRadius: '8px', 
+                          color: 'white', 
+                          border: 'none', 
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.4rem',
+                          boxShadow: '0 2px 4px rgba(0,82,189,0.2)'
+                        }}
+                      >
+                        <Printer size={16} /> Print Report to PDF
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Right WYSIWYG Page Preview Column (Scrollable canvas showing actual pages) */}
+                  <div 
+                    className="report-preview-canvas"
+                    style={{ 
+                      flex: 1, 
+                      overflowY: 'auto', 
+                      background: 'var(--DashboardBG)', 
+                      borderRadius: '12px', 
+                      border: '1px solid var(--border-light)', 
+                      padding: '1.5rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '2rem'
+                    }}
+                  >
+                    {/* WYSIWYG Letter Documents */}
+                    <div 
+                      className="report-preview-document"
+                      style={{ 
+                        width: printOrientation === 'portrait' ? '8.5in' : '11in',
+                        minHeight: printOrientation === 'portrait' ? '11in' : '8.5in',
+                        padding: '0.4in', 
+                        background: 'white',
+                        boxShadow: '0 4px 20px rgba(15,23,42,0.12), 0 0 10px rgba(0,0,0,0.02)',
+                        boxSizing: 'border-box',
+                        color: 'black',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1.5rem'
+                      }}
+                    >
+                      {/* Document Cover Header */}
+                      <div style={{ borderBottom: '2px solid var(--BannerGB)', paddingBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--LabelBG)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>PUBLIC CONSULTING GROUP</span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--DarkGray)' }}>Date: {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </div>
+                        <h1 style={{ margin: '0.5rem 0 0.15rem 0', fontSize: '1.65rem', fontWeight: 800, color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>
+                          {reportTitle || 'ASCR AI Data Analyst Report'}
+                        </h1>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569', fontWeight: 500 }}>
+                          {reportSubtitle || 'Executive Insights Summary'}
+                        </p>
+                      </div>
+
+                      {/* Global Insights summary section */}
+                      {includeGlobalInsights && latestInsights.length > 0 && (
+                        <div className="analysis-insights-card" style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderLeft: '4px solid var(--BannerGB)', padding: '1rem 1.25rem', borderRadius: '8px' }}>
+                          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--LabelBG)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 'bold' }}>
+                            <TrendingUp size={14} style={{ color: 'var(--BannerGB)' }} />
+                            Global Executive Insights
+                          </h4>
+                          <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.725rem', color: '#1e293b', display: 'flex', flexDirection: 'column', gap: '0.35rem', lineHeight: '1.35' }}>
+                            {latestInsights.map((insight, idx) => (
+                              <li key={idx} dangerouslySetInnerHTML={{ __html: inlineMarkdown(insight) }} />
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* KPI stats metrics row */}
+                      <div className="kpi-print-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                        <div style={{ border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.4rem 0.6rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', background: '#f8fafc' }}>
+                          <span style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Records</span>
+                          <strong style={{ fontSize: '1rem', color: 'var(--LabelBG)' }}>{filteredRows.length.toLocaleString()} rows</strong>
+                        </div>
+                        {processedActiveSheet?.columns.filter(c => c.type === 'number').slice(0, 3).map((col, idx) => {
+                          const avg = getFilteredAverage(col.name);
+                          return (
+                            <div key={idx} style={{ border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.4rem 0.6rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', background: '#f8fafc' }}>
+                              <span style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg {col.name}</span>
+                              <strong style={{ fontSize: '1rem', color: 'var(--LabelBG)' }}>
+                                {avg.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                              </strong>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Visualizations Order Loop */}
+                      <div 
+                        className="dashboard-section-grid" 
+                        style={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: printOrientation === 'portrait' ? '1fr' : '1fr 1fr', 
+                          gap: printOrientation === 'portrait' ? '1.25rem' : '0.75rem',
+                          width: '100%'
+                        }}
+                      >
+                        {printChartOrder.map((chart) => {
+                          const customNote = customChartNotes[chart.title] !== undefined 
+                            ? customChartNotes[chart.title] 
+                            : getAIInsightForChart(chart, filteredRows);
+                          
+                          const chartH = printOrientation === 'portrait' ? 220 : 180;
+
+                          return (
+                            <div 
+                              key={chart.title} 
+                              className="chart-container-widget" 
+                              style={{ 
+                                border: '1px solid #cbd5e1', 
+                                borderRadius: '6px', 
+                                padding: '0.5rem', 
+                                background: 'white',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                height: 'auto',
+                                minHeight: printOrientation === 'portrait' ? '300px' : '280px',
+                                pageBreakInside: 'avoid',
+                                boxShadow: 'none'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.25rem', marginBottom: '0.35rem', flexShrink: 0 }}>
+                                <span className="chart-title-widget" style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'black' }}>
+                                  {chart.title}
+                                </span>
+                              </div>
+                              
+                              <div style={{ flex: 1, height: `${chartH}px`, position: 'relative', overflow: 'hidden' }}>
+                                <InsightChart
+                                  chartSpec={chart}
+                                  rows={filteredRows}
+                                  borderless={true}
+                                  height="100%"
+                                  colorTheme={colorTheme}
+                                />
+                              </div>
+
+                              {includeChartInsights && (
+                                <div 
+                                  className="print-chart-executive-explanation"
+                                  style={{ 
+                                    marginTop: '0.4rem', 
+                                    padding: '0.4rem 0.5rem', 
+                                    background: '#f8fafc', 
+                                    borderLeft: '2.5px solid var(--BannerGB)', 
+                                    borderTop: '1px solid #e2e8f0',
+                                    fontSize: '0.675rem', 
+                                    color: '#334155',
+                                    lineHeight: '1.3',
+                                    wordBreak: 'break-word',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  <strong>AI Summary:</strong> {customNote}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Methodology page appending if checked */}
+                      {includeMethodology && (
+                        <div style={{ borderTop: '1px solid #cbd5e1', paddingTop: '1rem', marginTop: '1rem', pageBreakBefore: 'always', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--LabelBG)', fontWeight: 'bold' }}>🧠 Analytical Methodology & Rollup Calculations</h4>
+                          <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--DarkGray)', lineHeight: '1.4' }}>
+                            Calculations are performed dynamically based on the filtered rows in the active worksheet. The summary formulas used are standardized for EMS and PEMT public reimbursement structures.
+                          </p>
+                          <div style={{ background: '#f8fafc', padding: '0.6rem 0.8rem', borderRadius: '6px', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.675rem' }}>
+                            <div><strong>1. PEMT Supplemental Funding Formula:</strong></div>
+                            <div style={{ fontFamily: 'monospace', fontSize: '0.625rem', paddingLeft: '0.5rem' }}>Supplemental Allocation = Total Volume * (Average Cost - Fee Schedule Rate)</div>
+                            <div><strong>2. FTE Personnel Payroll Model:</strong></div>
+                            <div style={{ fontFamily: 'monospace', fontSize: '0.625rem', paddingLeft: '0.5rem' }}>Overtime Expenditures = Base Pay * Overtime Hours * 1.5 multiplier</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Print Document footer */}
+                      <div style={{ marginTop: 'auto', borderTop: '1px solid #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', color: 'var(--DarkGray)' }}>
+                        <span>ASCR AI Executive Reporting System</span>
+                        <span>Page 1 of 1</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
