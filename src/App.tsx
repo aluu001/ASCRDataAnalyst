@@ -1070,11 +1070,15 @@ function App() {
   // Sync printChartOrder with chartsToRender
   useEffect(() => {
     setPrintChartOrder(prev => {
-      const existing = prev.filter(c => chartsToRender.some(ctr => ctr.title === c.title));
-      const added = chartsToRender.filter(ctr => !prev.some(c => c.title === ctr.title));
+      const currentCharts = availableCharts.filter(c => selectedChartTitles.includes(c.title));
+      const isSame = prev.length === currentCharts.length && 
+                     prev.every((c, i) => c.title === currentCharts[i].title);
+      if (isSame) return prev;
+      const existing = prev.filter(c => currentCharts.some(ctr => ctr.title === c.title));
+      const added = currentCharts.filter(ctr => !prev.some(c => c.title === ctr.title));
       return [...existing, ...added];
     });
-  }, [chartsToRender]);
+  }, [availableCharts, selectedChartTitles]);
 
   // Render grouped financial vs operational grid panels dynamically
   const renderGroupedGrid = (charts: ChartSpecification[]) => {
