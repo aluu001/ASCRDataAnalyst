@@ -221,7 +221,8 @@ const BoxPlot: React.FC<{
   xAxisColumn: string;
   yAxisColumn: string;
   colors: { stroke: string; fill: string; gradient: string[]; glow: string };
-}> = ({ rows, xAxisColumn, yAxisColumn, colors }) => {
+  uniqueId: string;
+}> = ({ rows, xAxisColumn, yAxisColumn, colors, uniqueId }) => {
   const groups = useMemo(() => {
     return calculateBoxPlotGroups(rows, xAxisColumn, yAxisColumn);
   }, [rows, xAxisColumn, yAxisColumn]);
@@ -303,7 +304,7 @@ const BoxPlot: React.FC<{
           return (
             <g key={idx}>
               <defs>
-                <linearGradient id={`boxGrad-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id={`boxGrad-${uniqueId}-${idx}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.85} />
                   <stop offset="100%" stopColor={colors.gradient[1]} stopOpacity={0.35} />
                 </linearGradient>
@@ -345,7 +346,7 @@ const BoxPlot: React.FC<{
                 y={scaleY(group.q3)}
                 width={boxWidth}
                 height={Math.max(scaleY(group.q1) - scaleY(group.q3), 1)}
-                fill={`url(#boxGrad-${idx})`}
+                fill={`url(#boxGrad-${uniqueId}-${idx})`}
                 stroke={colors.stroke}
                 strokeWidth={2}
                 rx={2}
@@ -496,12 +497,16 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
     const w = isPrint ? (printWidth || 480) : undefined;
     const h = isPrint ? (printHeight || 180) : undefined;
 
+    const suffix = isPrint ? `-print-${h}` : '-screen';
+    const barGradientId = `barGradient-${uniqueId}${suffix}`;
+    const barHorizGradientId = `barHorizGradient-${uniqueId}${suffix}`;
+
     switch (chartType) {
       case 'bar':
         return (
           <BarChart width={w} height={h} data={data} margin={chartMargin}>
             <defs>
-              <linearGradient id={`barGradient-${uniqueId}`} x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={barGradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.9} />
                 <stop offset="100%" stopColor={colors.gradient[1]} stopOpacity={0.45} />
               </linearGradient>
@@ -523,7 +528,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               tickFormatter={(val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
-            <Bar dataKey="value" name={yAxisColumn} fill={`url(#barGradient-${uniqueId})`} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="value" name={yAxisColumn} fill={`url(#${barGradientId})`} radius={[4, 4, 0, 0]} />
           </BarChart>
         );
 
@@ -531,7 +536,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
         return (
           <BarChart layout="vertical" width={w} height={h} data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
             <defs>
-              <linearGradient id={`barHorizGradient-${uniqueId}`} x1="0" y1="0" x2="1" y2="0">
+              <linearGradient id={barHorizGradientId} x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.9} />
                 <stop offset="100%" stopColor={colors.gradient[1]} stopOpacity={0.45} />
               </linearGradient>
@@ -555,7 +560,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               width={100}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
-            <Bar dataKey="value" name={yAxisColumn} fill={`url(#barHorizGradient-${uniqueId})`} radius={[0, 4, 4, 0]} />
+            <Bar dataKey="value" name={yAxisColumn} fill={`url(#${barHorizGradientId})`} radius={[0, 4, 4, 0]} />
           </BarChart>
         );
 
@@ -687,7 +692,13 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       case 'box':
         return (
-          <BoxPlot rows={rows} xAxisColumn={chartSpec.xAxisColumn} yAxisColumn={chartSpec.yAxisColumn} colors={colors} />
+          <BoxPlot 
+            rows={rows} 
+            xAxisColumn={chartSpec.xAxisColumn} 
+            yAxisColumn={chartSpec.yAxisColumn} 
+            colors={colors} 
+            uniqueId={`${uniqueId}${suffix}`} 
+          />
         );
 
       default:
