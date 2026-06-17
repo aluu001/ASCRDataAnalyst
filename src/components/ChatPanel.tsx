@@ -14,57 +14,65 @@ interface ChatPanelProps {
 /**
  * Super simple helper to format markdown elements (**bold**, `code`, lists) to JSX.
  */
+const formatInlineMarkdown = (text: string): React.ReactNode[] => {
+  if (!text) return [];
+  const parts: React.ReactNode[] = [];
+  let currentIdx = 0;
+  
+  const regex = /(\*\*.*?\*\*|`.*?`)/g;
+  let match;
+  let partIdx = 0;
+
+  while ((match = regex.exec(text)) !== null) {
+    const matchStr = match[0];
+    const matchIndex = match.index;
+
+    if (matchIndex > currentIdx) {
+      parts.push(text.substring(currentIdx, matchIndex));
+    }
+
+    if (matchStr.startsWith('**') && matchStr.endsWith('**')) {
+      parts.push(<strong key={partIdx++}>{matchStr.slice(2, -2)}</strong>);
+    } else if (matchStr.startsWith('`') && matchStr.endsWith('`')) {
+      parts.push(<code key={partIdx++}>{matchStr.slice(1, -1)}</code>);
+    }
+
+    currentIdx = regex.lastIndex;
+  }
+
+  if (currentIdx < text.length) {
+    parts.push(text.substring(currentIdx));
+  }
+
+  return parts;
+};
+
+/**
+ * Super simple helper to format markdown elements (**bold**, `code`, lists) to JSX.
+ */
 const formatMarkdown = (text: string): React.ReactNode[] => {
   if (!text) return [];
   const lines = text.split('\n');
 
   return lines.map((line, lineIdx) => {
-    // Check if it's a bullet point
-    const isBullet = line.trim().startsWith('-') || line.trim().startsWith('*');
-    let content = isBullet ? line.trim().substring(1).trim() : line;
+    const trimmed = line.trim();
+    if (!trimmed) return <div key={lineIdx} style={{ height: '0.4rem' }} />;
 
-    // Parse **bold** and `code` inline elements
-    const parts: React.ReactNode[] = [];
-    let currentIdx = 0;
-    
-    // Regular expression matching bold or code snippets
-    const regex = /(\*\*.*?\*\*|`.*?`)/g;
-    let match;
-    let partIdx = 0;
-
-    while ((match = regex.exec(content)) !== null) {
-      const matchStr = match[0];
-      const matchIndex = match.index;
-
-      // Add text preceding the match
-      if (matchIndex > currentIdx) {
-        parts.push(content.substring(currentIdx, matchIndex));
-      }
-
-      if (matchStr.startsWith('**') && matchStr.endsWith('**')) {
-        parts.push(<strong key={partIdx++}>{matchStr.slice(2, -2)}</strong>);
-      } else if (matchStr.startsWith('`') && matchStr.endsWith('`')) {
-        parts.push(<code key={partIdx++}>{matchStr.slice(1, -1)}</code>);
-      }
-
-      currentIdx = regex.lastIndex;
-    }
-
-    if (currentIdx < content.length) {
-      parts.push(content.substring(currentIdx));
-    }
+    const isBullet = trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('•');
+    const content = isBullet ? trimmed.substring(1).trim() : line;
+    const parts = formatInlineMarkdown(content);
 
     if (isBullet) {
       return (
-        <li key={lineIdx} style={{ marginLeft: '1rem', marginBottom: '0.4rem', listStyleType: 'disc' }}>
-          {parts.length > 0 ? parts : content}
+        <li key={lineIdx} style={{ marginLeft: '1.2rem', marginBottom: '0.4rem', listStyleType: 'disc' }}>
+          {parts}
         </li>
       );
     }
 
     return (
       <p key={lineIdx} style={{ margin: '0 0 0.5rem 0' }}>
-        {parts.length > 0 ? parts : content}
+        {parts}
       </p>
     );
   });
@@ -241,15 +249,20 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       <ThinkingAccordion thinking={msg.analystResponse.thinking} />
                     )}
                     {msg.analystResponse?.conversationalResponse && (
-                      <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.45, color: '#1e293b', fontWeight: 500 }}>
-                        {msg.analystResponse.conversationalResponse}
-                      </p>
+                      <div className="chat-conversational-response" style={{ display: 'flex', flexDirection: 'column', fontWeight: 500 }}>
+                        {formatMarkdown(msg.analystResponse.conversationalResponse)}
+                      </div>
                     )}
                     {msg.analystResponse?.insights && msg.analystResponse.insights.length > 0 && (
-                      <ul style={{ margin: 0, padding: 0 }}>
-                        {msg.analystResponse.insights.map((insight, idx) => (
-                          <div key={idx}>{formatMarkdown(insight)}</div>
-                        ))}
+                      <ul style={{ margin: 0, paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        {msg.analystResponse.insights.map((insight, idx) => {
+                          const cleanInsight = insight.replace(/^[\s-*•]+/, '');
+                          return (
+                            <li key={idx} style={{ listStyleType: 'disc' }}>
+                              {formatInlineMarkdown(cleanInsight)}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>
@@ -297,9 +310,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       {/* Input Form Box */}
       <div className="chat-input-area">
         <div className="chat-input-wrapper" style={{ opacity: !hasData && messages.length === 0 ? 0.6 : 1 }}>
-          <input
-            type="text"
+          <textarea
             className="chat-text-input"
+            rows={1}
             placeholder={
               !hasData
                 ? 'Upload Excel sheet to begin...'
@@ -309,6 +322,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={!hasData || isLoading}
+            style={{
+              resize: 'none',
+              minHeight: '20px',
+              maxHeight: '120px',
+              paddingTop: '6px',
+              paddingBottom: '6px',
+              lineHeight: '1.4'
+            }}
           />
           <button
             className="btn btn-primary"

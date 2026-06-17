@@ -620,20 +620,20 @@ code {
 
 .chat-bubble-bot {
   background: white;
-  color: #0f172a; /* high contrast text */
+  color: #1e293b;
   border: 1.5px solid var(--LightGray);
   border-bottom-left-radius: 2px;
 }
 
 .chat-bubble-bot p {
-  color: #0f172a !important; /* enforce dark black color */
+  color: #1e293b !important;
   margin: 0 0 0.5rem 0;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
 }
 
 .chat-bubble-bot li {
-  color: #0f172a !important; /* enforce dark black color */
-  font-size: 0.95rem;
+  color: #1e293b !important;
+  font-size: 0.875rem;
   margin-bottom: 0.4rem;
 }
 
@@ -691,9 +691,9 @@ code {
   gap: 0.75rem;
   background: var(--ExtraLightGray);
   border: 1.5px solid var(--LightGray);
-  border-radius: 24px;
-  padding: 0.25rem 0.25rem 0.25rem 1rem;
-  align-items: center;
+  border-radius: 18px;
+  padding: 0.35rem 0.35rem 0.35rem 1rem;
+  align-items: flex-end;
   transition: all 0.2s ease;
 }
 
@@ -710,8 +710,9 @@ code {
   outline: none;
   color: var(--HeaderText);
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   padding: 0.4rem 0;
+  resize: none;
 }
 
 /* Suggestion Chips */

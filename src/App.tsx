@@ -33,6 +33,8 @@ function inlineMarkdown(text: string): string {
   if (!text) return '';
   return text
     .replace(/\n/g, '<br />')
+    .replace(/^\*\s+/gm, '• ') // Replace leading '* ' with bullet '• '
+    .replace(/^-\s+/gm, '• ')  // Replace leading '- ' with bullet '• '
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/`(.*?)`/g, '<code>$1</code>');
 }
@@ -50,14 +52,14 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
   if (chart.chartType === 'box') {
     const vals = rows.map(r => parseFloat(r[yCol])).filter(v => !isNaN(v)).sort((a, b) => a - b);
     if (vals.length === 0) {
-      return `**Compensation Dispersion Analysis:** Grouped dataset review of **${yCol}** by **${xCol}**. Quartile metrics are uncomputable due to lack of valid numeric values.`;
+      return `**Distribution Audit: ${yCol}**\n* **Cohort Spread:** Median value stands at **${yCol}** across categories, but individual values are uncomputable.\n* **Strategic Action:** Map numeric columns properly to review compensation patterns.`;
     }
     const count = vals.length;
     const max = vals[count - 1];
     const min = vals[0];
     const median = count % 2 === 0 ? (vals[count / 2 - 1] + vals[count / 2]) / 2 : vals[Math.floor(count / 2)];
     
-    // Calculate Standard Deviation & Coefficient of Variation
+    // Calculate standard deviation and coefficient of variation for simple label classification
     const totalSum = vals.reduce((a, b) => a + b, 0);
     const meanVal = totalSum / count;
     let stdDev = 0;
@@ -76,15 +78,15 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
       return `${sign}${prefix}${abs.toFixed(0)}`;
     };
 
-    let volatilityDescriptor = 'low variance';
-    if (cv >= 0.5) volatilityDescriptor = 'high dispersion / volatility';
-    else if (cv >= 0.15) volatilityDescriptor = 'moderate variation';
+    let volatilityDescriptor = 'consistent and stable';
+    if (cv >= 0.5) volatilityDescriptor = 'highly variable';
+    else if (cv >= 0.15) volatilityDescriptor = 'moderately spread';
 
     return `
-**[Structural Dispersion & Pay Equity Audit]**
-* **Strategic Performance:** Statistical review of **${yCol}** indicates a median value of **${formatVal(median)}** across a cohort size of **${count}** records. The overall range is bounded by a minimum of **${formatVal(min)}** and a peak outlier of **${formatVal(max)}**.
-* **Variance & Volatility:** The segment dispersion is classified as **${volatilityDescriptor}** with a calculated Coefficient of Variation of **${cv.toFixed(2)}** (Standard Deviation: **${formatVal(stdDev)}**).
-* **Operational Recommendation:** Establish targeted audit gates for high-range outlier cohorts exceeding **${formatVal(median)}** to monitor budgetary leakage and ensure wage equity alignment.
+**[Distribution Audit: ${yCol}]**
+* **Cohort Spread:** The median value stands at **${formatVal(median)}** across the cohort, with individual records ranging from a minimum of **${formatVal(min)}** to a maximum of **${formatVal(max)}**.
+* **Cohort Variance:** Category values show **${volatilityDescriptor}** patterns, reflecting the overall dispersion across different segments.
+* **Strategic Action:** Focus audits on categories with wide ranges to optimize operational equity and check for outliers.
 `.trim();
   }
 
@@ -155,25 +157,13 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
 
   // 3. Pareto & Concentration Analysis
   const topShare = totalSum > 0 ? (highest.value / totalSum) * 100 : 0;
-  const topTwoShare = totalSum > 0 && sorted.length > 1 ? ((highest.value + sorted[1].value) / totalSum) * 100 : topShare;
-
-  let concentrationText = '';
-  if (topShare >= 50) {
-    concentrationText = `Structural concentration is extremely high; **${highest.name}** unilaterally accounts for **${topShare.toFixed(1)}%** of cumulative volume. This indicates a high dependency or localized bottleneck.`;
-  } else if (topTwoShare >= 70) {
-    concentrationText = `A clear Pareto concentration is visible: the top two segments (**${highest.name}** and **${sorted[1].name}**) control **${topTwoShare.toFixed(1)}%** of the aggregate total, suggesting resource optimization should focus heavily on these segments.`;
-  } else {
-    concentrationText = `The distribution is relatively dispersed; the top segment (**${highest.name}**) commands **${topShare.toFixed(1)}%** of volume, indicating a decentralized operational spread.`;
-  }
 
   // 4. Volatility Classification
-  let volatilityText = '';
-  if (cv < 0.15) {
-    volatilityText = `The dataset displays high operational stability (Coefficient of Variation: **${cv.toFixed(2)}**), indicating consistent distribution bounds and uniform demand levels across cohorts.`;
-  } else if (cv < 0.5) {
-    volatilityText = `The metrics show moderate variability (Coefficient of Variation: **${cv.toFixed(2)}**), showing standard operational variance that requires routine oversight.`;
-  } else {
-    volatilityText = `The dataset features high structural volatility (Coefficient of Variation: **${cv.toFixed(2)}**), signaling severe variance or outliers that warrant immediate process audit.`;
+  let volatilityText = 'relative stability';
+  if (cv >= 0.5) {
+    volatilityText = 'significant variation';
+  } else if (cv >= 0.15) {
+    volatilityText = 'moderate variation';
   }
 
   // 5. Timeline Trend Analysis (Chronological Slope)
@@ -226,11 +216,9 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
     const pctChange = firstVal > 0 ? ((lastVal - firstVal) / firstVal) * 100 : 0;
 
     if (slope > 0) {
-      trendText = `Chronological analysis indicates a **positive growth trajectory** (slope: **+${formatVal(slope)}**/period), demonstrating a cumulative expansion of **${pctChange.toFixed(1)}%** from the start of the series to the end.`;
+      trendText = ` Timeline tracking shows a **steady growing trend**, expanding by **${pctChange.toFixed(0)}%** over the period.`;
     } else if (slope < 0) {
-      trendText = `Chronological analysis reveals a **steady contraction trend** (slope: **-${formatVal(Math.abs(slope))}/period**), resulting in a cumulative **${Math.abs(pctChange).toFixed(1)}% decline** over the observed timeline.`;
-    } else {
-      trendText = `Chronological progress is flat, showing zero net trend over the series.`;
+      trendText = ` Timeline tracking reveals a **downward trend**, contracting by **${Math.abs(pctChange).toFixed(0)}%** over the period.`;
     }
   }
 
@@ -250,7 +238,7 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
     if (stackSorted.length > 0) {
       const topStack = stackSorted[0];
       const topStackPct = totalSum > 0 ? (topStack[1] / totalSum) * 100 : 0;
-      stackText = `Compositional audit segmented by **${stackCol}** highlights **${topStack[0]}** as the primary driver, accounting for **${topStackPct.toFixed(1)}%** (**${formatVal(topStack[1])}**) of cumulative value.`;
+      stackText = ` Segment breakdown by **${stackCol}** shows **${topStack[0]}** is the primary driver at **${topStackPct.toFixed(0)}%** (**${formatVal(topStack[1])}**).`;
     }
   }
 
@@ -262,23 +250,22 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
   let domainRecommendation = '';
 
   if (titleLower.includes('revenue') || titleLower.includes('reimbursement') || titleLower.includes('cost') || titleLower.includes('expenditure') || titleLower.includes('pay') || titleLower.includes('finance') || yLower.includes('pay') || yLower.includes('salary') || yLower.includes('revenue')) {
-    domainHeader = 'Financial Audit & Allocative Insights';
-    domainRecommendation = `**Executive Action:** Review billing yields and compensation policies in high-variance bands. Consider capping overtime or adjusting agency fee schedules in **${highest.name}** to prevent budgetary leakage.`;
+    domainHeader = 'Financial & Cost Insights';
+    domainRecommendation = `Audit high-cost areas in **${highest.name}** and review budget allocations to find cost-saving opportunities.`;
   } else if (titleLower.includes('response') || titleLower.includes('time') || titleLower.includes('duration') || titleLower.includes('turnout') || titleLower.includes('transit') || titleLower.includes('delay') || yLower.includes('time') || yLower.includes('sec') || yLower.includes('min')) {
-    domainHeader = 'Operational Efficiency & Latency Review';
-    domainRecommendation = `**Executive Action:** Perform a workflow audit in **${highest.name}** to mitigate delays. Consider standardizing dispatcher protocols or adjusting unit coverage plans to align performance metrics with SLA safety thresholds.`;
+    domainHeader = 'Operational Performance & Latency Review';
+    domainRecommendation = `Evaluate workflow bottlenecks in **${highest.name}** to reduce delays and align response times with service standards.`;
   } else {
-    domainHeader = 'Throughput Capacity & Labor Resource Analysis';
-    domainRecommendation = `**Executive Action:** Align staffing rosters directly with workload peaks in **${highest.name}** to mitigate burnout and balance coverage across lower-demand segments.`;
+    domainHeader = 'Capacity & Resource Utilization';
+    domainRecommendation = `Adjust staffing levels to match workload peaks in **${highest.name}** to balance resource usage across teams.`;
   }
 
-  // 8. Put it all together into a senior-analyst brief
+  // 8. Put it all together into a brief business-friendly summary (shortened by 2 sentences, simple terminology)
   return `
 **[${domainHeader}]**
-* **Strategic Performance:** Segment variance indicates **${highest.name}** represents the maximum allocation at **${formattedHighest}**, while **${lowest.name}** maintains the minimal footprint at **${formattedLowest}**. ${volatilityText}
-* **Data Concentration:** ${concentrationText} ${stackText ? ` ${stackText}` : ''}
-* **Trend Vector:** ${trendText || 'No clear temporal pacing trend exists in this aggregation.'}
-* **Operational Recommendation:** ${domainRecommendation}
+* **Performance Range:** **${highest.name}** represents the highest category at **${formattedHighest}**, while **${lowest.name}** is the lowest at **${formattedLowest}**, showing **${volatilityText}** across segments.${trendText}
+* **Volume Distribution:** **${highest.name}** accounts for **${topShare.toFixed(0)}%** of the total volume.${stackText}
+* **Strategic Action:** ${domainRecommendation}
 `.trim();
 }
 
