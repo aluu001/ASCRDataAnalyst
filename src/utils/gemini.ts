@@ -2,12 +2,13 @@ import { GoogleGenAI } from '@google/genai';
 import type { ColumnMetadata } from './dataEngine';
 
 export interface ChartSpecification {
-  chartType: 'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box';
+  chartType: 'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box' | 'stackedBar' | 'percentStackedBar' | 'area';
   title: string;
   xAxisColumn: string;
   yAxisColumn: string;
   aggregation: 'sum' | 'avg' | 'count' | 'none';
   zAxisColumn?: string;
+  stackByColumn?: string;
 }
 
 export interface AnalystResponse {
@@ -108,6 +109,8 @@ Rules:
    - xAxisColumn: typically a categorical, text, or date column.
    - yAxisColumn: MUST be a numeric column (unless aggregation is 'count', where it can count rows).
    - aggregation: 'sum', 'avg', or 'count'. If plotting raw points (e.g. scatter/bubble/box), use 'none'.
+   - chartType can be 'bar', 'horizontalBar', 'line', 'pie', 'scatter', 'bubble', 'radar', 'box', 'stackedBar', 'percentStackedBar', or 'area'.
+   - If using 'stackedBar', 'percentStackedBar', or 'area', you can optionally specify 'stackByColumn' to segment/split the data by a secondary categorical column.
 6. In "followUpQuestions", write 2-3 interactive, action-oriented questions that YOU (the analyst) are asking the user to guide them (e.g., "Would you like me to analyze X?"). Do NOT write questions that the user would ask you.
    - Example: "Would you like me to analyze the correlation between Regular Hours and Salary?"
    - Example: "Shall we build a Radar Chart comparing average dispatch times across Call Sources?"
@@ -167,7 +170,7 @@ Rules:
               properties: {
                 chartType: { 
                    type: 'STRING' as any, 
-                   enum: ['bar', 'horizontalBar', 'line', 'pie', 'scatter', 'bubble', 'radar', 'box'] 
+                   enum: ['bar', 'horizontalBar', 'line', 'pie', 'scatter', 'bubble', 'radar', 'box', 'stackedBar', 'percentStackedBar', 'area'] 
                 },
                 title: { type: 'STRING' as any },
                 xAxisColumn: { type: 'STRING' as any, description: 'Column name for categories/X-axis.' },
@@ -177,7 +180,8 @@ Rules:
                   enum: ['sum', 'avg', 'count', 'none'],
                   description: 'How to roll up the values: sum, avg, count, or none.' 
                 },
-                zAxisColumn: { type: 'STRING' as any, description: 'Optional third numeric column name specifically for Bubble chart dot sizes.' }
+                zAxisColumn: { type: 'STRING' as any, description: 'Optional third numeric column name specifically for Bubble chart dot sizes.' },
+                stackByColumn: { type: 'STRING' as any, description: 'Optional secondary categorical column name to segment/stack the data by (specifically for stackedBar, percentStackedBar, and area charts).' }
               },
               required: ['chartType', 'title', 'xAxisColumn', 'yAxisColumn', 'aggregation']
             }

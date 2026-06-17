@@ -127,12 +127,13 @@ export function parseExcelWorkbook(arrayBuffer: ArrayBuffer): WorkbookData {
 }
 
 export interface AggregationRequest {
-  chartType: 'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box';
+  chartType: 'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box' | 'stackedBar' | 'percentStackedBar' | 'area';
   title: string;
   xAxisColumn: string;
   yAxisColumn: string;
   aggregation: 'sum' | 'avg' | 'count' | 'none';
   zAxisColumn?: string;
+  stackByColumn?: string;
 }
 
 export interface AggregatedDataPoint {
@@ -146,6 +147,154 @@ export interface AggregatedDataPoint {
  */
 export function aggregateDataset(rows: any[], request: AggregationRequest): AggregatedDataPoint[] {
   const { xAxisColumn, yAxisColumn, aggregation } = request;
+  const isStackedType = ['stackedBar', 'percentStackedBar', 'area'].includes(request.chartType);
+  const stackBy = isStackedType ? request.stackByColumn : undefined;
+
+  // Handle pivot aggregation if stackBy is defined and exists in the request
+  if (stackBy && xAxisColumn && yAxisColumn) {
+    const groups: Record<string, Record<string, { sum: number; count: number }>> = {};
+
+    for (const row of rows) {
+      let xVal = row[xAxisColumn];
+      if (xVal === null || xVal === undefined) {
+        xVal = 'N/A';
+      } else if (xVal instanceof Date) {
+        xVal = xVal.toLocaleDateString();
+      } else {
+        xVal = String(xVal);
+      }
+
+      let sVal = row[stackBy];
+      if (sVal === null || sVal === undefined) {
+        sVal = 'Unspecified';
+      } else if (sVal instanceof Date) {
+        sVal = sVal.toLocaleDateString();
+      } else {
+        sVal = String(sVal);
+      }
+
+      const rawYVal = row[yAxisColumn];
+      const yVal = rawYVal !== null && rawYVal !== undefined ? Number(rawYVal) : 0;
+      const finalY = isNaN(yVal) ? 0 : yVal;
+
+      if (!groups[xVal]) {
+        groups[xVal] = {};
+      }
+      if (!groups[xVal][sVal]) {
+        groups[xVal][sVal] = { sum: 0, count: 0 };
+      }
+
+      groups[xVal][sVal].sum += finalY;
+      groups[xVal][sVal].count += 1;
+    }
+
+    const results: AggregatedDataPoint[] = Object.keys(groups).map(xKey => {
+      const sGroups = groups[xKey];
+      const point: AggregatedDataPoint = {
+        name: xKey,
+        value: 0
+      };
+
+      let totalSum = 0;
+      let totalCount = 0;
+
+      Object.keys(sGroups).forEach(sKey => {
+        const sub = sGroups[sKey];
+        let val = 0;
+        if (aggregation === 'sum' || aggregation === 'none') {
+          val = sub.sum;
+        } else if (aggregation === 'avg') {
+          val = sub.sum / sub.count;
+        } else if (aggregation === 'count') {
+          val = sub.count;
+        }
+        point[sKey] = Number(val.toFixed(2));
+
+        totalSum += sub.sum;
+        totalCount += sub.count;
+      });
+
+      if (aggregation === 'sum' || aggregation === 'none') {
+        point.value = Number(totalSum.toFixed(2));
+      } else if (aggregation === 'avg') {
+        point.value = totalCount > 0 ? Number((totalSum / totalCount).toFixed(2)) : 0;
+      } else if (aggregation === 'count') {
+        point.value = totalCount;
+      }
+
+      return point;
+    });
+
+    // Sort values descending (useful for bar/pie charts to show top categories)
+    results.sort((a, b) => b.value - a.value);
+
+    let finalResults = results;
+    // If there are too many categories (e.g. >15), take top 10 and group the rest into "Other"
+    if (results.length > 15) {
+      const topTen = results.slice(0, 10);
+      const rest = results.slice(10);
+      const otherPoint: AggregatedDataPoint = {
+        name: 'Other',
+        value: 0
+      };
+
+      const allStackKeys = new Set<string>();
+      rest.forEach(r => {
+        Object.keys(r).forEach(k => {
+          if (k !== 'name' && k !== 'value' && k !== 'z') {
+            allStackKeys.add(k);
+          }
+        });
+      });
+
+      allStackKeys.forEach(sKey => {
+        let sum = 0;
+        let count = 0;
+        rest.forEach(r => {
+          if (r[sKey] !== undefined) {
+            sum += r[sKey];
+            count += 1;
+          }
+        });
+
+        if (aggregation === 'avg') {
+          otherPoint[sKey] = count > 0 ? Number((sum / count).toFixed(2)) : 0;
+        } else {
+          otherPoint[sKey] = Number(sum.toFixed(2));
+        }
+      });
+
+      const sKeys = Array.from(allStackKeys);
+      if (aggregation === 'avg') {
+        const sum = sKeys.reduce((acc, k) => acc + (otherPoint[k] || 0), 0);
+        otherPoint.value = sKeys.length > 0 ? Number((sum / sKeys.length).toFixed(2)) : 0;
+      } else {
+        otherPoint.value = Number(sKeys.reduce((acc, k) => acc + (otherPoint[k] || 0), 0).toFixed(2));
+      }
+
+      topTen.push(otherPoint);
+      finalResults = topTen;
+    }
+
+    // Normalize stack values to sum to 100 if percentStackedBar
+    if (request.chartType === 'percentStackedBar') {
+      finalResults.forEach(point => {
+        const sKeys = Object.keys(point).filter(k => k !== 'name' && k !== 'value' && k !== 'z');
+        const pointSum = sKeys.reduce((sum, k) => sum + (point[k] || 0), 0);
+        if (pointSum > 0) {
+          sKeys.forEach(k => {
+            point[k] = Number(((point[k] / pointSum) * 100).toFixed(2));
+          });
+        } else {
+          sKeys.forEach(k => {
+            point[k] = 0;
+          });
+        }
+      });
+    }
+
+    return finalResults;
+  }
 
   // Handle scatter plot or raw records (no aggregation required)
   if (aggregation === 'none' || !xAxisColumn || !yAxisColumn) {

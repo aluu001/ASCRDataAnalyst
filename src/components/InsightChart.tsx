@@ -19,7 +19,9 @@ import {
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
-  Radar
+  Radar,
+  AreaChart,
+  Area
 } from 'recharts';
 import { Info, EyeOff, Maximize2 } from 'lucide-react';
 import { aggregateDataset } from '../utils/dataEngine';
@@ -119,8 +121,20 @@ function getChartDescription(spec: ChartSpecification): string {
                       : chartType === 'bubble' ? 'Bubble Size Correlation Plot'
                       : chartType === 'radar' ? 'Radar Comparison Profile'
                       : chartType === 'box' ? 'Box and Whisker Plot'
+                      : chartType === 'stackedBar' ? 'Stacked Bar Chart'
+                      : chartType === 'percentStackedBar' ? '100% Stacked Percentage Bar Chart'
+                      : chartType === 'area' ? 'Area Chart'
                       : 'Scatter Correlation Plot';
 
+  if (chartType === 'stackedBar') {
+    return `This Stacked Bar Chart displays the rollup of ${yAxisColumn} across ${xAxisColumn} categories, segmented by ${spec.stackByColumn || 'stack groups'}. It highlights the contribution of each segment to the overall total.`;
+  }
+  if (chartType === 'percentStackedBar') {
+    return `This 100% Stacked Percentage Bar Chart contrasts the relative proportions of ${spec.stackByColumn || 'stack groups'} within each ${xAxisColumn} category. This standardizes categories to identify compositional differences independent of overall volume.`;
+  }
+  if (chartType === 'area') {
+    return `This Area Chart plots the progression or categories of ${yAxisColumn} against ${xAxisColumn}${spec.stackByColumn ? `, stacked by ${spec.stackByColumn} to display volume transitions` : ''}. The filled area highlights cumulative volume and trends.`;
+  }
   if (chartType === 'bubble') {
     return `This Bubble Chart plots the correlation between ${xAxisColumn} (X-axis) and ${yAxisColumn} (Y-axis), with bubble size representing ${spec.zAxisColumn || 'magnitude'}. It highlights multi-dimensional patterns and outliers.`;
   }
@@ -404,7 +418,7 @@ Outliers: ${group.outliers.length} point(s)`}</title>
   );
 };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label, isPercent }: any) => {
   if (active && payload && payload.length) {
     return (
       <div
@@ -422,9 +436,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           {label}
         </p>
         {payload.map((item: any, i: number) => {
-          const formattedVal = typeof item.value === 'number' 
-            ? item.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) 
-            : item.value;
+          const val = item.value;
+          const formattedVal = typeof val === 'number' 
+            ? (isPercent 
+                ? `${val.toFixed(1)}%` 
+                : val.toLocaleString(undefined, { maximumFractionDigits: 2 })) 
+            : val;
           const sizeVal = item.payload && item.payload.z !== undefined && item.payload.z !== 10
             ? ` (Size: ${item.payload.z.toLocaleString(undefined, { maximumFractionDigits: 2 })})`
             : '';
@@ -454,6 +471,19 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
   const uniqueId = useMemo(() => {
     return chartSpec.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
   }, [chartSpec.title]);
+
+  const stackKeys = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    const keys = new Set<string>();
+    data.forEach(item => {
+      Object.keys(item).forEach(k => {
+        if (k !== 'name' && k !== 'value' && k !== 'z') {
+          keys.add(k);
+        }
+      });
+    });
+    return Array.from(keys);
+  }, [data]);
 
   const colors = useMemo(() => {
     return getChartColors(chartSpec.title || chartSpec.yAxisColumn, colorTheme);
@@ -531,6 +561,118 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
             <Bar dataKey="value" name={yAxisColumn} fill={`url(#${barGradientId})`} radius={[4, 4, 0, 0]} />
           </BarChart>
         );
+
+      case 'stackedBar':
+      case 'percentStackedBar': {
+        const isPercent = chartType === 'percentStackedBar';
+        return (
+          <BarChart width={w} height={h} data={data} margin={chartMargin}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+            <XAxis
+              dataKey="name"
+              stroke="#64748b"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              {...xAxisProps}
+            />
+            <YAxis
+              stroke="#64748b"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(val) => isPercent ? `${val}%` : (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
+              domain={isPercent ? [0, 100] : [0, 'auto']}
+            />
+            <Tooltip content={<CustomTooltip isPercent={isPercent} />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
+            {stackKeys.length > 0 ? (
+              stackKeys.map((key, index) => {
+                const color = PIE_COLORS[index % PIE_COLORS.length];
+                return (
+                  <Bar 
+                    key={key} 
+                    dataKey={key} 
+                    name={key} 
+                    stackId="a" 
+                    fill={color} 
+                  />
+                );
+              })
+            ) : (
+              <Bar dataKey="value" name={yAxisColumn} fill={colors.stroke} radius={[4, 4, 0, 0]} />
+            )}
+          </BarChart>
+        );
+      }
+
+      case 'area': {
+        const isStacked = stackKeys.length > 0;
+        return (
+          <AreaChart width={w} height={h} data={data} margin={chartMargin}>
+            <defs>
+              {isStacked ? (
+                stackKeys.map((key, index) => {
+                  const color = PIE_COLORS[index % PIE_COLORS.length];
+                  const gradId = `areaGrad-${uniqueId}-${index}${suffix}`;
+                  return (
+                    <linearGradient key={key} id={gradId} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={color} stopOpacity={0.7} />
+                      <stop offset="95%" stopColor={color} stopOpacity={0.05} />
+                    </linearGradient>
+                  );
+                })
+              ) : (
+                <linearGradient id={`areaGradSingle-${uniqueId}${suffix}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={colors.stroke} stopOpacity={0.7} />
+                  <stop offset="95%" stopColor={colors.stroke} stopOpacity={0.05} />
+                </linearGradient>
+              )}
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <XAxis
+              dataKey="name"
+              stroke="#64748b"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              {...xAxisProps}
+            />
+            <YAxis
+              stroke="#64748b"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            {isStacked ? (
+              stackKeys.map((key, index) => {
+                const color = PIE_COLORS[index % PIE_COLORS.length];
+                const gradId = `areaGrad-${uniqueId}-${index}${suffix}`;
+                return (
+                  <Area
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    name={key}
+                    stackId="a"
+                    stroke={color}
+                    fill={`url(#${gradId})`}
+                  />
+                );
+              })
+            ) : (
+              <Area
+                type="monotone"
+                dataKey="value"
+                name={yAxisColumn}
+                stroke={colors.stroke}
+                fill={`url(#areaGradSingle-${uniqueId}${suffix})`}
+              />
+            )}
+          </AreaChart>
+        );
+      }
 
       case 'horizontalBar':
         return (

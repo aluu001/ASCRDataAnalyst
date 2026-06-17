@@ -28,46 +28,83 @@ import { getMockWorkbook } from './utils/mockData';
 import type { WorkbookData, SheetData } from './utils/dataEngine';
 import type { ChatMessage, ChartSpecification } from './utils/gemini';
 
-// Helper to format basic inline markdown bolding and backticks
+// Helper to format basic inline markdown bolding, backticks, and line breaks
 function inlineMarkdown(text: string): string {
   if (!text) return '';
   return text
+    .replace(/\n/g, '<br />')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/`(.*?)`/g, '<code>$1</code>');
 }
 
-// Smart helper to generate executive-ready AI data summaries for each chart type dynamically
+// Smart helper to generate senior/principal level data insights with mathematical metrics (volatility, concentration, trends)
 function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
   if (!rows || rows.length === 0) return "No data available to generate insights.";
   
   const xCol = chart.xAxisColumn;
   const yCol = chart.yAxisColumn;
   const agg = chart.aggregation || 'sum';
-  
+  const isStacked = ['stackedBar', 'percentStackedBar', 'area'].includes(chart.chartType) && chart.stackByColumn;
+  const stackCol = isStacked ? chart.stackByColumn : undefined;
+
   if (chart.chartType === 'box') {
     const vals = rows.map(r => parseFloat(r[yCol])).filter(v => !isNaN(v)).sort((a, b) => a - b);
     if (vals.length === 0) {
-      return `Distribution Review: Analyzing numerical dispersion of '${yCol}' grouped by '${xCol}'.`;
+      return `**Compensation Dispersion Analysis:** Grouped dataset review of **${yCol}** by **${xCol}**. Quartile metrics are uncomputable due to lack of valid numeric values.`;
     }
     const count = vals.length;
     const max = vals[count - 1];
+    const min = vals[0];
     const median = count % 2 === 0 ? (vals[count / 2 - 1] + vals[count / 2]) / 2 : vals[Math.floor(count / 2)];
     
-    const fmtMedian = median >= 1000000 
-      ? `$${(median / 1000000).toFixed(2)}M` 
-      : median >= 1000 
-        ? `$${(median / 1000).toFixed(1)}k` 
-        : median.toFixed(0);
+    // Calculate Standard Deviation & Coefficient of Variation
+    const totalSum = vals.reduce((a, b) => a + b, 0);
+    const meanVal = totalSum / count;
+    let stdDev = 0;
+    if (count > 1) {
+      const variance = vals.reduce((sum, val) => sum + Math.pow(val - meanVal, 2), 0) / (count - 1);
+      stdDev = Math.sqrt(variance);
+    }
+    const cv = meanVal > 0 ? stdDev / meanVal : 0;
 
-    const fmtMax = max >= 1000000 
-      ? `$${(max / 1000000).toFixed(2)}M` 
-      : max >= 1000 
-        ? `$${(max / 1000).toFixed(1)}k` 
-        : max.toFixed(0);
+    const formatVal = (v: number) => {
+      const sign = v < 0 ? '-' : '';
+      const abs = Math.abs(v);
+      const prefix = yCol.toLowerCase().includes('revenue') || yCol.toLowerCase().includes('pay') || yCol.toLowerCase().includes('salary') || yCol.toLowerCase().includes('cost') || yCol.toLowerCase().includes('funding') || yCol.toLowerCase().includes('rate') ? '$' : '';
+      if (abs >= 1000000) return `${sign}${prefix}${(abs / 1000000).toFixed(2)}M`;
+      if (abs >= 1000) return `${sign}${prefix}${(abs / 1000).toFixed(1)}k`;
+      return `${sign}${prefix}${abs.toFixed(0)}`;
+    };
 
-    return `Compensation Dispersion Analysis: The distribution of '${yCol}' across categories indicates a median value of ${fmtMedian}, with a maximum value of ${fmtMax} logged in the dataset. Box plot dispersion outlines division variations, suggesting where outlier audits may be helpful for pay equity.`;
+    let volatilityDescriptor = 'low variance';
+    if (cv >= 0.5) volatilityDescriptor = 'high dispersion / volatility';
+    else if (cv >= 0.15) volatilityDescriptor = 'moderate variation';
+
+    return `
+**[Structural Dispersion & Pay Equity Audit]**
+* **Strategic Performance:** Statistical review of **${yCol}** indicates a median value of **${formatVal(median)}** across a cohort size of **${count}** records. The overall range is bounded by a minimum of **${formatVal(min)}** and a peak outlier of **${formatVal(max)}**.
+* **Variance & Volatility:** The segment dispersion is classified as **${volatilityDescriptor}** with a calculated Coefficient of Variation of **${cv.toFixed(2)}** (Standard Deviation: **${formatVal(stdDev)}**).
+* **Operational Recommendation:** Establish targeted audit gates for high-range outlier cohorts exceeding **${formatVal(median)}** to monitor budgetary leakage and ensure wage equity alignment.
+`.trim();
   }
 
+  // 1. Extract numeric values for general statistical calculations
+  const numericValues = rows
+    .map(r => parseFloat(r[yCol]))
+    .filter(v => !isNaN(v));
+
+  const totalSum = numericValues.reduce((sum, val) => sum + val, 0);
+  const meanVal = numericValues.length > 0 ? totalSum / numericValues.length : 0;
+  
+  // Calculate Standard Deviation & Coefficient of Variation
+  let stdDev = 0;
+  if (numericValues.length > 1) {
+    const variance = numericValues.reduce((sum, val) => sum + Math.pow(val - meanVal, 2), 0) / (numericValues.length - 1);
+    stdDev = Math.sqrt(variance);
+  }
+  const cv = meanVal > 0 ? stdDev / meanVal : 0;
+
+  // 2. Group by X-Axis and aggregate values
   const groupedData: Record<string, number[]> = {};
   rows.forEach(row => {
     const xVal = String(row[xCol] ?? 'Unmapped').trim();
@@ -77,56 +114,172 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
       groupedData[xVal].push(yVal);
     }
   });
-  
+
   const aggregated: { name: string; value: number }[] = [];
   Object.keys(groupedData).forEach(name => {
     const vals = groupedData[name];
-    let value = 0;
+    let val = 0;
     if (agg === 'sum') {
-      value = vals.reduce((a, b) => a + b, 0);
+      val = vals.reduce((a, b) => a + b, 0);
     } else if (agg === 'avg') {
-      value = vals.reduce((a, b) => a + b, 0) / vals.length;
+      val = vals.reduce((a, b) => a + b, 0) / vals.length;
     } else if (agg === 'count') {
-      value = vals.length;
+      val = vals.length;
+    } else {
+      val = vals[0] || 0; // fallback
     }
-    aggregated.push({ name, value });
+    aggregated.push({ name, value: val });
   });
-  
+
   if (aggregated.length === 0) {
-    return `Operational Review: Comparing the relationship between '${xCol}' and '${yCol}' in the dataset.`;
+    return `**Strategic Analysis:** Insufficient numeric values present to construct a statistical profile of **${yCol}** across **${xCol}** categories. Audit source schema.`;
   }
-  
+
+  // Sort groupings descending
   const sorted = [...aggregated].sort((a, b) => b.value - a.value);
   const highest = sorted[0];
   const lowest = sorted[sorted.length - 1];
+
+  // Formatting helpers
+  const formatVal = (v: number) => {
+    const sign = v < 0 ? '-' : '';
+    const abs = Math.abs(v);
+    const prefix = yCol.toLowerCase().includes('revenue') || yCol.toLowerCase().includes('pay') || yCol.toLowerCase().includes('salary') || yCol.toLowerCase().includes('cost') || yCol.toLowerCase().includes('funding') || yCol.toLowerCase().includes('charge') || yCol.toLowerCase().includes('fee') ? '$' : '';
+    if (abs >= 1000000) return `${sign}${prefix}${(abs / 1000000).toFixed(2)}M`;
+    if (abs >= 1000) return `${sign}${prefix}${(abs / 1000).toFixed(1)}k`;
+    return `${sign}${prefix}${abs.toFixed(1)}`;
+  };
+
+  const formattedHighest = formatVal(highest.value);
+  const formattedLowest = formatVal(lowest.value);
+
+  // 3. Pareto & Concentration Analysis
+  const topShare = totalSum > 0 ? (highest.value / totalSum) * 100 : 0;
+  const topTwoShare = totalSum > 0 && sorted.length > 1 ? ((highest.value + sorted[1].value) / totalSum) * 100 : topShare;
+
+  let concentrationText = '';
+  if (topShare >= 50) {
+    concentrationText = `Structural concentration is extremely high; **${highest.name}** unilaterally accounts for **${topShare.toFixed(1)}%** of cumulative volume. This indicates a high dependency or localized bottleneck.`;
+  } else if (topTwoShare >= 70) {
+    concentrationText = `A clear Pareto concentration is visible: the top two segments (**${highest.name}** and **${sorted[1].name}**) control **${topTwoShare.toFixed(1)}%** of the aggregate total, suggesting resource optimization should focus heavily on these segments.`;
+  } else {
+    concentrationText = `The distribution is relatively dispersed; the top segment (**${highest.name}**) commands **${topShare.toFixed(1)}%** of volume, indicating a decentralized operational spread.`;
+  }
+
+  // 4. Volatility Classification
+  let volatilityText = '';
+  if (cv < 0.15) {
+    volatilityText = `The dataset displays high operational stability (Coefficient of Variation: **${cv.toFixed(2)}**), indicating consistent distribution bounds and uniform demand levels across cohorts.`;
+  } else if (cv < 0.5) {
+    volatilityText = `The metrics show moderate variability (Coefficient of Variation: **${cv.toFixed(2)}**), showing standard operational variance that requires routine oversight.`;
+  } else {
+    volatilityText = `The dataset features high structural volatility (Coefficient of Variation: **${cv.toFixed(2)}**), signaling severe variance or outliers that warrant immediate process audit.`;
+  }
+
+  // 5. Timeline Trend Analysis (Chronological Slope)
+  let trendText = '';
+  const temporalKeywords = ['month', 'date', 'year', 'timeline', 'period', 'quarter', 'fy'];
+  const isTemporal = temporalKeywords.some(k => xCol.toLowerCase().includes(k) || chart.title.toLowerCase().includes(k));
   
-  const fmtHighest = highest.value >= 1000000 
-    ? `$${(highest.value / 1000000).toFixed(2)}M` 
-    : highest.value >= 1000 
-      ? `$${(highest.value / 1000).toFixed(1)}k` 
-      : highest.value.toFixed(0);
+  if (isTemporal && aggregated.length > 2) {
+    const monthOrder: Record<string, number> = {
+      'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+      'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+      'january': 1, 'february': 2, 'march': 3, 'april': 4, 'june': 6,
+      'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12
+    };
 
-  const fmtLowest = lowest.value >= 1000000 
-    ? `$${(lowest.value / 1000000).toFixed(2)}M` 
-    : lowest.value >= 1000 
-      ? `$${(lowest.value / 1000).toFixed(1)}k` 
-      : lowest.value.toFixed(0);
+    const chronological = [...aggregated].sort((a, b) => {
+      const aLower = a.name.toLowerCase();
+      const bLower = b.name.toLowerCase();
+      
+      const aMonthIdx = Object.keys(monthOrder).find(m => aLower.includes(m));
+      const bMonthIdx = Object.keys(monthOrder).find(m => bLower.includes(m));
+      
+      if (aMonthIdx && bMonthIdx) {
+        return monthOrder[aMonthIdx] - monthOrder[bMonthIdx];
+      }
+      
+      const aDate = Date.parse(a.name);
+      const bDate = Date.parse(b.name);
+      if (!isNaN(aDate) && !isNaN(bDate)) {
+        return aDate - bDate;
+      }
+      
+      return a.name.localeCompare(b.name);
+    });
 
+    const N = chronological.length;
+    const X = Array.from({ length: N }, (_, i) => i + 1);
+    const Y = chronological.map(c => c.value);
+
+    const sumX = X.reduce((a, b) => a + b, 0);
+    const sumY = Y.reduce((a, b) => a + b, 0);
+    const sumXY = X.reduce((acc, xVal, i) => acc + xVal * Y[i], 0);
+    const sumXX = X.reduce((a, b) => a + Math.pow(b, 2), 0);
+
+    const denominator = N * sumXX - Math.pow(sumX, 2);
+    const slope = denominator !== 0 ? (N * sumXY - sumX * sumY) / denominator : 0;
+    
+    const firstVal = Y[0];
+    const lastVal = Y[N - 1];
+    const pctChange = firstVal > 0 ? ((lastVal - firstVal) / firstVal) * 100 : 0;
+
+    if (slope > 0) {
+      trendText = `Chronological analysis indicates a **positive growth trajectory** (slope: **+${formatVal(slope)}**/period), demonstrating a cumulative expansion of **${pctChange.toFixed(1)}%** from the start of the series to the end.`;
+    } else if (slope < 0) {
+      trendText = `Chronological analysis reveals a **steady contraction trend** (slope: **-${formatVal(Math.abs(slope))}/period**), resulting in a cumulative **${Math.abs(pctChange).toFixed(1)}% decline** over the observed timeline.`;
+    } else {
+      trendText = `Chronological progress is flat, showing zero net trend over the series.`;
+    }
+  }
+
+  // 6. Secondary Stacking Audit (if stacked)
+  let stackText = '';
+  if (isStacked && stackCol) {
+    const stackGroups: Record<string, number> = {};
+    rows.forEach(r => {
+      const sVal = String(r[stackCol] ?? 'Unspecified').trim();
+      const yVal = parseFloat(r[yCol]);
+      if (!isNaN(yVal)) {
+        stackGroups[sVal] = (stackGroups[sVal] || 0) + yVal;
+      }
+    });
+
+    const stackSorted = Object.entries(stackGroups).sort((a, b) => b[1] - a[1]);
+    if (stackSorted.length > 0) {
+      const topStack = stackSorted[0];
+      const topStackPct = totalSum > 0 ? (topStack[1] / totalSum) * 100 : 0;
+      stackText = `Compositional audit segmented by **${stackCol}** highlights **${topStack[0]}** as the primary driver, accounting for **${topStackPct.toFixed(1)}%** (**${formatVal(topStack[1])}**) of cumulative value.`;
+    }
+  }
+
+  // 7. Domain Wording & Recommendations
   const titleLower = chart.title.toLowerCase();
-  
-  if (titleLower.includes('revenue') || titleLower.includes('reimbursement') || titleLower.includes('cost') || titleLower.includes('expenditure') || titleLower.includes('pay') || titleLower.includes('finance')) {
-    return `Financial Audit Insights: A cost structure review reveals that '${highest.name}' is the highest reporting category at ${fmtHighest}. Conversely, '${lowest.name}' reports the lowest allocation at ${fmtLowest}. Variance analysis is recommended to optimize departmental budgets.`;
+  const yLower = yCol.toLowerCase();
+
+  let domainHeader = 'Operational Insights';
+  let domainRecommendation = '';
+
+  if (titleLower.includes('revenue') || titleLower.includes('reimbursement') || titleLower.includes('cost') || titleLower.includes('expenditure') || titleLower.includes('pay') || titleLower.includes('finance') || yLower.includes('pay') || yLower.includes('salary') || yLower.includes('revenue')) {
+    domainHeader = 'Financial Audit & Allocative Insights';
+    domainRecommendation = `**Executive Action:** Review billing yields and compensation policies in high-variance bands. Consider capping overtime or adjusting agency fee schedules in **${highest.name}** to prevent budgetary leakage.`;
+  } else if (titleLower.includes('response') || titleLower.includes('time') || titleLower.includes('duration') || titleLower.includes('turnout') || titleLower.includes('transit') || titleLower.includes('delay') || yLower.includes('time') || yLower.includes('sec') || yLower.includes('min')) {
+    domainHeader = 'Operational Efficiency & Latency Review';
+    domainRecommendation = `**Executive Action:** Perform a workflow audit in **${highest.name}** to mitigate delays. Consider standardizing dispatcher protocols or adjusting unit coverage plans to align performance metrics with SLA safety thresholds.`;
+  } else {
+    domainHeader = 'Throughput Capacity & Labor Resource Analysis';
+    domainRecommendation = `**Executive Action:** Align staffing rosters directly with workload peaks in **${highest.name}** to mitigate burnout and balance coverage across lower-demand segments.`;
   }
-  
-  if (titleLower.includes('response') || titleLower.includes('time') || titleLower.includes('duration') || titleLower.includes('turnout') || titleLower.includes('transit') || titleLower.includes('delay')) {
-    return `Operational Performance Analysis: Transit metrics indicate '${highest.name}' reports the longest delay/intervals averaging ${fmtHighest}. The shortest lag was logged for '${lowest.name}' at ${fmtLowest}. Evaluate workflows in '${highest.name}' to align averages with safe thresholds.`;
-  }
-  
-  if (titleLower.includes('admissions') || titleLower.includes('volume') || titleLower.includes('count') || titleLower.includes('runs') || titleLower.includes('transport') || titleLower.includes('ratio')) {
-    return `Capacity & Utilization Review: Volume logs highlight '${highest.name}' has the highest volume activity at ${fmtHighest} records, while '${lowest.name}' records the lowest throughput at ${fmtLowest}. Re-align staffing resources to cover high-volume segments.`;
-  }
-  
-  return `Performance Highlights: Category tracking shows '${highest.name}' represents the maximum logged value (${fmtHighest}) while '${lowest.name}' represents the minimum logged value (${fmtLowest}). Review these bounds for strategic capacity planning.`;
+
+  // 8. Put it all together into a senior-analyst brief
+  return `
+**[${domainHeader}]**
+* **Strategic Performance:** Segment variance indicates **${highest.name}** represents the maximum allocation at **${formattedHighest}**, while **${lowest.name}** maintains the minimal footprint at **${formattedLowest}**. ${volatilityText}
+* **Data Concentration:** ${concentrationText} ${stackText ? ` ${stackText}` : ''}
+* **Trend Vector:** ${trendText || 'No clear temporal pacing trend exists in this aggregation.'}
+* **Operational Recommendation:** ${domainRecommendation}
+`.trim();
 }
 
 // Smart helper to generate 8+ default charts based on sheet columns
@@ -452,6 +605,34 @@ const MiniChartThumbnail = ({ chartType }: { chartType: string }) => {
           <line x1="25" y1="8" x2="25" y2="27" stroke="var(--BannerGB)" strokeWidth="1.5" />
         </svg>
       );
+    case 'stackedBar':
+      return (
+        <svg width="42" height="30" viewBox="0 0 50 35" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+          <rect x="8" y="22" width="10" height="12" fill="var(--BannerGB)" opacity="0.9" />
+          <rect x="8" y="10" width="10" height="12" fill="var(--BannerGB)" opacity="0.5" />
+          <rect x="22" y="16" width="10" height="18" fill="var(--BannerGB)" opacity="0.9" />
+          <rect x="22" y="4" width="10" height="12" fill="var(--BannerGB)" opacity="0.5" />
+          <rect x="36" y="26" width="10" height="8" fill="var(--BannerGB)" opacity="0.9" />
+          <rect x="36" y="14" width="10" height="12" fill="var(--BannerGB)" opacity="0.5" />
+        </svg>
+      );
+    case 'percentStackedBar':
+      return (
+        <svg width="42" height="30" viewBox="0 0 50 35" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+          <rect x="8" y="20" width="10" height="14" fill="var(--BannerGB)" opacity="0.9" />
+          <rect x="8" y="4" width="10" height="16" fill="var(--BannerGB)" opacity="0.5" />
+          <rect x="22" y="14" width="10" height="20" fill="var(--BannerGB)" opacity="0.9" />
+          <rect x="22" y="4" width="10" height="10" fill="var(--BannerGB)" opacity="0.5" />
+          <rect x="36" y="24" width="10" height="10" fill="var(--BannerGB)" opacity="0.9" />
+          <rect x="36" y="4" width="10" height="20" fill="var(--BannerGB)" opacity="0.5" />
+        </svg>
+      );
+    case 'area':
+      return (
+        <svg width="42" height="30" viewBox="0 0 50 35" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+          <path d="M5 30 L15 12 L28 22 L45 7 L45 30 Z" fill="var(--BannerGB)" fillOpacity="0.25" stroke="var(--BannerGB)" strokeWidth="1.5" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -528,10 +709,11 @@ function App() {
 
   // Custom Chart Form states
   const [customTitle, setCustomTitle] = useState<string>('');
-  const [customChartType, setCustomChartType] = useState<'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box'>('bar');
+  const [customChartType, setCustomChartType] = useState<'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box' | 'stackedBar' | 'percentStackedBar' | 'area'>('bar');
   const [customX, setCustomX] = useState<string>('');
   const [customY, setCustomY] = useState<string>('');
   const [customZ, setCustomZ] = useState<string>('');
+  const [customStackBy, setCustomStackBy] = useState<string>('');
   const [customAggregation, setCustomAggregation] = useState<'sum' | 'avg' | 'count' | 'none'>('sum');
   const [colorTheme, setColorTheme] = useState<'classic' | 'vibrant'>('vibrant');
 
@@ -1109,7 +1291,8 @@ function App() {
       xAxisColumn: customX,
       yAxisColumn: customY,
       aggregation: customAggregation,
-      zAxisColumn: customChartType === 'bubble' ? customZ : undefined
+      zAxisColumn: customChartType === 'bubble' ? customZ : undefined,
+      stackByColumn: ['stackedBar', 'percentStackedBar', 'area'].includes(customChartType) && customStackBy ? customStackBy : undefined
     };
 
     setAvailableCharts(prev => [...prev, newChart]);
@@ -1117,6 +1300,7 @@ function App() {
     setActiveChartTab(newChart.title);
     setCustomTitle('');
     setCustomZ('');
+    setCustomStackBy('');
   };
 
   const handleExportPDF = () => {
@@ -1811,14 +1995,17 @@ function App() {
                                   setAvailableCharts(prev => prev.map((c, i) => i === idx ? { ...c, chartType: newType } : c));
                                 }}
                               >
-                                <option value="bar">Bar Chart</option>
+                                <option value="bar">Vertical Bar Chart</option>
                                 <option value="horizontalBar">Horizontal Bar Chart</option>
                                 <option value="line">Line Chart</option>
                                 <option value="pie">Pie Chart</option>
                                 <option value="scatter">Scatter Plot</option>
-                                <option value="bubble">Bubble Chart</option>
-                                <option value="radar">Radar Chart</option>
-                                <option value="box">Distribution Plot</option>
+                                <option value="bubble">Bubble Correlation</option>
+                                <option value="radar">Radar Comparison</option>
+                                <option value="box">Box & Whisker Plot</option>
+                                <option value="stackedBar">Stacked Bar Chart</option>
+                                <option value="percentStackedBar">100% Stacked Bar Chart</option>
+                                <option value="area">Area Chart</option>
                               </select>
                             </div>
                             
@@ -1838,6 +2025,25 @@ function App() {
                                 <option value="none">Actual Values</option>
                               </select>
                             </div>
+
+                            {['stackedBar', 'percentStackedBar', 'area'].includes(chart.chartType) && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', gridColumn: 'span 2' }}>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--DarkGray)', fontWeight: 'bold' }}>Stack / Split By</span>
+                                <select
+                                  style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem', borderRadius: '4px', border: '1px solid var(--LightGray)', background: 'white' }}
+                                  value={chart.stackByColumn || ''}
+                                  onChange={e => {
+                                    const newStack = e.target.value;
+                                    setAvailableCharts(prev => prev.map((c, i) => i === idx ? { ...c, stackByColumn: newStack || undefined } : c));
+                                  }}
+                                >
+                                  <option value="">-- No Stacking --</option>
+                                  {processedActiveSheet?.columns.map((col, cIdx) => (
+                                    <option key={cIdx} value={col.name}>{col.name}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -2299,6 +2505,23 @@ function App() {
                         >
                           <option value="">-- Select --</option>
                           {processedActiveSheet?.columns.filter(c => c.type === 'number').map((c, i) => (
+                            <option key={i} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {['stackedBar', 'percentStackedBar', 'area'].includes(customChartType) && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>Stack / Split By</span>
+                        <select 
+                          className="filter-select" 
+                          style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '6px' }}
+                          value={customStackBy}
+                          onChange={e => setCustomStackBy(e.target.value)}
+                        >
+                          <option value="">-- No Stacking --</option>
+                          {processedActiveSheet?.columns.map((c, i) => (
                             <option key={i} value={c.name}>{c.name}</option>
                           ))}
                         </select>
