@@ -32,11 +32,11 @@ import type { ChatMessage, ChartSpecification } from './utils/gemini';
 function inlineMarkdown(text: string): string {
   if (!text) return '';
   return text
-    .replace(/\n/g, '<br />')
     .replace(/^\*\s+/gm, '• ') // Replace leading '* ' with bullet '• '
     .replace(/^-\s+/gm, '• ')  // Replace leading '- ' with bullet '• '
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`(.*?)`/g, '<code>$1</code>');
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br />');
 }
 
 // Smart helper to generate senior/principal level data insights with mathematical metrics (volatility, concentration, trends)
@@ -49,17 +49,25 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
   const isStacked = ['stackedBar', 'percentStackedBar', 'area'].includes(chart.chartType) && chart.stackByColumn;
   const stackCol = isStacked ? chart.stackByColumn : undefined;
 
+  const formatVal = (v: number) => {
+    const sign = v < 0 ? '-' : '';
+    const abs = Math.abs(v);
+    const prefix = yCol.toLowerCase().includes('revenue') || yCol.toLowerCase().includes('pay') || yCol.toLowerCase().includes('salary') || yCol.toLowerCase().includes('cost') || yCol.toLowerCase().includes('funding') || yCol.toLowerCase().includes('charge') || yCol.toLowerCase().includes('fee') ? '$' : '';
+    if (abs >= 1000000) return `${sign}${prefix}${(abs / 1000000).toFixed(2)}M`;
+    if (abs >= 1000) return `${sign}${prefix}${(abs / 1000).toFixed(1)}k`;
+    return `${sign}${prefix}${abs.toFixed(1)}`;
+  };
+
   if (chart.chartType === 'box') {
     const vals = rows.map(r => parseFloat(r[yCol])).filter(v => !isNaN(v)).sort((a, b) => a - b);
     if (vals.length === 0) {
-      return `**Distribution Audit: ${yCol}**\n* **Cohort Spread:** Median value stands at **${yCol}** across categories, but individual values are uncomputable.\n* **Strategic Action:** Map numeric columns properly to review compensation patterns.`;
+      return `The distribution analysis for **${yCol}** cannot be completed due to insufficient numeric values. To optimize operational equity and address potential outliers, we recommend reviewing compensation patterns and verifying data alignment.`.trim();
     }
     const count = vals.length;
     const max = vals[count - 1];
     const min = vals[0];
     const median = count % 2 === 0 ? (vals[count / 2 - 1] + vals[count / 2]) / 2 : vals[Math.floor(count / 2)];
     
-    // Calculate standard deviation and coefficient of variation for simple label classification
     const totalSum = vals.reduce((a, b) => a + b, 0);
     const meanVal = totalSum / count;
     let stdDev = 0;
@@ -69,25 +77,11 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
     }
     const cv = meanVal > 0 ? stdDev / meanVal : 0;
 
-    const formatVal = (v: number) => {
-      const sign = v < 0 ? '-' : '';
-      const abs = Math.abs(v);
-      const prefix = yCol.toLowerCase().includes('revenue') || yCol.toLowerCase().includes('pay') || yCol.toLowerCase().includes('salary') || yCol.toLowerCase().includes('cost') || yCol.toLowerCase().includes('funding') || yCol.toLowerCase().includes('rate') ? '$' : '';
-      if (abs >= 1000000) return `${sign}${prefix}${(abs / 1000000).toFixed(2)}M`;
-      if (abs >= 1000) return `${sign}${prefix}${(abs / 1000).toFixed(1)}k`;
-      return `${sign}${prefix}${abs.toFixed(0)}`;
-    };
+    let volatilityText = 'consistent and stable';
+    if (cv >= 0.5) volatilityText = 'highly variable';
+    else if (cv >= 0.15) volatilityText = 'moderately spread';
 
-    let volatilityDescriptor = 'consistent and stable';
-    if (cv >= 0.5) volatilityDescriptor = 'highly variable';
-    else if (cv >= 0.15) volatilityDescriptor = 'moderately spread';
-
-    return `
-**[Distribution Audit: ${yCol}]**
-* **Cohort Spread:** The median value stands at **${formatVal(median)}** across the cohort, with individual records ranging from a minimum of **${formatVal(min)}** to a maximum of **${formatVal(max)}**.
-* **Cohort Variance:** Category values show **${volatilityDescriptor}** patterns, reflecting the overall dispersion across different segments.
-* **Strategic Action:** Focus audits on categories with wide ranges to optimize operational equity and check for outliers.
-`.trim();
+    return `The distribution analysis for **${yCol}** reveals a median value of **${formatVal(median)}**, with individual records ranging from a minimum of **${formatVal(min)}** to a maximum of **${formatVal(max)}**. The data shows **${volatilityText}** patterns across the cohort, reflecting the overall dispersion between different segments. To optimize operational equity and address potential outliers, we recommend focusing detailed audits on categories exhibiting the widest variance.`.trim();
   }
 
   // 1. Extract numeric values for general statistical calculations
@@ -128,13 +122,13 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
     } else if (agg === 'count') {
       val = vals.length;
     } else {
-      val = vals[0] || 0; // fallback
+      val = vals[0] || 0;
     }
     aggregated.push({ name, value: val });
   });
 
   if (aggregated.length === 0) {
-    return `**Strategic Analysis:** Insufficient numeric values present to construct a statistical profile of **${yCol}** across **${xCol}** categories. Audit source schema.`;
+    return `Analysis of **${yCol}** across **${xCol}** categories could not be performed due to insufficient numeric values. To improve reporting quality, we recommend auditing the worksheet data configuration and ensuring fields are mapped correctly.`;
   }
 
   // Sort groupings descending
@@ -142,21 +136,12 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
   const highest = sorted[0];
   const lowest = sorted[sorted.length - 1];
 
-  // Formatting helpers
-  const formatVal = (v: number) => {
-    const sign = v < 0 ? '-' : '';
-    const abs = Math.abs(v);
-    const prefix = yCol.toLowerCase().includes('revenue') || yCol.toLowerCase().includes('pay') || yCol.toLowerCase().includes('salary') || yCol.toLowerCase().includes('cost') || yCol.toLowerCase().includes('funding') || yCol.toLowerCase().includes('charge') || yCol.toLowerCase().includes('fee') ? '$' : '';
-    if (abs >= 1000000) return `${sign}${prefix}${(abs / 1000000).toFixed(2)}M`;
-    if (abs >= 1000) return `${sign}${prefix}${(abs / 1000).toFixed(1)}k`;
-    return `${sign}${prefix}${abs.toFixed(1)}`;
-  };
-
   const formattedHighest = formatVal(highest.value);
   const formattedLowest = formatVal(lowest.value);
 
-  // 3. Pareto & Concentration Analysis
-  const topShare = totalSum > 0 ? (highest.value / totalSum) * 100 : 0;
+  // 3. Concentration Analysis
+  const aggTotal = aggregated.reduce((sum, item) => sum + item.value, 0);
+  const topShare = aggTotal > 0 ? (highest.value / aggTotal) * 100 : 0;
 
   // 4. Volatility Classification
   let volatilityText = 'relative stability';
@@ -167,9 +152,10 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
   }
 
   // 5. Timeline Trend Analysis (Chronological Slope)
-  let trendText = '';
   const temporalKeywords = ['month', 'date', 'year', 'timeline', 'period', 'quarter', 'fy'];
   const isTemporal = temporalKeywords.some(k => xCol.toLowerCase().includes(k) || chart.title.toLowerCase().includes(k));
+  let slope = 0;
+  let pctChange = 0;
   
   if (isTemporal && aggregated.length > 2) {
     const monthOrder: Record<string, number> = {
@@ -182,20 +168,12 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
     const chronological = [...aggregated].sort((a, b) => {
       const aLower = a.name.toLowerCase();
       const bLower = b.name.toLowerCase();
-      
       const aMonthIdx = Object.keys(monthOrder).find(m => aLower.includes(m));
       const bMonthIdx = Object.keys(monthOrder).find(m => bLower.includes(m));
-      
-      if (aMonthIdx && bMonthIdx) {
-        return monthOrder[aMonthIdx] - monthOrder[bMonthIdx];
-      }
-      
+      if (aMonthIdx && bMonthIdx) return monthOrder[aMonthIdx] - monthOrder[bMonthIdx];
       const aDate = Date.parse(a.name);
       const bDate = Date.parse(b.name);
-      if (!isNaN(aDate) && !isNaN(bDate)) {
-        return aDate - bDate;
-      }
-      
+      if (!isNaN(aDate) && !isNaN(bDate)) return aDate - bDate;
       return a.name.localeCompare(b.name);
     });
 
@@ -209,23 +187,17 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
     const sumXX = X.reduce((a, b) => a + Math.pow(b, 2), 0);
 
     const denominator = N * sumXX - Math.pow(sumX, 2);
-    const slope = denominator !== 0 ? (N * sumXY - sumX * sumY) / denominator : 0;
+    slope = denominator !== 0 ? (N * sumXY - sumX * sumY) / denominator : 0;
     
     const firstVal = Y[0];
     const lastVal = Y[N - 1];
-    const pctChange = firstVal > 0 ? ((lastVal - firstVal) / firstVal) * 100 : 0;
-
-    if (slope > 0) {
-      trendText = ` Timeline tracking shows a **steady growing trend**, expanding by **${pctChange.toFixed(0)}%** over the period.`;
-    } else if (slope < 0) {
-      trendText = ` Timeline tracking reveals a **downward trend**, contracting by **${Math.abs(pctChange).toFixed(0)}%** over the period.`;
-    }
+    pctChange = firstVal > 0 ? ((lastVal - firstVal) / firstVal) * 100 : 0;
   }
 
   // 6. Secondary Stacking Audit (if stacked)
-  let stackText = '';
+  const stackGroups: Record<string, number> = {};
+  let stackSorted: [string, number][] = [];
   if (isStacked && stackCol) {
-    const stackGroups: Record<string, number> = {};
     rows.forEach(r => {
       const sVal = String(r[stackCol] ?? 'Unspecified').trim();
       const yVal = parseFloat(r[yCol]);
@@ -233,13 +205,7 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
         stackGroups[sVal] = (stackGroups[sVal] || 0) + yVal;
       }
     });
-
-    const stackSorted = Object.entries(stackGroups).sort((a, b) => b[1] - a[1]);
-    if (stackSorted.length > 0) {
-      const topStack = stackSorted[0];
-      const topStackPct = totalSum > 0 ? (topStack[1] / totalSum) * 100 : 0;
-      stackText = ` Segment breakdown by **${stackCol}** shows **${topStack[0]}** is the primary driver at **${topStackPct.toFixed(0)}%** (**${formatVal(topStack[1])}**).`;
-    }
+    stackSorted = Object.entries(stackGroups).sort((a, b) => b[1] - a[1]);
   }
 
   // 7. Domain Wording & Recommendations
@@ -247,26 +213,42 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
   const yLower = yCol.toLowerCase();
 
   let domainHeader = 'Operational Insights';
-  let domainRecommendation = '';
+  let sentence3 = '';
+  let sentence4 = '';
 
   if (titleLower.includes('revenue') || titleLower.includes('reimbursement') || titleLower.includes('cost') || titleLower.includes('expenditure') || titleLower.includes('pay') || titleLower.includes('finance') || yLower.includes('pay') || yLower.includes('salary') || yLower.includes('revenue')) {
     domainHeader = 'Financial & Cost Insights';
-    domainRecommendation = `Audit high-cost areas in **${highest.name}** and review budget allocations to find cost-saving opportunities.`;
+    sentence3 = "This concentration of financial activity suggests that resource expenditures are heavily skewed toward top categories, requiring closer oversight to ensure budget alignment.";
+    sentence4 = `To manage these costs, we recommend auditing expenditures in **${highest.name}** and reviewing budget allocations to identify potential saving opportunities.`;
   } else if (titleLower.includes('response') || titleLower.includes('time') || titleLower.includes('duration') || titleLower.includes('turnout') || titleLower.includes('transit') || titleLower.includes('delay') || yLower.includes('time') || yLower.includes('sec') || yLower.includes('min')) {
     domainHeader = 'Operational Performance & Latency Review';
-    domainRecommendation = `Evaluate workflow bottlenecks in **${highest.name}** to reduce delays and align response times with service standards.`;
+    sentence3 = "The variations in operational times indicate that certain workflows experience longer processing lags, which can cause service bottlenecks.";
+    sentence4 = `To improve efficiency, we recommend evaluating workflow bottlenecks in **${highest.name}** to reduce delays and align response times with service standards.`;
   } else {
     domainHeader = 'Capacity & Resource Utilization';
-    domainRecommendation = `Adjust staffing levels to match workload peaks in **${highest.name}** to balance resource usage across teams.`;
+    sentence3 = "The differences in capacity metrics show that workload demands are unevenly distributed, potentially straining certain roles or teams.";
+    sentence4 = `To optimize service delivery, we recommend adjusting staffing levels to match workload peaks in **${highest.name}** and balancing resources across teams.`;
   }
 
-  // 8. Put it all together into a brief business-friendly summary (shortened by 2 sentences, simple terminology)
-  return `
-**[${domainHeader}]**
-* **Performance Range:** **${highest.name}** represents the highest category at **${formattedHighest}**, while **${lowest.name}** is the lowest at **${formattedLowest}**, showing **${volatilityText}** across segments.${trendText}
-* **Volume Distribution:** **${highest.name}** accounts for **${topShare.toFixed(0)}%** of the total volume.${stackText}
-* **Strategic Action:** ${domainRecommendation}
-`.trim();
+  let aggWord = 'volume';
+  if (agg === 'avg') aggWord = 'average';
+  else if (agg === 'count') aggWord = 'count';
+
+  // Build the narrative paragraph of 3-5 sentences
+  const sentence1 = `Based on the analysis of **${yCol}** across different **${xCol}** categories, **${highest.name}** represents the highest ${aggWord} at **${formattedHighest}** (accounting for **${topShare.toFixed(0)}%** of the total), while **${lowest.name}** registers the lowest at **${formattedLowest}**.`;
+  
+  let sentence2 = '';
+  if (isTemporal && Math.abs(pctChange) > 0) {
+    sentence2 = `Timeline tracking shows a ${slope > 0 ? 'steady growing trend' : 'downward trend'} across the period, with a net change of **${Math.abs(pctChange).toFixed(0)}%**.`;
+  } else if (isStacked && stackCol && stackSorted.length > 0) {
+    const topStack = stackSorted[0];
+    const topStackPct = totalSum > 0 ? (topStack[1] / totalSum) * 100 : 0;
+    sentence2 = `A secondary breakdown by **${stackCol}** shows that **${topStack[0]}** is the primary driver, accounting for **${topStackPct.toFixed(0)}%** of the overall total.`;
+  } else {
+    sentence2 = `The distribution indicates **${volatilityText}** across different categories, reflecting the current operational spread.`;
+  }
+
+  return `**[${domainHeader}]** ${sentence1} ${sentence2} ${sentence3} ${sentence4}`.trim();
 }
 
 // Smart helper to generate 8+ default charts based on sheet columns
@@ -4108,7 +4090,7 @@ function App() {
                                         flexShrink: 0
                                       }}
                                     >
-                                      <strong>AI Summary:</strong> {customNote}
+                                      <strong>AI Summary:</strong> <span dangerouslySetInnerHTML={{ __html: inlineMarkdown(customNote) }} />
                                     </div>
                                   )}
                                 </div>

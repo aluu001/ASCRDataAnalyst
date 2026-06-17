@@ -58,8 +58,14 @@ const formatMarkdown = (text: string): React.ReactNode[] => {
     const trimmed = line.trim();
     if (!trimmed) return <div key={lineIdx} style={{ height: '0.4rem' }} />;
 
-    const isBullet = trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('•');
-    const content = isBullet ? trimmed.substring(1).trim() : line;
+    const isBullet = /^([*•-]\s+)/.test(trimmed);
+    let content = line;
+    if (isBullet) {
+      const match = trimmed.match(/^([*•-]\s+)/);
+      if (match) {
+        content = trimmed.substring(match[0].length).trim();
+      }
+    }
     const parts = formatInlineMarkdown(content);
 
     if (isBullet) {
@@ -112,6 +118,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [inputValue]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -311,6 +326,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       <div className="chat-input-area">
         <div className="chat-input-wrapper" style={{ opacity: !hasData && messages.length === 0 ? 0.6 : 1 }}>
           <textarea
+            ref={textareaRef}
             className="chat-text-input"
             rows={1}
             placeholder={
