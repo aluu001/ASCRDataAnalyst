@@ -824,7 +824,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
       {/* Print Mode Wrapper (Portrait vs Landscape optimized, toggled via CSS orientation) */}
       <div className="chart-wrapper print-only-chart print-only-portrait-chart">
-        {renderChart(true, 700, 350)}
+        {renderChart(true, 700, 520)}
       </div>
       <div className="chart-wrapper print-only-chart print-only-landscape-chart">
         {renderChart(true, 920, 280)}

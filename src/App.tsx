@@ -3744,7 +3744,7 @@ function App() {
                             style={{ 
                               width: printOrientation === 'portrait' ? '8.5in' : '11in',
                               height: printOrientation === 'portrait' ? '11in' : '8.5in',
-                              padding: '0.6in', 
+                              padding: printOrientation === 'portrait' ? '0.4in' : '0.6in', 
                               background: 'white',
                               boxShadow: '0 4px 20px rgba(15,23,42,0.12), 0 0 10px rgba(0,0,0,0.02)',
                               boxSizing: 'border-box',
@@ -3803,7 +3803,7 @@ function App() {
                             </div>
 
                             {/* Page Footer */}
-                            <div style={{ position: 'absolute', bottom: '0.4in', left: '0.6in', right: '0.6in', borderTop: '1px solid #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', color: 'var(--DarkGray)' }}>
+                            <div style={{ position: 'absolute', bottom: '0.4in', left: printOrientation === 'portrait' ? '0.4in' : '0.6in', right: printOrientation === 'portrait' ? '0.4in' : '0.6in', borderTop: '1px solid #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', color: 'var(--DarkGray)' }}>
                               <span>ASCR AI Executive Reporting System</span>
                               <span>Page 1 of {totalPages}</span>
                             </div>
@@ -3823,7 +3823,7 @@ function App() {
                                 style={{ 
                                   width: printOrientation === 'portrait' ? '8.5in' : '11in',
                                   height: printOrientation === 'portrait' ? '11in' : '8.5in',
-                                  padding: '0.6in', 
+                                  padding: printOrientation === 'portrait' ? '0.4in' : '0.6in', 
                                   background: 'white',
                                   boxShadow: '0 4px 20px rgba(15,23,42,0.12), 0 0 10px rgba(0,0,0,0.02)',
                                   boxSizing: 'border-box',
@@ -3866,8 +3866,8 @@ function App() {
                                     flex: 1, 
                                     position: 'relative', 
                                     overflow: 'hidden', 
-                                    minHeight: printOrientation === 'portrait' ? '320px' : '220px', 
-                                    maxHeight: printOrientation === 'portrait' ? '480px' : '300px', 
+                                    minHeight: printOrientation === 'portrait' ? '480px' : '220px', 
+                                    maxHeight: printOrientation === 'portrait' ? '600px' : '300px', 
                                     width: '100%', 
                                     marginBottom: '1rem' 
                                   }}>
@@ -3904,7 +3904,7 @@ function App() {
                                 </div>
 
                                 {/* Page Footer */}
-                                <div style={{ position: 'absolute', bottom: '0.4in', left: '0.6in', right: '0.6in', borderTop: '1px solid #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', color: 'var(--DarkGray)' }}>
+                                <div style={{ position: 'absolute', bottom: '0.4in', left: printOrientation === 'portrait' ? '0.4in' : '0.6in', right: printOrientation === 'portrait' ? '0.4in' : '0.6in', borderTop: '1px solid #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', color: 'var(--DarkGray)' }}>
                                   <span>ASCR AI Executive Reporting System</span>
                                   <span>Page {pageNumber} of {totalPages}</span>
                                 </div>
@@ -3919,7 +3919,7 @@ function App() {
                               style={{ 
                                 width: printOrientation === 'portrait' ? '8.5in' : '11in',
                                 height: printOrientation === 'portrait' ? '11in' : '8.5in',
-                                padding: '0.6in', 
+                                padding: printOrientation === 'portrait' ? '0.4in' : '0.6in', 
                                 background: 'white',
                                 boxShadow: '0 4px 20px rgba(15,23,42,0.12), 0 0 10px rgba(0,0,0,0.02)',
                                 boxSizing: 'border-box',
@@ -4054,7 +4054,7 @@ function App() {
                               </div>
 
                               {/* Page Footer */}
-                              <div style={{ position: 'absolute', bottom: '0.4in', left: '0.6in', right: '0.6in', borderTop: '1px solid #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', color: 'var(--DarkGray)' }}>
+                              <div style={{ position: 'absolute', bottom: '0.4in', left: printOrientation === 'portrait' ? '0.4in' : '0.6in', right: printOrientation === 'portrait' ? '0.4in' : '0.6in', borderTop: '1px solid #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', color: 'var(--DarkGray)' }}>
                                 <span>ASCR AI Executive Reporting System</span>
                                 <span>Page {totalPages} of {totalPages}</span>
                               </div>

@@ -1190,7 +1190,7 @@ code {
     .print-only-portrait-chart {
       display: block !important;
       width: 100% !important;
-      height: 350px !important;
+      height: 520px !important;
     }
     .print-only-landscape-chart {
       display: none !important;
@@ -1212,7 +1212,7 @@ code {
       border-radius: 6px !important;
     }
     .chart-wrapper {
-      height: 350px !important;
+      height: 520px !important;
     }
   }
 
@@ -1298,7 +1298,7 @@ code {
   .report-preview-document.portrait-mode {
     width: 8.5in !important;
     height: 11in !important;
-    padding: 0.6in !important;
+    padding: 0.4in !important;
   }
 
   .report-preview-document.landscape-mode {
