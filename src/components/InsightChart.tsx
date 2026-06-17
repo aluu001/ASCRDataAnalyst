@@ -420,6 +420,20 @@ Outliers: ${group.outliers.length} point(s)`}</title>
 
 const CustomTooltip = ({ active, payload, label, isPercent }: any) => {
   if (active && payload && payload.length) {
+    let total = 0;
+    let showTotal = false;
+    if (payload.length > 1) {
+      payload.forEach((item: any) => {
+        if (typeof item.value === 'number') {
+          total += item.value;
+        }
+      });
+      showTotal = true;
+    }
+    const formattedTotal = isPercent 
+      ? `${total.toFixed(1)}%` 
+      : total.toLocaleString(undefined, { maximumFractionDigits: 2 });
+
     return (
       <div
         style={{
@@ -452,6 +466,12 @@ const CustomTooltip = ({ active, payload, label, isPercent }: any) => {
             </p>
           );
         })}
+        {showTotal && (
+          <div style={{ borderTop: '1.5px dashed #cbd5e1', marginTop: '0.5rem', paddingTop: '0.5rem', fontWeight: 700, fontSize: '0.85rem', color: '#0f172a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Total:</span>
+            <span style={{ color: '#002185' }}>{formattedTotal}</span>
+          </div>
+        )}
       </div>
     );
   }

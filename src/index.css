@@ -603,8 +603,8 @@ code {
 .chat-bubble {
   padding: 0.85rem 1.15rem;
   border-radius: 12px;
-  font-size: 0.95rem; /* larger font size */
-  line-height: 1.6;  /* relaxed line height for readability */
+  font-size: 0.875rem;
+  line-height: 1.5;
   box-shadow: 0 1px 4px rgba(0, 33, 133, 0.04);
 }
 
@@ -971,9 +971,9 @@ code {
   box-shadow: 0 6px 20px rgba(0, 33, 133, 0.1);
   position: absolute;
   z-index: 50;
-  bottom: 125%;
+  top: 100%;
   right: 0;
-  margin-bottom: 5px;
+  margin-top: 5px;
   opacity: 0;
   transition: opacity 0.2s, visibility 0.2s;
   font-size: 0.8rem;

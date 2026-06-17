@@ -264,7 +264,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       <ThinkingAccordion thinking={msg.analystResponse.thinking} />
                     )}
                     {msg.analystResponse?.conversationalResponse && (
-                      <div className="chat-conversational-response" style={{ display: 'flex', flexDirection: 'column', fontWeight: 500 }}>
+                      <div className="chat-conversational-response" style={{ display: 'flex', flexDirection: 'column', fontWeight: 400 }}>
                         {formatMarkdown(msg.analystResponse.conversationalResponse)}
                       </div>
                     )}
