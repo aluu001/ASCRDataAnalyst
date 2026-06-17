@@ -1,15 +1,22 @@
 # ASCR AI Data Analyst - Executive Reporting Platform
 
-An advanced, executive-ready analytical workspace designed to help public agency stakeholders and personnel managers ingest operational worksheets, collaborate with a conversational AI copilot, and export beautifully scaled multi-page PDF reports.
+An advanced, executive-ready analytical tool designed to ingest tabular worksheets (such as Excel spreadsheets and CSV files) to instantly generate visual charts and professional summaries. It enables users to converse directly with their data in real time, extract key operational metrics, and export polished, multi-page executive reports on the fly.
 
 ---
 
 ## Technical Stack & Architecture
 
-- **Frontend Core**: React 18, TypeScript, Vite (High HMR development experience)
-- **Data Visualizations**: Recharts (Line, Bar, Horizontal Bar, Pie, Radar, Scatter, Bubble Charts) supplemented by a custom-engineered responsive SVG Box & Whisker plot renderer for quartile variance analysis.
-- **Design System & Theme**: Custom CSS stylesheet featuring glassmorphic drawers, micro-animations, fade-ins, and dynamic visual color thematic bindings (financial green, salary purple, time benchmarks teal, and distributions amber).
-- **AI Engine**: Google Gemini API integration using structured JSON schemas and guide-driven conversational heuristics.
+- **Interactive User Interface**: Built using React and TypeScript for a fluid, responsive browser experience, powered by Vite for rapid assembly and instant page load times.
+- **Data Visualization Engine**: Utilizes Recharts and custom responsive SVG renderers to turn raw spreadsheets into high-impact visuals (such as trend lines, category bars, salary boxes, and multi-axis radars).
+- **Tailored Workspace Layout**: A premium CSS system styled with collapsible panel drawers, glassmorphic accents, and color-coordinated indicators to streamline review and executive presentations.
+- **GenAI Copilot Integration**: Connected directly to the Google Gemini developer API to analyze tables, explain anomalies, suggest business queries, and automatically curate chart recommendations.
+
+### Gemini Developer API Access
+The application communicates directly from the client browser with the Google Gemini developer API endpoints:
+- **SDK Integration**: Utilizes the official `@google/genai` developer SDK.
+- **Secure Authentication**: Authenticates using a user-supplied or environment-configured developer API Key (`new GoogleGenAI({ apiKey })`).
+- **Structured Context Passing**: Sends the active dataset schema, column statistics, and chat history with each user query.
+- **JSON Schema Enforcement**: Leverages structured JSON output (`application/json`) config, strictly enforcing a schema that returns internal reasoning (`thinking`), conversational responses, markdown insights, and chart specification parameters.
 
 ---
 
