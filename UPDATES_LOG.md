@@ -38,7 +38,7 @@ This log chronicles the day-by-day development, feature additions, user requests
 
 ---
 
-## 📅 June 10, 2026 (Today): Immersive Easing & Mock Data Restructuring
+## 📅 June 10, 2026: Immersive Easing & Mock Data Restructuring
 * **Dynamic Zoom-In Origin Point**: Refined the Expand button to track midpoint client coordinates and dynamically compute offsets. The expanded pop-up now scales out directly from the clicked button.
 * **Ease-Out Deceleration**: Configured the modal scale transition to use `cubic-bezier(0.25, 1, 0.5, 1)` with a `0.48s` duration, removing spring recoil.
 * **Maximized Expanded Viewport**: Maximized modal bounds to `95vw` and `92vh`, enabling percentage-based scaling (`outerRadius="72%"`) for Pie/Doughnut charts.
@@ -46,3 +46,16 @@ This log chronicles the day-by-day development, feature additions, user requests
 * **Consolidated 3-Report Quick Start**: Standardized the welcome page list to exactly three clean Excel sheets, removing CAD benchmarks and CSV files.
 * **Hide Button Prop Restoration**: Restored the missing `onRemove` callback prop to financial charts in the grid layout, bringing back the **Hide** button to all widgets.
 * **Production Build Checks**: Verified all build bundles compile cleanly with zero TypeScript errors.
+
+---
+
+## 📅 June 17, 2026 (Today): Stacked Visualizations, Plain Narrative Summaries & Dynamic UX
+* **Advanced Stacked Visualizations**: Enabled standard stacked bar, 100% stacked percentage bar, and stacked area charts. Refactored the data aggregation engine to handle double-grouping (category + split-by) with automatic "Other" category grouping.
+* **Plain-English AI Summaries**: Rewrote the chart insight generator to output unified 3-to-5 sentence narrative paragraphs in plain business English, removing all structured bullets, headers, and technical statistical metrics (like CV or standard deviation).
+* **HTML Print Parsing**: Resolved literal markdown tags displaying in print reports by rendering the executive summaries using `dangerouslySetInnerHTML` combined with an optimized `inlineMarkdown` helper.
+* **Auto-Resizing Chat Textarea**: Swapped the single-line input field with an auto-wrapping `<textarea>` that dynamically expands/shrinks vertically based on `scrollHeight` and collapses back on message send.
+* **Regex Bullet Matching**: Fixed list formatting in chat logs using strict regex `/^([*•-]\s+)/`, ensuring bold-only headers (e.g. `**Important:**`) do not display as list bullets.
+* **Stacked Tooltip Totals**: Updated the custom hover tooltip to calculate and display the cumulative sum of multiple stacked data series on the fly.
+* **Information Tooltip Positioning**: Configured chart info callouts to position downwards (`top: 100%`), preventing them from being clipped by the top margin of expanded modals.
+* **Unified Chat Typography**: Aligned chat message fonts and spacing, and changed body weights to `fontWeight: 400` so bolded text stands out clearly.
+
