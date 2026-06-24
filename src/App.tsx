@@ -1121,6 +1121,16 @@ function App() {
 
     try {
       const sampleRows = targetSheet.rows.slice(0, 5);
+      
+      const getYearOrLabel = (fileName: string) => {
+        const match = fileName.match(/\b(20\d{2})\b/);
+        if (match) return match[1];
+        return fileName.replace(/\.[^/.]+$/, "");
+      };
+      
+      const baseLabel = isYoyActive ? getYearOrLabel(yoyBaseName) : undefined;
+      const compareLabel = isYoyActive ? getYearOrLabel(yoyCompareName) : undefined;
+
       const analystResult = await queryGeminiAnalyst(
         apiKey,
         targetSheet.name,
@@ -1128,7 +1138,12 @@ function App() {
         targetSheet.rowCount,
         sampleRows,
         currentHistory,
-        queryText
+        queryText,
+        isYoyActive,
+        yoyBaseName,
+        yoyCompareName,
+        baseLabel,
+        compareLabel
       );
 
       setMessages([
@@ -1206,11 +1221,19 @@ function App() {
       }
 
       if (apiKey) {
-        executeAnalysis(
-          `Perform an initial cost report audit of this worksheet. Outline the primary operational/financial metrics and recommend some custom visualizations.`,
-          [],
-          firstSheet
-        );
+        const getYearOrLabel = (fileName: string) => {
+          const match = fileName.match(/\b(20\d{2})\b/);
+          if (match) return match[1];
+          return fileName.replace(/\.[^/.]+$/, "");
+        };
+        const baseLabel = isYoyActive ? getYearOrLabel(yoyBaseName) : '';
+        const compareLabel = isYoyActive ? getYearOrLabel(yoyCompareName) : '';
+
+        const initialQuery = isYoyActive
+          ? `Perform an initial Year-over-Year (YoY) audit comparing the base period "${baseLabel}" and comparison period "${compareLabel}". Identify key operational and financial variances and recommend comparative visualizations.`
+          : `Perform an initial cost report audit of this worksheet. Outline the primary operational/financial metrics and recommend some custom visualizations.`;
+
+        executeAnalysis(initialQuery, [], firstSheet);
       }
 
       setWorkspaceStep('preview');
@@ -1255,11 +1278,19 @@ function App() {
       setCarouselIndex(0);
 
       if (apiKey) {
-        executeAnalysis(
-          `I have switched worksheets. Let's analyze the "${sheetName}" sheet. Give me its summary and suggest suitable charts.`,
-          messages,
-          nextSheet
-        );
+        const getYearOrLabel = (fileName: string) => {
+          const match = fileName.match(/\b(20\d{2})\b/);
+          if (match) return match[1];
+          return fileName.replace(/\.[^/.]+$/, "");
+        };
+        const baseLabel = isYoyActive ? getYearOrLabel(yoyBaseName) : '';
+        const compareLabel = isYoyActive ? getYearOrLabel(yoyCompareName) : '';
+
+        const sheetChangeQuery = isYoyActive
+          ? `I have switched worksheets to "${sheetName}". Let's perform a Year-over-Year (YoY) comparison between base "${baseLabel}" and comparison "${compareLabel}" for this worksheet. Highlight the key changes between years and suggest suitable comparative charts.`
+          : `I have switched worksheets. Let's analyze the "${sheetName}" sheet. Give me its summary and suggest suitable charts.`;
+
+        executeAnalysis(sheetChangeQuery, messages, nextSheet);
       }
     }
   };
@@ -1707,6 +1738,19 @@ function App() {
     setIsPreviewLoading(true);
     try {
       const sampleRows = processedActiveSheet.rows.slice(0, 5);
+      
+      const getYearOrLabel = (fileName: string) => {
+        const match = fileName.match(/\b(20\d{2})\b/);
+        if (match) return match[1];
+        return fileName.replace(/\.[^/.]+$/, "");
+      };
+      const baseLabel = isYoyActive ? getYearOrLabel(yoyBaseName) : '';
+      const compareLabel = isYoyActive ? getYearOrLabel(yoyCompareName) : '';
+
+      const queryText = isYoyActive
+        ? `Review the active sheet. Curate exactly 6 custom chart configurations that compare YoY differences between ${baseLabel} and ${compareLabel} targeting the following analytical goal: ${goal}. Use YoY_Year as stackByColumn where appropriate, and use actual column names and aggregations suitable for the variables.`
+        : `Review the active sheet. Curate exactly 6 custom chart configurations that target the following analytical goal: ${goal}. Use actual column names and aggregations suitable for the variables.`;
+
       const res = await queryGeminiAnalyst(
         apiKey,
         processedActiveSheet.name,
@@ -1714,7 +1758,12 @@ function App() {
         processedActiveSheet.rowCount,
         sampleRows,
         [],
-        `Review the active sheet. Curate exactly 6 custom chart configurations that target the following analytical goal: ${goal}. Use actual column names and aggregations suitable for the variables.`
+        queryText,
+        isYoyActive,
+        yoyBaseName,
+        yoyCompareName,
+        isYoyActive ? baseLabel : undefined,
+        isYoyActive ? compareLabel : undefined
       );
       if (res.charts && res.charts.length > 0) {
         setAvailableCharts(res.charts);
@@ -1739,9 +1788,21 @@ function App() {
     setIsLoading(true);
     setWorkspaceStep('dashboard');
 
+    const getYearOrLabel = (fileName: string) => {
+      const match = fileName.match(/\b(20\d{2})\b/);
+      if (match) return match[1];
+      return fileName.replace(/\.[^/.]+$/, "");
+    };
+    const baseLabel = isYoyActive ? getYearOrLabel(yoyBaseName) : '';
+    const compareLabel = isYoyActive ? getYearOrLabel(yoyCompareName) : '';
+
     const promptText = previewGoal.trim().length > 0
-      ? `Auto-generate dashboard visual analysis for goal: ${previewGoal}`
-      : "Perform an initial cost report audit of this worksheet. Outline the primary operational/financial metrics and recommend some custom visualizations.";
+      ? (isYoyActive
+          ? `Auto-generate dashboard YoY visual analysis comparing ${baseLabel} and ${compareLabel} for goal: ${previewGoal}`
+          : `Auto-generate dashboard visual analysis for goal: ${previewGoal}`)
+      : (isYoyActive
+          ? `Perform an initial Year-over-Year (YoY) audit comparing the base period "${baseLabel}" and comparison period "${compareLabel}". Identify key operational and financial variances and recommend comparative visualizations.`
+          : "Perform an initial cost report audit of this worksheet. Outline the primary operational/financial metrics and recommend some custom visualizations.");
 
     // Append initial user message
     const updatedMessages: ChatMessage[] = [
@@ -1758,7 +1819,12 @@ function App() {
         processedActiveSheet.rowCount,
         sampleRows,
         [],
-        promptText
+        promptText,
+        isYoyActive,
+        yoyBaseName,
+        yoyCompareName,
+        isYoyActive ? baseLabel : undefined,
+        isYoyActive ? compareLabel : undefined
       );
 
       setMessages([

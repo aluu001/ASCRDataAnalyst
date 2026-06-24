@@ -33,7 +33,12 @@ function buildDatasetContextPrompt(
   sheetName: string,
   columns: ColumnMetadata[],
   rowCount: number,
-  sampleRows: any[]
+  sampleRows: any[],
+  isYoy?: boolean,
+  yoyBaseName?: string,
+  yoyCompareName?: string,
+  yoyBaseLabel?: string,
+  yoyCompareLabel?: string
 ): string {
   const columnSummaries = columns
     .map(col => {
@@ -49,9 +54,20 @@ function buildDatasetContextPrompt(
 
   const sampleRowsJson = JSON.stringify(sampleRows.slice(0, 5), null, 2);
 
+  let yoySection = '';
+  if (isYoy) {
+    yoySection = `
+### Year-over-Year (YoY) Context
+- This is a comparative analysis comparing two datasets.
+- **Base Dataset**: ${yoyBaseName || 'Older File'} (represented in the rows by the YoY_Year value "${yoyBaseLabel || 'Base'}")
+- **Comparison Dataset**: ${yoyCompareName || 'Newer File'} (represented in the rows by the YoY_Year value "${yoyCompareLabel || 'Compare'}")
+- **Analytic Instructions**: The virtual column \`YoY_Year\` splits the rows. Leverage this column to highlight changes, percentage increases/decreases, and growth trends from "${yoyBaseLabel || 'Base'}" to "${yoyCompareLabel || 'Compare'}".
+`;
+  }
+
   return `
 You are analyzing the Excel worksheet named: "${sheetName}".
-
+${yoySection}
 ### Dataset Overview
 - **Total Rows**: ${rowCount}
 - **Columns & Statistics**:
@@ -76,7 +92,12 @@ export async function queryGeminiAnalyst(
   rowCount: number,
   sampleRows: any[],
   history: ChatMessage[],
-  userQuery: string
+  userQuery: string,
+  isYoy?: boolean,
+  yoyBaseName?: string,
+  yoyCompareName?: string,
+  yoyBaseLabel?: string,
+  yoyCompareLabel?: string
 ): Promise<AnalystResponse> {
   if (!apiKey) {
     throw new Error('API Key is required to call the Gemini API.');
@@ -85,10 +106,20 @@ export async function queryGeminiAnalyst(
   // Initialize the new Google Gen AI SDK
   const ai = new GoogleGenAI({ apiKey });
 
-  const datasetContext = buildDatasetContextPrompt(sheetName, columns, rowCount, sampleRows);
+  const datasetContext = buildDatasetContextPrompt(
+    sheetName, 
+    columns, 
+    rowCount, 
+    sampleRows,
+    isYoy,
+    yoyBaseName,
+    yoyCompareName,
+    yoyBaseLabel,
+    yoyCompareLabel
+  );
   
   // Set up the system instructions directing the agent persona and rules
-  const systemInstruction = `
+  let systemInstruction = `
 You are "Antigravity Data Analyst", an elite senior business intelligence analyst and data scientist.
 Your role is to deeply analyze tabular datasets, draw out unexpected, crucial insights, and recommend the best interactive visualizations to explain findings.
 
@@ -116,6 +147,17 @@ Rules:
    - Example: "Shall we build a Radar Chart comparing average dispatch times across Call Sources?"
    - Note: The user may respond by repeating your question. If they do, treat it as confirmation to execute that analysis.
 `;
+
+  if (isYoy) {
+    systemInstruction += `
+ADDITIONAL YEAR-OVER-YEAR (YoY) ANALYSIS RULES:
+1. You are performing a Year-over-Year (YoY) comparative analysis. Your primary goal is to compare the base period "${yoyBaseLabel || 'Base'}" and comparison period "${yoyCompareLabel || 'Compare'}".
+2. In the "thinking" field, focus specifically on calculating and identifying the differences, growth/decline rates, and variance between the base and comparison periods.
+3. In "insights", every insight MUST focus on comparing the two periods and highlighting key changes (e.g., changes in revenue, run volume, FTE counts, hourly rates, response times) from "${yoyBaseLabel || 'Base'}" to "${yoyCompareLabel || 'Compare'}".
+4. When recommending charts in "charts", you MUST prioritize comparative visualizations (like stackedBar, percentStackedBar, area, or line charts) and set "stackByColumn" to "YoY_Year" to ensure the data is split/grouped by year.
+5. In "followUpQuestions", ask questions that guide the user to explore year-over-year variations (e.g., "Shall we check the YoY change in regular pay for EMTs?").
+`;
+  }
 
   // Format chat history for the SDK
   const contents = history.map(msg => ({
