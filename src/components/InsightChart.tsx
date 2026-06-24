@@ -299,7 +299,17 @@ const BoxPlot: React.FC<{
 
   const svgWidth = 500;
   const svgHeight = 260;
-  const margin = { top: 20, right: 20, bottom: 40, left: 55 };
+
+  const hasLongLabel = groups.some(g => g.category.length > 9);
+  const hasManyLabels = groups.length > 4;
+  const isSlanted = hasLongLabel || hasManyLabels;
+
+  const margin = { 
+    top: 20, 
+    right: 20, 
+    bottom: isSlanted ? 55 : 40, 
+    left: 55 
+  };
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -355,6 +365,20 @@ const BoxPlot: React.FC<{
 
         {groups.map((group, idx) => {
           const centerX = margin.left + widthPerCat * (idx + 0.5);
+
+          const textY = isSlanted 
+            ? margin.top + chartHeight + 12 
+            : margin.top + chartHeight + 18;
+          const textAnchor = isSlanted ? 'end' : 'middle';
+          const transform = isSlanted 
+            ? `rotate(-20, ${isSlanted ? centerX - 4 : centerX}, ${textY})` 
+            : undefined;
+          const textX = isSlanted ? centerX - 4 : centerX;
+
+          const maxLen = isSlanted ? 16 : 10;
+          const displayCategory = group.category.length > maxLen + 2 
+            ? `${group.category.slice(0, maxLen)}..` 
+            : group.category;
 
           return (
             <g key={idx}>
@@ -441,14 +465,15 @@ Outliers: ${group.outliers.length} point(s)`}</title>
               ))}
 
               <text
-                x={centerX}
-                y={svgHeight - 12}
-                textAnchor="middle"
+                x={textX}
+                y={textY}
+                transform={transform}
+                textAnchor={textAnchor}
                 fontSize={9}
                 fontWeight="700"
                 fill="#475569"
               >
-                {group.category.length > 11 ? `${group.category.slice(0, 9)}..` : group.category}
+                {displayCategory}
                 <title>{group.category}</title>
               </text>
             </g>
