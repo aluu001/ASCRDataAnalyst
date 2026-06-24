@@ -261,7 +261,7 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
   const applyYoy = (charts: ChartSpecification[]) => {
     if (!hasYoy) return charts;
     return charts.map(chart => {
-      if (['bar', 'horizontalBar', 'line', 'area', 'stackedBar', 'percentStackedBar'].includes(chart.chartType)) {
+      if (['bar', 'horizontalBar', 'line', 'area', 'stackedBar', 'percentStackedBar', 'radar'].includes(chart.chartType)) {
         return {
           ...chart,
           stackByColumn: 'YoY_Year'
@@ -1378,22 +1378,6 @@ function App() {
         setActiveChartTab(defaultCharts[0].title);
       }
 
-      if (apiKey) {
-        const getYearOrLabel = (fileName: string) => {
-          const match = fileName.match(/\b(20\d{2})\b/);
-          if (match) return match[1];
-          return fileName.replace(/\.[^/.]+$/, "");
-        };
-        const baseLabel = isYoyActive ? getYearOrLabel(yoyBaseName) : '';
-        const compareLabel = isYoyActive ? getYearOrLabel(yoyCompareName) : '';
-
-        const initialQuery = isYoyActive
-          ? `Perform an initial Year-over-Year (YoY) audit comparing the base period "${baseLabel}" and comparison period "${compareLabel}". Identify key operational and financial variances and recommend comparative visualizations.`
-          : `Perform an initial cost report audit of this worksheet. Outline the primary operational/financial metrics and recommend some custom visualizations.`;
-
-        executeAnalysis(initialQuery, [], firstSheet);
-      }
-
       setWorkspaceStep('preview');
     }
   };
@@ -2061,6 +2045,25 @@ function App() {
       ]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleLaunchDashboard = () => {
+    setWorkspaceStep('dashboard');
+    if (apiKey && messages.length === 0 && activeSheet) {
+      const getYearOrLabel = (fileName: string) => {
+        const match = fileName.match(/\b(20\d{2})\b/);
+        if (match) return match[1];
+        return fileName.replace(/\.[^/.]+$/, "");
+      };
+      const baseLabel = isYoyActive ? getYearOrLabel(yoyBaseName) : '';
+      const compareLabel = isYoyActive ? getYearOrLabel(yoyCompareName) : '';
+
+      const initialQuery = isYoyActive
+        ? `Perform an initial Year-over-Year (YoY) audit comparing the base period "${baseLabel}" and comparison period "${compareLabel}". Identify key operational and financial variances and recommend comparative visualizations.`
+        : `Perform an initial cost report audit of this worksheet. Outline the primary operational/financial metrics and recommend some custom visualizations.`;
+
+      executeAnalysis(initialQuery, [], activeSheet);
     }
   };
 
@@ -2738,7 +2741,7 @@ function App() {
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => setWorkspaceStep('dashboard')}
+                  onClick={handleLaunchDashboard}
                   style={{ padding: '0.5rem 1.5rem', fontWeight: 'bold' }}
                 >
                   Launch Executive Dashboard 🚀

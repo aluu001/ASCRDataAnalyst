@@ -964,7 +964,24 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
             <PolarGrid stroke="#cbd5e1" />
             <PolarAngleAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
             <PolarRadiusAxis angle={30} domain={[0, 'auto']} stroke="#cbd5e1" fontSize={8} tickLine={false} />
-            <Radar name={yAxisColumn} dataKey="value" stroke={colors.stroke} fill={colors.fill} fillOpacity={0.2} />
+            {renderLegend()}
+            {stackKeys.length > 0 ? (
+              stackKeys.map((key, index) => {
+                const color = PIE_COLORS[index % PIE_COLORS.length];
+                return (
+                  <Radar
+                    key={key}
+                    name={key}
+                    dataKey={key}
+                    stroke={color}
+                    fill={color}
+                    fillOpacity={0.15}
+                  />
+                );
+              })
+            ) : (
+              <Radar name={yAxisColumn} dataKey="value" stroke={colors.stroke} fill={colors.fill} fillOpacity={0.2} />
+            )}
             <Tooltip content={<CustomTooltip />} />
           </RadarChart>
         );
