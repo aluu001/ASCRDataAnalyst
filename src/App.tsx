@@ -221,16 +221,16 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
 
   if (titleLower.includes('revenue') || titleLower.includes('reimbursement') || titleLower.includes('cost') || titleLower.includes('expenditure') || titleLower.includes('pay') || titleLower.includes('finance') || yLower.includes('pay') || yLower.includes('salary') || yLower.includes('revenue')) {
     domainHeader = 'Financial & Cost Insights';
-    sentence3 = "This concentration of financial activity suggests that resource expenditures are heavily skewed toward top categories, requiring closer oversight to ensure budget alignment.";
-    sentence4 = `To manage these costs, we recommend auditing expenditures in **${highest.name}** and reviewing budget allocations to identify potential saving opportunities.`;
+    sentence3 = `This heavy spending skew indicates that **${highest.name}** acts as the primary cost driver, leaving the organization financially vulnerable to budget creep in this single area.`;
+    sentence4 = `To protect operational margins and release capital for secondary divisions, we recommend instituting a structured cost-control audit on **${highest.name}** transactions.`;
   } else if (titleLower.includes('response') || titleLower.includes('time') || titleLower.includes('duration') || titleLower.includes('turnout') || titleLower.includes('transit') || titleLower.includes('delay') || yLower.includes('time') || yLower.includes('sec') || yLower.includes('min')) {
     domainHeader = 'Operational Performance & Latency Review';
-    sentence3 = "The variations in operational times indicate that certain workflows experience longer processing lags, which can cause service bottlenecks.";
-    sentence4 = `To improve efficiency, we recommend evaluating workflow bottlenecks in **${highest.name}** to reduce delays and align response times with service standards.`;
+    sentence3 = `The latency profile shows that **${highest.name}** causes the highest service friction, creating cascading bottlenecks that directly threaten customer response SLAs.`;
+    sentence4 = `To optimize service speeds, operational managers should investigate dispatch dispatch-lag or shift coverage at **${highest.name}** to remove idle time.`;
   } else {
     domainHeader = 'Capacity & Resource Utilization';
-    sentence3 = "The differences in capacity metrics show that workload demands are unevenly distributed, potentially straining certain roles or teams.";
-    sentence4 = `To optimize service delivery, we recommend adjusting staffing levels to match workload peaks in **${highest.name}** and balancing resources across teams.`;
+    sentence3 = `This utilization spike suggests that **${highest.name}** absorbs the vast majority of operational bandwidth, which poses a serious risk of staff burnout and processing errors.`;
+    sentence4 = `To mitigate this operational risk, leadership should cross-train personnel or reallocate workload from **${highest.name}** to under-utilized segments.`;
   }
 
   let aggWord = 'volume';
@@ -703,6 +703,7 @@ function App() {
   const [customStackBy, setCustomStackBy] = useState<string>('');
   const [customAggregation, setCustomAggregation] = useState<'sum' | 'avg' | 'count' | 'none'>('sum');
   const [colorTheme, setColorTheme] = useState<'classic' | 'vibrant'>('vibrant');
+  const [showKpis, setShowKpis] = useState<boolean>(true);
 
   // Step Step States: 'upload' | 'preview' | 'dashboard'
   const [workspaceStep, setWorkspaceStep] = useState<'upload' | 'preview' | 'dashboard'>('upload');
@@ -1117,6 +1118,81 @@ function App() {
     }
     return count > 0 ? sum / count : 0;
   };
+
+  // Dynamically generate exactly 3 relevant KPI statistics cards based on the dataset structure
+  const dashboardKPIs = useMemo(() => {
+    if (!processedActiveSheet) return [];
+    
+    const numericCols = processedActiveSheet.columns.filter(c => c.type === 'number' && !/year/i.test(c.name));
+    const stringCols = processedActiveSheet.columns.filter(c => c.type === 'string');
+    
+    const list: { label: string; value: string }[] = [];
+    
+    if (numericCols.length >= 3) {
+      // If we have at least 3 numeric columns, show averages of first 3
+      numericCols.slice(0, 3).forEach(col => {
+        const avg = getFilteredAverage(col.name);
+        list.push({
+          label: `Avg ${col.name}`,
+          value: avg.toLocaleString(undefined, { maximumFractionDigits: 2 })
+        });
+      });
+    } else if (numericCols.length === 2) {
+      // If we have 2 numeric columns, show Avg Col1, Avg Col2, and Total Col1
+      const avg0 = getFilteredAverage(numericCols[0].name);
+      list.push({
+        label: `Avg ${numericCols[0].name}`,
+        value: avg0.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      });
+      const avg1 = getFilteredAverage(numericCols[1].name);
+      list.push({
+        label: `Avg ${numericCols[1].name}`,
+        value: avg1.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      });
+      
+      const sum0 = filteredRows.reduce((acc, r) => acc + (Number(r[numericCols[0].name]) || 0), 0);
+      list.push({
+        label: `Total ${numericCols[0].name}`,
+        value: sum0.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      });
+    } else if (numericCols.length === 1) {
+      // If we have 1 numeric column, show Avg Col1, Total Col1, and Max Col1
+      const avg0 = getFilteredAverage(numericCols[0].name);
+      list.push({
+        label: `Avg ${numericCols[0].name}`,
+        value: avg0.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      });
+      
+      const sum0 = filteredRows.reduce((acc, r) => acc + (Number(r[numericCols[0].name]) || 0), 0);
+      list.push({
+        label: `Total ${numericCols[0].name}`,
+        value: sum0.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      });
+      
+      const max0 = filteredRows.reduce((max, r) => {
+        const val = Number(r[numericCols[0].name]) || 0;
+        return val > max ? val : max;
+      }, 0);
+      list.push({
+        label: `Max ${numericCols[0].name}`,
+        value: max0.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      });
+    }
+    
+    // Ensure we always have exactly 3 items by filling with string column unique counts
+    let index = 0;
+    while (list.length < 3 && stringCols.length > 0) {
+      const nextCol = stringCols[index % stringCols.length];
+      const uniques = new Set(filteredRows.map(r => String(r[nextCol.name] ?? '').trim()).filter(Boolean)).size;
+      list.push({
+        label: `Unique ${nextCol.name}s`,
+        value: uniques.toLocaleString()
+      });
+      index++;
+    }
+    
+    return list.slice(0, 3);
+  }, [processedActiveSheet, filteredRows, getFilteredAverage]);
 
   // Helper to execute query against Gemini
   const executeAnalysis = async (queryText: string, currentHistory: ChatMessage[], targetSheet: SheetData) => {
@@ -1710,7 +1786,8 @@ function App() {
       selectedChartTitles,
       availableCharts,
       colorTheme,
-      layoutMode
+      layoutMode,
+      showKpis
     };
     const blob = new Blob([JSON.stringify(profile, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1737,6 +1814,9 @@ function App() {
         }
         if (profile.layoutMode) {
           setLayoutMode(profile.layoutMode);
+        }
+        if (profile.showKpis !== undefined) {
+          setShowKpis(profile.showKpis);
         }
         alert("Dashboard profile imported successfully!");
       } catch (err) {
@@ -3065,6 +3145,20 @@ function App() {
                     </div>
                   </div>
 
+                  {/* KPI Visibility Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0' }}>
+                    <input 
+                      type="checkbox" 
+                      id="toggle-kpis"
+                      checked={showKpis} 
+                      onChange={(e) => setShowKpis(e.target.checked)} 
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <label htmlFor="toggle-kpis" style={{ fontSize: '0.725rem', color: 'var(--LabelBG)', fontWeight: 'bold', cursor: 'pointer', userSelect: 'none' }}>
+                      📋 Show KPI Statistics Row
+                    </label>
+                  </div>
+
                   {/* Actions Row */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
                     <button 
@@ -3262,61 +3356,62 @@ function App() {
                   )}
 
                   {/* KPI Statistics Row (Floating white cards with left border accents) */}
-                  <div className="kpi-print-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
-                    <div 
-                      style={{ 
-                        border: '1px solid var(--border-light)', 
-                        borderLeft: colorTheme === 'classic' ? '1px solid var(--border-light)' : '4px solid #0052BD',
-                        background: colorTheme === 'classic' ? 'white' : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
-                        borderRadius: '10px', 
-                        padding: '1rem', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        gap: '0.25rem',
-                        boxShadow: 'var(--shadow-sm)' 
-                      }}
-                    >
-                      <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Records</span>
-                      <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
-                        {filteredRows.length.toLocaleString()} {filteredRows.length === processedActiveSheet?.rows.length ? 'rows' : 'filtered'}
-                      </span>
+                  {showKpis && (
+                    <div className="kpi-print-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                      <div 
+                        style={{ 
+                          border: '1px solid var(--border-light)', 
+                          borderLeft: colorTheme === 'classic' ? '1px solid var(--border-light)' : '4px solid #0052BD',
+                          background: colorTheme === 'classic' ? 'white' : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
+                          borderRadius: '10px', 
+                          padding: '1rem', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          gap: '0.25rem',
+                          boxShadow: 'var(--shadow-sm)' 
+                        }}
+                      >
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Records</span>
+                        <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
+                          {filteredRows.length.toLocaleString()} {filteredRows.length === processedActiveSheet?.rows.length ? 'rows' : 'filtered'}
+                        </span>
+                      </div>
+                      {dashboardKPIs.map((kpi, idx) => {
+                        // Dynamic harmonic palettes: Emerald Green, Indigo Purple, Amber Gold
+                        const isClassic = colorTheme === 'classic';
+                        const cardThemes = isClassic 
+                          ? Array(3).fill({ bg: 'white', border: '1px solid var(--border-light)' })
+                          : [
+                              { bg: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)', border: '4px solid #10b981' },
+                              { bg: 'linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)', border: '4px solid #6366f1' },
+                              { bg: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)', border: '4px solid #f59e0b' }
+                            ];
+                        const theme = cardThemes[idx % cardThemes.length];
+                        
+                        return (
+                          <div 
+                            key={idx} 
+                            style={{ 
+                              border: '1px solid var(--border-light)', 
+                              borderLeft: theme.border,
+                              background: theme.bg, 
+                              borderRadius: '10px', 
+                              padding: '1rem', 
+                              display: 'flex', 
+                              flexDirection: 'column', 
+                              gap: '0.25rem',
+                              boxShadow: 'var(--shadow-sm)' 
+                            }}
+                          >
+                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{kpi.label}</span>
+                            <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
+                              {kpi.value}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
-                    {processedActiveSheet?.columns.filter(c => c.type === 'number' && !/year/i.test(c.name)).slice(0, 3).map((col, idx) => {
-                      const avg = getFilteredAverage(col.name);
-                      // Dynamic harmonic palettes: Emerald Green, Indigo Purple, Amber Gold
-                      const isClassic = colorTheme === 'classic';
-                      const cardThemes = isClassic 
-                        ? Array(3).fill({ bg: 'white', border: '1px solid var(--border-light)' })
-                        : [
-                            { bg: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)', border: '4px solid #10b981' },
-                            { bg: 'linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)', border: '4px solid #6366f1' },
-                            { bg: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)', border: '4px solid #f59e0b' }
-                          ];
-                      const theme = cardThemes[idx % cardThemes.length];
-                      
-                      return (
-                        <div 
-                          key={idx} 
-                          style={{ 
-                            border: '1px solid var(--border-light)', 
-                            borderLeft: theme.border,
-                            background: theme.bg, 
-                            borderRadius: '10px', 
-                            padding: '1rem', 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            gap: '0.25rem',
-                            boxShadow: 'var(--shadow-sm)' 
-                          }}
-                        >
-                          <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg {col.name}</span>
-                          <span style={{ fontSize: '1.35rem', fontWeight: 'bold', color: 'var(--LabelBG)' }}>
-                            {avg.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  )}
 
                   {chartsToRender.length === 0 ? (
                     <div style={{ background: 'white', border: '1.5px dashed var(--LightGray)', borderRadius: '10px', padding: '4rem 1rem', textAlign: 'center', color: 'var(--DarkGray)', fontSize: '0.85rem' }}>
@@ -4471,23 +4566,22 @@ function App() {
                             )}
 
                             {/* KPI stats metrics row */}
-                            <div className="kpi-print-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                              <div style={{ border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.5rem 0.6rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', background: '#f8fafc' }}>
-                                <span style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Records</span>
-                                <strong style={{ fontSize: '1rem', color: 'var(--LabelBG)' }}>{filteredRows.length.toLocaleString()} rows</strong>
-                              </div>
-                              {processedActiveSheet?.columns.filter(c => c.type === 'number' && !/year/i.test(c.name)).slice(0, 3).map((col, idx) => {
-                                const avg = getFilteredAverage(col.name);
-                                return (
+                            {showKpis && (
+                              <div className="kpi-print-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                <div style={{ border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.5rem 0.6rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', background: '#f8fafc' }}>
+                                  <span style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Records</span>
+                                  <strong style={{ fontSize: '1rem', color: 'var(--LabelBG)' }}>{filteredRows.length.toLocaleString()} rows</strong>
+                                </div>
+                                {dashboardKPIs.map((kpi, idx) => (
                                   <div key={idx} style={{ border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.5rem 0.6rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', background: '#f8fafc' }}>
-                                    <span style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg {col.name}</span>
+                                    <span style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{kpi.label}</span>
                                     <strong style={{ fontSize: '1rem', color: 'var(--LabelBG)' }}>
-                                      {avg.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                                      {kpi.value}
                                     </strong>
                                   </div>
-                                );
-                              })}
-                            </div>
+                                ))}
+                              </div>
+                            )}
 
                             {/* Page Footer */}
                             <div style={{ position: 'absolute', bottom: '0.4in', left: printOrientation === 'portrait' ? '0.4in' : '0.6in', right: printOrientation === 'portrait' ? '0.4in' : '0.6in', borderTop: '1px solid #cbd5e1', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', color: 'var(--DarkGray)' }}>

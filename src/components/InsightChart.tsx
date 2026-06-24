@@ -70,7 +70,7 @@ function getChartColors(title: string, colorTheme?: 'classic' | 'vibrant') {
       badgeClass: 'badge-emerald'
     };
   }
-  if (t.includes('hourly') || t.includes('pay') || t.includes('salary') || t.includes('expenditure') || t.includes('rate') || t.includes('expenses')) {
+  if (t.includes('hourly') || t.includes('pay') || t.includes('salary') || t.includes('expenditure') || t.includes('rate') || t.includes('expenses') || t.includes('cost')) {
     return {
       stroke: '#6366f1',
       fill: '#6366f1',
@@ -88,7 +88,7 @@ function getChartColors(title: string, colorTheme?: 'classic' | 'vibrant') {
       badgeClass: 'badge-cyan'
     };
   }
-  if (t.includes('volume') || t.includes('count') || t.includes('distribution') || t.includes('share')) {
+  if (t.includes('volume') || t.includes('count') || t.includes('distribution') || t.includes('share') || t.includes('records') || t.includes('trips')) {
     return {
       stroke: '#f59e0b',
       fill: '#f59e0b',
@@ -97,13 +97,53 @@ function getChartColors(title: string, colorTheme?: 'classic' | 'vibrant') {
       badgeClass: 'badge-amber'
     };
   }
-  return {
-    stroke: '#0052BD',
-    fill: '#0052BD',
-    gradient: ['#0052BD', '#1F71DB'],
-    glow: 'rgba(0, 82, 189, 0.15)',
-    badgeClass: 'badge-blue'
-  };
+
+  // Fallback hash-based mapping for general charts in vibrant mode
+  let hash = 0;
+  for (let i = 0; i < title.length; i++) {
+    hash = title.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % 5;
+  
+  const VIBRANT_PALETTES = [
+    {
+      stroke: '#8b5cf6', // Violet/Purple
+      fill: '#8b5cf6',
+      gradient: ['#8b5cf6', '#7c3aed'],
+      glow: 'rgba(139, 92, 246, 0.15)',
+      badgeClass: 'badge-purple'
+    },
+    {
+      stroke: '#06b6d4', // Cyan
+      fill: '#06b6d4',
+      gradient: ['#06b6d4', '#0891b2'],
+      glow: 'rgba(6, 182, 212, 0.15)',
+      badgeClass: 'badge-cyan'
+    },
+    {
+      stroke: '#4f46e5', // Indigo
+      fill: '#4f46e5',
+      gradient: ['#6366f1', '#4f46e5'],
+      glow: 'rgba(79, 70, 229, 0.15)',
+      badgeClass: 'badge-indigo'
+    },
+    {
+      stroke: '#10b981', // Emerald
+      fill: '#10b981',
+      gradient: ['#10b981', '#059669'],
+      glow: 'rgba(16, 185, 129, 0.15)',
+      badgeClass: 'badge-emerald'
+    },
+    {
+      stroke: '#f59e0b', // Amber
+      fill: '#f59e0b',
+      gradient: ['#f59e0b', '#d97706'],
+      glow: 'rgba(245, 158, 11, 0.15)',
+      badgeClass: 'badge-amber'
+    }
+  ];
+
+  return VIBRANT_PALETTES[index];
 }
 
 // Helper to translate chart specs into human-readable descriptions for client hand-off reports
@@ -552,6 +592,29 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
     const barGradientId = `barGradient-${uniqueId}${suffix}`;
     const barHorizGradientId = `barHorizGradient-${uniqueId}${suffix}`;
 
+    const renderLegend = () => {
+      if (stackKeys.length === 0) return null;
+      const isSlanted = xAxisProps.angle !== undefined;
+      if (isSlanted) {
+        return (
+          <Legend 
+            verticalAlign="top" 
+            align="center" 
+            height={36} 
+            wrapperStyle={{ fontSize: '10px', paddingBottom: '10px' }} 
+          />
+        );
+      } else {
+        return (
+          <Legend 
+            verticalAlign="bottom" 
+            align="center" 
+            wrapperStyle={{ fontSize: '10px', paddingTop: '5px' }} 
+          />
+        );
+      }
+    };
+
     switch (chartType) {
       case 'bar':
         return (
@@ -579,7 +642,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               tickFormatter={(val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
-            {stackKeys.length > 0 && <Legend wrapperStyle={{ fontSize: '10px', marginTop: '5px' }} />}
+            {renderLegend()}
             {stackKeys.length > 0 ? (
               stackKeys.map((key, index) => {
                 const color = PIE_COLORS[index % PIE_COLORS.length];
@@ -622,7 +685,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               domain={isPercent ? [0, 100] : [0, 'auto']}
             />
             <Tooltip content={<CustomTooltip isPercent={isPercent} />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
-            {stackKeys.length > 0 && <Legend wrapperStyle={{ fontSize: '10px', marginTop: '5px' }} />}
+            {renderLegend()}
             {stackKeys.length > 0 ? (
               stackKeys.map((key, index) => {
                 const color = PIE_COLORS[index % PIE_COLORS.length];
@@ -683,7 +746,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               tickFormatter={(val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
             />
             <Tooltip content={<CustomTooltip />} />
-            {isStacked && <Legend wrapperStyle={{ fontSize: '10px', marginTop: '5px' }} />}
+            {renderLegend()}
             {isStacked ? (
               stackKeys.map((key, index) => {
                 const color = PIE_COLORS[index % PIE_COLORS.length];
@@ -741,7 +804,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               width={100}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
-            {stackKeys.length > 0 && <Legend wrapperStyle={{ fontSize: '10px', marginTop: '5px' }} />}
+            {renderLegend()}
             {stackKeys.length > 0 ? (
               stackKeys.map((key, index) => {
                 const color = PIE_COLORS[index % PIE_COLORS.length];
@@ -781,7 +844,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               tickFormatter={(val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
             />
             <Tooltip content={<CustomTooltip />} />
-            {stackKeys.length > 0 && <Legend wrapperStyle={{ fontSize: '10px', marginTop: '5px' }} />}
+            {renderLegend()}
             {stackKeys.length > 0 ? (
               stackKeys.map((key, index) => {
                 const color = PIE_COLORS[index % PIE_COLORS.length];
