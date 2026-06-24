@@ -34,6 +34,10 @@ The application communicates directly from the client browser with the Google Ge
 3. **Calculation Methodology Slide**:
    - Stacks relevant math equations, variables, and parameters (PEMT supplemental funding, FTE equivalents, CAD timing benchmarks) vertically.
    - Automatically references active filtered rows and warns with fallback badges when data is unmapped.
+4. **Natural Language Chart Editing & Element Exclusions**:
+   - Refine any chart dynamically by clicking the **Edit** button on its header and describing changes in natural language (e.g. *"change to a line chart"*, *"group by Job Title"*).
+   - Exclude specific categories, legend items, or synthetic groupings (such as `"Other"`) directly using commands like *"remove Tampa"* or *"exclude Other"*.
+   - Exclusions use case-insensitive substring and word-level matching, and apply reactively across all visual components (including Scatter plots, Bubble charts, Bar/Line/Area/Radar charts, and Box & Whisker plots).
 
 ---
 

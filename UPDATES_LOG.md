@@ -49,7 +49,7 @@ This log chronicles the day-by-day development, feature additions, user requests
 
 ---
 
-## 📅 June 17, 2026 (Today): Stacked Visualizations, Plain Narrative Summaries & Dynamic UX
+## 📅 June 17, 2026: Stacked Visualizations, Plain Narrative Summaries & Dynamic UX
 * **Advanced Stacked Visualizations**: Enabled standard stacked bar, 100% stacked percentage bar, and stacked area charts. Refactored the data aggregation engine to handle double-grouping (category + split-by) with automatic "Other" category grouping.
 * **Plain-English AI Summaries**: Rewrote the chart insight generator to output unified 3-to-5 sentence narrative paragraphs in plain business English, removing all structured bullets, headers, and technical statistical metrics (like CV or standard deviation).
 * **HTML Print Parsing**: Resolved literal markdown tags displaying in print reports by rendering the executive summaries using `dangerouslySetInnerHTML` combined with an optimized `inlineMarkdown` helper.
@@ -58,4 +58,13 @@ This log chronicles the day-by-day development, feature additions, user requests
 * **Stacked Tooltip Totals**: Updated the custom hover tooltip to calculate and display the cumulative sum of multiple stacked data series on the fly.
 * **Information Tooltip Positioning**: Configured chart info callouts to position downwards (`top: 100%`), preventing them from being clipped by the top margin of expanded modals.
 * **Unified Chat Typography**: Aligned chat message fonts and spacing, and changed body weights to `fontWeight: 400` so bolded text stands out clearly.
+
+---
+
+## 📅 June 24, 2026 (Today): Natural Language Chart Editing & Element Exclusions
+* **Refined Natural Language Chart Specification Refinements**: Added a sparkle Edit action button to the header of all chart cards. It presents a popover window allowing users to write natural language refinements (e.g. changing chart type, changing axes, or excluding categories).
+* **Multi-Turn Exclusions Reconciliation (Fail-Safe)**: Implemented an overlap-aware matching function that compares the user's edit instruction against previously excluded categories. If the user does not mention a previously excluded category (directly or via word sub-match), it is automatically preserved. This ensures exclusions accumulate reliably over multiple turns instead of being accidentally dropped by the LLM.
+* **Case-Insensitive Substring & Word-Level Exclusions**: Refactored the pre-aggregation data filter to check if any text/string column value contains the user's excluded terms as a substring. This makes category exclusions work dynamically even with partial name inputs.
+* **Exclusion Support on Non-Aggregated Visuals**: Extended the exclusion logic to work identically on scatter plots and bubble charts (filtering out rows so their coordinate points disappear and axes re-scale) and custom SVG box plots (re-evaluating min/max ranges, quartiles, and outliers dynamically).
+* **Synthetic "Other" Category Override**: Added a client-side interceptor that automatically handles the exclusion or restoration of the synthetic `"Other"` category, ensuring it works seamlessly without relying on the LLM's sheet schema knowledge.
 
