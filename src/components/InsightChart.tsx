@@ -597,8 +597,9 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
     const hasLongLabel = data.some(d => String(d.name || '').length > 8);
     const hasManyLabels = data.length > 5;
     const bottom = (hasLongLabel || hasManyLabels) ? 55 : 20;
-    return { top: 10, right: 20, left: 10, bottom };
-  }, [data]);
+    const top = stackKeys.length > 0 ? 35 : 10;
+    return { top, right: 20, left: 10, bottom };
+  }, [data, stackKeys]);
 
   const renderChart = (isPrint: boolean = false, printWidth?: number, printHeight?: number) => {
     if (chartSpec.chartType !== 'box' && data.length === 0) {
@@ -619,25 +620,14 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
     const renderLegend = () => {
       if (stackKeys.length === 0) return null;
-      const isSlanted = xAxisProps.angle !== undefined;
-      if (isSlanted) {
-        return (
-          <Legend 
-            verticalAlign="top" 
-            align="center" 
-            height={36} 
-            wrapperStyle={{ fontSize: '10px', paddingBottom: '10px' }} 
-          />
-        );
-      } else {
-        return (
-          <Legend 
-            verticalAlign="bottom" 
-            align="center" 
-            wrapperStyle={{ fontSize: '10px', paddingTop: '5px' }} 
-          />
-        );
-      }
+      return (
+        <Legend 
+          verticalAlign="top" 
+          align="center" 
+          height={24} 
+          wrapperStyle={{ fontSize: '10px', paddingBottom: '10px' }} 
+        />
+      );
     };
 
     switch (chartType) {
@@ -706,8 +696,9 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(val) => isPercent ? `${val}%` : (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
+              tickFormatter={(val) => isPercent ? `${Math.round(val)}%` : (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
               domain={isPercent ? [0, 100] : [0, 'auto']}
+              ticks={isPercent ? [0, 25, 50, 75, 100] : undefined}
             />
             <Tooltip content={<CustomTooltip isPercent={isPercent} />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
             {renderLegend()}
@@ -801,9 +792,10 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
         );
       }
 
-      case 'horizontalBar':
+      case 'horizontalBar': {
+        const top = stackKeys.length > 0 ? 35 : 10;
         return (
-          <BarChart layout="vertical" width={w} height={h} data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+          <BarChart layout="vertical" width={w} height={h} data={data} margin={{ top, right: 20, left: 15, bottom: 20 }}>
             <defs>
               <linearGradient id={barHorizGradientId} x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.9} />
@@ -826,7 +818,8 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              width={100}
+              width={110}
+              tickFormatter={(val) => String(val).length > 18 ? `${String(val).slice(0, 16)}..` : String(val)}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
             {renderLegend()}
@@ -848,6 +841,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
             )}
           </BarChart>
         );
+      }
 
       case 'line':
         return (
@@ -983,9 +977,10 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
           </ScatterChart>
         );
 
-      case 'radar':
+      case 'radar': {
+        const top = stackKeys.length > 0 ? 30 : 10;
         return (
-          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data} width={w} height={h} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data} width={w} height={h} margin={{ top, right: 10, left: 10, bottom: 10 }}>
             <PolarGrid stroke="#cbd5e1" />
             <PolarAngleAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
             <PolarRadiusAxis angle={30} domain={[0, 'auto']} stroke="#cbd5e1" fontSize={8} tickLine={false} />
@@ -1010,6 +1005,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
             <Tooltip content={<CustomTooltip />} />
           </RadarChart>
         );
+      }
 
       case 'box':
         return (
