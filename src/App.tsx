@@ -2127,10 +2127,34 @@ function App() {
           </span>
         </div>
 
-        <div className="header-actions">
+        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <span style={{ fontSize: '0.8rem', opacity: 0.85, fontWeight: 500, letterSpacing: '0.05em' }}>
             PUBLIC CONSULTING GROUP
           </span>
+          {workbookData && (
+            <button 
+              className="btn btn-secondary" 
+              style={{ 
+                padding: '0.35rem 0.75rem', 
+                fontSize: '0.75rem', 
+                background: 'rgba(255, 255, 255, 0.1)', 
+                color: 'white', 
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                borderRadius: '6px'
+              }} 
+              onClick={handleCloseWorkspace}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+            >
+              <ArrowLeft size={14} /> Close & Upload New
+            </button>
+          )}
         </div>
       </header>
 
@@ -2161,9 +2185,6 @@ function App() {
               </button>
             )}
 
-            <button className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }} onClick={handleCloseWorkspace}>
-              <ArrowLeft size={14} /> Close & Upload New
-            </button>
             {isChatCollapsed && (
               <button 
                 className="btn btn-primary" 
