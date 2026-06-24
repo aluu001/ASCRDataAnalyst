@@ -286,10 +286,35 @@ User Instruction:
 "${instruction}"
 
 Output a valid, updated ChartSpecification matching the schema below. Ensure all column names exist in the available columns.
-Special instructions for category exclusions:
-- If the user asks to remove/hide/exclude specific categories, items, or labels (for example: remove the "Other" category, exclude "Pinellas County Fire Rescue"), add those exact category string values to the "excludedCategories" array.
-- If the user asks to add back/show/restore a category that is currently in "excludedCategories", remove it from the "excludedCategories" array.
-- Maintain existing exclusions unless the user explicitly asks to restore them.
+
+Rules for category exclusions ("excludedCategories"):
+1. The "excludedCategories" array stores the exact string labels (case-insensitive) of categories to exclude from the chart (e.g., specific X-axis column values like "Other", "Pinellas County Fire Rescue").
+2. Accumulate/Merge: When the user asks to remove, exclude, or hide a category, you MUST keep all currently excluded categories that are already in the Current Spec's "excludedCategories" array, and add the new category/categories to that array. Do not discard existing exclusions unless the user specifically asks to restore or add them back.
+3. Remove/Restore: When the user asks to add back, restore, show, or include a category that is currently listed in "excludedCategories", you must remove it from the "excludedCategories" array.
+4. If the user asks to "restore all", "show all", "add back all", or "clear exclusions", empty the "excludedCategories" array (or set it to []).
+5. If the instruction is unrelated to categories (e.g., changing the chart type or changing axes), preserve the entire "excludedCategories" array exactly as it is in the Current Spec.
+
+Few-Shot Examples of Exclusions Handling:
+
+- Case A (Add to exclusions):
+  Current Spec: {"chartType": "bar", "excludedCategories": ["Other"]}
+  User Instruction: "remove the 'Pinellas County' bar"
+  Expected Output "excludedCategories": ["Other", "Pinellas County"]
+
+- Case B (Restore an exclusion):
+  Current Spec: {"chartType": "bar", "excludedCategories": ["Other", "Pinellas County"]}
+  User Instruction: "add back Other category"
+  Expected Output "excludedCategories": ["Pinellas County"]
+
+- Case C (Preserve exclusions when editing other properties):
+  Current Spec: {"chartType": "bar", "excludedCategories": ["Other", "Pinellas County"]}
+  User Instruction: "change to a line chart"
+  Expected Output: {"chartType": "line", "excludedCategories": ["Other", "Pinellas County"]}
+
+- Case D (Multiple exclusions):
+  Current Spec: {"chartType": "bar"}
+  User Instruction: "exclude Pinellas and Hillsborough"
+  Expected Output "excludedCategories": ["Pinellas", "Hillsborough"]
 `;
 
   const response = await ai.models.generateContent({
@@ -330,7 +355,66 @@ Special instructions for category exclusions:
   }
 
   try {
-    return JSON.parse(responseText);
+    const parsed: ChartSpecification = JSON.parse(responseText);
+
+    // Client-side fail-safe: Reconcile excludedCategories to prevent Gemini from dropping exclusions during multi-turn edits
+    if (currentSpec.excludedCategories && currentSpec.excludedCategories.length > 0) {
+      const instructionLower = instruction.toLowerCase().trim();
+      
+      const isResetAll = 
+        instructionLower.includes('all') || 
+        instructionLower.includes('everything') || 
+        instructionLower.includes('clear') || 
+        instructionLower.includes('reset') ||
+        instructionLower.includes('restore all') ||
+        instructionLower.includes('show all') ||
+        instructionLower.includes('add back all');
+
+      if (isResetAll) {
+        parsed.excludedCategories = [];
+      } else {
+        const nextExclusions = new Set<string>(parsed.excludedCategories || []);
+        
+        // Helper to check if a category is mentioned in the user instruction
+        const isCategoryMentioned = (cat: string, inst: string): boolean => {
+          const catLower = cat.toLowerCase().trim();
+          const instLower = inst.toLowerCase().trim();
+          
+          if (instLower.includes(catLower) || catLower.includes(instLower)) {
+            return true;
+          }
+          
+          const stopWords = new Set([
+            'add', 'back', 'remove', 'exclude', 'show', 'hide', 'restore', 'include', 'delete',
+            'the', 'category', 'bar', 'column', 'row', 'chart', 'visual', 'visualization',
+            'please', 'can', 'you', 'and', 'from', 'this', 'that', 'with'
+          ]);
+          
+          const catWords = catLower.split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !stopWords.has(w));
+          const instWords = instLower.split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !stopWords.has(w));
+          
+          for (const w of instWords) {
+            if (catWords.includes(w) || catLower.includes(w)) {
+              return true;
+            }
+          }
+          
+          return false;
+        };
+
+        for (const cat of currentSpec.excludedCategories) {
+          // If the user did not explicitly mention the category in their instruction,
+          // they didn't ask to modify its status, so we should preserve it.
+          if (!isCategoryMentioned(cat, instruction)) {
+            nextExclusions.add(cat);
+          }
+        }
+        
+        parsed.excludedCategories = Array.from(nextExclusions);
+      }
+    }
+
+    return parsed;
   } catch (err) {
     console.error('Failed to parse Gemini editChartSpecification response as JSON. Raw text:', responseText);
     throw new Error('Failed to parse refined chart configuration. The model response was not in the expected format.');
