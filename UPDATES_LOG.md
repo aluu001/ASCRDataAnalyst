@@ -49,8 +49,16 @@ This log chronicles the day-by-day development, feature additions, user requests
 
 ---
 
-## 📅 June 17, 2026: Stacked Visualizations, Plain Narrative Summaries & Dynamic UX
+## 📅 June 17, 2026: Stacked Visualizations, Visual Refinements & Layout Safety
 * **Advanced Stacked Visualizations**: Enabled standard stacked bar, 100% stacked percentage bar, and stacked area charts. Refactored the data aggregation engine to handle double-grouping (category + split-by) with automatic "Other" category grouping.
+* **Overlaps & Spacing Resolutions**:
+  - **Percent Stacked Bar Y-Axis Ticks**: Fixed precision errors on 100% stacked Y-axes (preventing overlaps like `100%` and `99.999%`) by hardcoding `[0, 25, 50, 75, 100]` ticks and forcing integer roundings.
+  - **Top Margin Spacing**: Expanded chart canvas top margins to `35px` on stacked types to prevent top-aligned Recharts `<Legend>` text nodes from colliding with the chart bars and grid.
+  - **Horizontal Bar Category Labels**: Increased the Y-axis label width bounds to `110px`, left margin to `15px`, and added truncation at 18 characters to prevent names from running into the visual bars.
+  - **Radar Margin Collisions**: Reduced outer radius to `70%` and added `30px` top margins to prevent spokes and legend labels from clipping.
+  - **Dynamic Legend Placement**: Integrated a layout system that shifts Recharts legends to the top when X-axis labels are slanted, and to the bottom when labels are horizontal, preventing bottom label/legend text collisions.
+* **Dynamic X-Axis Label Slanting**: Added auto-detection inside custom SVG box plots. If labels are long (>9 chars) or many (>4 categories), they slant at `-20` degrees, bottom margins expand to `55px`, and labels align to `textAnchor="end"`, preventing text truncation.
+* **Relocation of 'Close & Upload New' Button**: Moved the button out of the active analysis welcome bar and placed it safely inside the global app header action area, preventing users from accidentally clicking it and losing active sheets.
 * **Plain-English AI Summaries**: Rewrote the chart insight generator to output unified 3-to-5 sentence narrative paragraphs in plain business English, removing all structured bullets, headers, and technical statistical metrics (like CV or standard deviation).
 * **HTML Print Parsing**: Resolved literal markdown tags displaying in print reports by rendering the executive summaries using `dangerouslySetInnerHTML` combined with an optimized `inlineMarkdown` helper.
 * **Auto-Resizing Chat Textarea**: Swapped the single-line input field with an auto-wrapping `<textarea>` that dynamically expands/shrinks vertically based on `scrollHeight` and collapses back on message send.
@@ -61,7 +69,19 @@ This log chronicles the day-by-day development, feature additions, user requests
 
 ---
 
-## 📅 June 24, 2026 (Today): Natural Language Chart Editing & Element Exclusions
+## 📅 June 24, 2026 (Today): YoY Comparative Analytics, Spec Editors & Exclusions
+* **Year-over-Year (YoY) Comparative Analytics**:
+  - **Double-Polygon Radar Charts**: Enabled pivot aggregations on Radar charts. When comparative years exist (`YoY_Year`), the polar plot overlays two distinct, colored comparative polygons (e.g. 2023 vs 2024 profiles) paired with an interactive series legend.
+  - **Automatic YoY Preset Configurations**: Configured the default presets builder to automatically map `YoY_Year` as the `stackByColumn` when YoY mode is active, populating comparative series instantly.
+* **Loading Overlay & Audit Race Resolvers**:
+  - **Vite Audit Race Fix**: Prevented background analytical threads from overlapping by removing auto-audit on workbook loaded. Dashboard analysis is now deferred to the **Launch Executive Dashboard 🚀** click handler.
+  - **Glassmorphic Loading Screen**: Added a full-screen loading overlay when auto-generating dashboards. Displays a live, progressive terminal log cycling through dataset-aware thinking steps.
+* **Auto-Generating Exactly 10 Visualizations**:
+  - Structured Gemini prompt directives to request exactly 10 distinct, clean dashboard visualizations.
+  - Built a client-side generator fallback that sequentially maps columns and pads/slices the charts array to exactly 10 distinct visual types (Bar, Line, Area, Pie, Box, Scatter, Radar, etc.) on launch.
+* **Dashboard Theme Settings (Classic vs. Vibrant)**:
+  - **Classic PCG Blue**: Resets the entire interface to unified professional corporate blue gradients and solid white KPI cards.
+  - **Vibrant Domain**: Applies harmonized color-coded themes (green for financial, purple for salaries, teal for response intervals, and amber for distributions) across visual metrics, KPI tiles, and badge elements.
 * **Refined Natural Language Chart Specification Refinements**: Added a sparkle Edit action button to the header of all chart cards. It presents a popover window allowing users to write natural language refinements (e.g. changing chart type, changing axes, or excluding categories).
 * **Multi-Turn Exclusions Reconciliation (Fail-Safe)**: Implemented an overlap-aware matching function that compares the user's edit instruction against previously excluded categories. If the user does not mention a previously excluded category (directly or via word sub-match), it is automatically preserved. This ensures exclusions accumulate reliably over multiple turns instead of being accidentally dropped by the LLM.
 * **Case-Insensitive Substring & Word-Level Exclusions**: Refactored the pre-aggregation data filter to check if any text/string column value contains the user's excluded terms as a substring. This makes category exclusions work dynamically even with partial name inputs.
