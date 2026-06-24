@@ -1107,8 +1107,22 @@ export const InsightChart: React.FC<InsightChartProps> = ({
           : (() => {
               const exSet = new Set(chartSpec.excludedCategories.map(c => String(c).trim().toLowerCase()));
               return rows.filter(row => {
-                const xVal = String(row[chartSpec.xAxisColumn] ?? '').trim().toLowerCase();
-                return !exSet.has(xVal);
+                return !Object.keys(row).some(colKey => {
+                  const val = row[colKey];
+                  if (val === null || val === undefined) return false;
+
+                  const isXAxis = colKey === chartSpec.xAxisColumn;
+                  const isStack = colKey === chartSpec.stackByColumn;
+                  const isStringCol = typeof val === 'string';
+
+                  if (isXAxis || isStack || isStringCol) {
+                    const valStr = val instanceof Date 
+                      ? val.toLocaleDateString().trim().toLowerCase() 
+                      : String(val).trim().toLowerCase();
+                    return exSet.has(valStr);
+                  }
+                  return false;
+                });
               });
             })();
         return (

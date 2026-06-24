@@ -156,8 +156,22 @@ export function aggregateDataset(rows: any[], request: AggregationRequest): Aggr
   if (request.excludedCategories && request.excludedCategories.length > 0 && xAxisColumn) {
     const exSet = new Set(request.excludedCategories.map(c => String(c).trim().toLowerCase()));
     sourceRows = rows.filter(row => {
-      const xVal = String(row[xAxisColumn] ?? '').trim().toLowerCase();
-      return !exSet.has(xVal);
+      return !Object.keys(row).some(colKey => {
+        const val = row[colKey];
+        if (val === null || val === undefined) return false;
+
+        const isXAxis = colKey === xAxisColumn;
+        const isStack = colKey === stackBy;
+        const isStringCol = typeof val === 'string';
+
+        if (isXAxis || isStack || isStringCol) {
+          const valStr = val instanceof Date 
+            ? val.toLocaleDateString().trim().toLowerCase() 
+            : String(val).trim().toLowerCase();
+          return exSet.has(valStr);
+        }
+        return false;
+      });
     });
   }
 
