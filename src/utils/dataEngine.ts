@@ -154,7 +154,7 @@ export function aggregateDataset(rows: any[], request: AggregationRequest): Aggr
   // 1. Filter rows by excludedCategories at the source level
   let sourceRows = rows;
   if (request.excludedCategories && request.excludedCategories.length > 0 && xAxisColumn) {
-    const exSet = new Set(request.excludedCategories.map(c => String(c).trim().toLowerCase()));
+    const exList = request.excludedCategories.map(c => String(c).trim().toLowerCase()).filter(Boolean);
     sourceRows = rows.filter(row => {
       return !Object.keys(row).some(colKey => {
         const val = row[colKey];
@@ -168,7 +168,9 @@ export function aggregateDataset(rows: any[], request: AggregationRequest): Aggr
           const valStr = val instanceof Date 
             ? val.toLocaleDateString().trim().toLowerCase() 
             : String(val).trim().toLowerCase();
-          return exSet.has(valStr);
+          
+          // Substring and word-level case-insensitive matching
+          return exList.some(ex => valStr.includes(ex));
         }
         return false;
       });
@@ -412,8 +414,12 @@ export function aggregateDataset(rows: any[], request: AggregationRequest): Aggr
 
   // 2. Post-filter results (e.g. removing synthetic categories like 'Other')
   if (request.excludedCategories && request.excludedCategories.length > 0) {
-    const exSet = new Set(request.excludedCategories.map(c => String(c).trim().toLowerCase()));
-    finalOutput = finalOutput.filter(item => !exSet.has(item.name.trim().toLowerCase()));
+    const exList = request.excludedCategories.map(c => String(c).trim().toLowerCase()).filter(Boolean);
+    finalOutput = finalOutput.filter(item => {
+      const nameLower = item.name.trim().toLowerCase();
+      // Substring case-insensitive match for post-aggregation (like "Other" category)
+      return !exList.some(ex => nameLower.includes(ex));
+    });
   }
 
   return finalOutput;

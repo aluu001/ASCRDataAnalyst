@@ -1105,7 +1105,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({
         const boxPlotRows = !chartSpec.excludedCategories || chartSpec.excludedCategories.length === 0
           ? rows
           : (() => {
-              const exSet = new Set(chartSpec.excludedCategories.map(c => String(c).trim().toLowerCase()));
+              const exList = chartSpec.excludedCategories.map(c => String(c).trim().toLowerCase()).filter(Boolean);
               return rows.filter(row => {
                 return !Object.keys(row).some(colKey => {
                   const val = row[colKey];
@@ -1119,7 +1119,8 @@ export const InsightChart: React.FC<InsightChartProps> = ({
                     const valStr = val instanceof Date 
                       ? val.toLocaleDateString().trim().toLowerCase() 
                       : String(val).trim().toLowerCase();
-                    return exSet.has(valStr);
+                    // Substring and word-level case-insensitive matching
+                    return exList.some(ex => valStr.includes(ex));
                   }
                   return false;
                 });
