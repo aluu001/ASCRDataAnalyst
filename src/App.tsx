@@ -782,6 +782,7 @@ function App() {
   const [isYoyActive, setIsYoyActive] = useState<boolean>(false);
   const [previewGoal, setPreviewGoal] = useState<string>('');
   const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false);
+  const [loadingStepIdx, setLoadingStepIdx] = useState<number>(0);
   const [columnTypes, setColumnTypes] = useState<Record<string, 'number' | 'string' | 'date' | 'boolean'>>({});
   const [excludedColumns, setExcludedColumns] = useState<Set<string>>(new Set());
 
@@ -807,6 +808,51 @@ function App() {
       columns: mappedCols
     };
   }, [activeSheet, columnTypes, excludedColumns]);
+
+  // Dynamic Loading Thinking Steps
+  const dynamicThinkingSteps = useMemo(() => {
+    if (!processedActiveSheet) return ['Initializing analyst engine...', 'Scanning worksheet columns...'];
+    const cols = processedActiveSheet.columns.map(c => c.name);
+    const numCols = processedActiveSheet.columns.filter(c => c.type === 'number').map(c => c.name);
+    const catCols = processedActiveSheet.columns.filter(c => c.type === 'string' || c.type === 'date').map(c => c.name);
+
+    const steps = [
+      'Establishing connection to Gemini LLM model...',
+      `Scanning worksheet variables: [${cols.slice(0, 4).join(', ')}${cols.length > 4 ? '...' : ''}]`,
+    ];
+
+    if (numCols.length > 0) {
+      steps.push(`Analyzing numerical data distributions for [${numCols.slice(0, 2).join(', ')}]...`);
+    }
+
+    if (catCols.length > 0 && numCols.length > 0) {
+      steps.push(`Computing baseline groups of [${numCols[0]}] segmented by [${catCols[0]}]...`);
+    }
+
+    if (isYoyActive) {
+      steps.push(`Evaluating Year-over-Year (YoY) variances across YoY_Year splits...`);
+    }
+
+    steps.push(
+      'Comparing multiple charting metrics for optimal business insights...',
+      'Mapping variables into advanced visualizations (Radar, Box plots, Stacked Areas)...',
+      'Curating premium visualizations to show off the system...',
+      'Generating business summaries and stakeholder risk briefs...',
+      'Polishing interactive dashboard canvas layout...'
+    );
+
+    return steps;
+  }, [processedActiveSheet, isYoyActive]);
+
+  useEffect(() => {
+    if (isLoading && workspaceStep === 'preview') {
+      setLoadingStepIdx(0);
+      const interval = setInterval(() => {
+        setLoadingStepIdx(prev => (prev + 1) % dynamicThinkingSteps.length);
+      }, 1800);
+      return () => clearInterval(interval);
+    }
+  }, [isLoading, workspaceStep, dynamicThinkingSteps]);
 
   // Automatically select matching methodology sub-tab based on sheet metadata
   useEffect(() => {
@@ -5107,13 +5153,28 @@ function App() {
           gap: '1.5rem'
         }}>
           <div className="spinner" style={{ width: '48px', height: '48px', borderWidth: '3px' }}></div>
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
               Letting the AI Decide...
             </h3>
-            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--DarkGray)', fontWeight: 500 }}>
-              Analyzing spreadsheet rows & curating exactly 10 premium visualizations.
-            </p>
+            <div style={{ 
+              marginTop: '1rem', 
+              padding: '0.6rem 1.25rem', 
+              background: '#f8fafc', 
+              border: '1.5px solid var(--LightGray)', 
+              borderRadius: '8px', 
+              minWidth: '320px', 
+              maxWidth: '500px', 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.65rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+            }}>
+              <span className="spinner" style={{ width: '12px', height: '12px', border: '1.5px solid rgba(0, 82, 189, 0.1)', borderTopColor: 'var(--BannerGB)' }}></span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--LabelBG)', fontWeight: 600, textAlign: 'left', fontFamily: 'monospace', wordBreak: 'break-word' }}>
+                {dynamicThinkingSteps[loadingStepIdx]}
+              </span>
+            </div>
           </div>
         </div>
       )}
