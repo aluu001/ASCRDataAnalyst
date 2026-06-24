@@ -1,0 +1,101 @@
+State,Provider,Year,Section,Bucket,Group,Subgroup,Line Item,Quarter,Value,Type
+FL,"Duval County Fire Rescue",2023,Trips,"Salaries","Capital Related",Dedicated,"Administrative",Qtr 1,2831982,Budget
+FL,"Pinellas County Fire Rescue",2023,Allocation Statistics,"Medicare","Administration and General",Shared,"Fines and Penalties",Qtr 3,31712,Actual
+FL,"Miami-Dade Fire Rescue",2023,Revenues,"Capital Related","MTS",Dedicated,"All Trips",Full Year,53013882,Forecast
+FL,"Orange County Fire Rescue",2023,Allocation Statistics,"Medicare","Capital Related",Shared,"Administrative",Qtr 2,1385379,Forecast
+FL,"Pinellas County Fire Rescue",2023,Totals,"Capital Related","MTS",Dedicated,"Administrative",Qtr 4,1330224,Actual
+FL,"Orange County Fire Rescue",2023,Revenues,"Medicare","Capital Related",Dedicated,"Administrative",Qtr 3,3745840.8,Actual
+FL,"Duval County Fire Rescue",2023,Revenues,"Salaries","Administration and General",Shared,"Private Insurance",Qtr 3,812654,Budget
+FL,"Broward County Fire Rescue",2023,Allocation Statistics,"Workers Comp","Non-MTS",Shared,"Training",Qtr 4,12351,Forecast
+FL,"Palm Beach County Fire Rescue",2023,Allocation Statistics,"Workers Comp","MTS",Shared,"Fines and Penalties",Qtr 2,8843,Forecast
+FL,"Pinellas County Fire Rescue",2023,Revenues,"Medicaid Fee For Service Revenue from Transports","Salaries",Shared,"Medicare HMO",Qtr 3,14885664.53,Actual
+FL,"Duval County Fire Rescue",2023,Revenues,"Salaries","MTS",Dedicated,"Administrative",Qtr 4,367221,Forecast
+FL,"Broward County Fire Rescue",2023,Trips,"Totals","Capital Related",Dedicated,"Hours Logged for MTS Duty",Qtr 1,2946436,Actual
+FL,"Pinellas County Fire Rescue",2023,Revenues,"Totals","Non-MTS",Dedicated,"Property Taxes",Qtr 4,39793862.1,Budget
+FL,"Pinellas County Fire Rescue",2023,Revenues,"Salaries","Non-MTS",Dedicated,"Minor Equipment",Qtr 4,6787,Budget
+FL,"Palm Beach County Fire Rescue",2023,Revenues,"Capital Related","Non-MTS",Dedicated,"Leases and Rentals",Qtr 1,30418,Forecast
+FL,"Duval County Fire Rescue",2023,Totals,"Medicaid Fee For Service Revenue from Transports","Non-MTS",Shared,"Training",Full Year,36327,Actual
+FL,"Pinellas County Fire Rescue",2023,Totals,"Workers Comp","Salaries",Shared,"Medicaid FFS",Qtr 4,40474282,Budget
+FL,"Pinellas County Fire Rescue",2023,Trips,"Capital Related","Non-MTS",Dedicated,"Fines and Penalties",Qtr 1,21118,Actual
+FL,"Hillsborough County Fire Rescue",2023,Allocation Statistics,"Medicaid MCO","Salaries",Shared,"Medicaid MTS Costs",Qtr 1,1446090,Actual
+FL,"Miami-Dade Fire Rescue",2023,Totals,"Medicare","MTS",Shared,"Minor Equipment",Full Year,35903,Forecast
+FL,"Palm Beach County Fire Rescue",2023,Trips,"Medicaid Fee For Service Revenue from Transports","Administration and General",Dedicated,"Medicare HMO",Qtr 4,58250305.74,Actual
+FL,"Palm Beach County Fire Rescue",2023,Totals,"Workers Comp","MTS",Shared,"All Trips",Full Year,39421491,Budget
+FL,"Palm Beach County Fire Rescue",2023,Totals,"Workers Comp","Administration and General",Dedicated,"Logistics",Full Year,1672027.13,Actual
+FL,"Duval County Fire Rescue",2023,Revenues,"Medicaid Fee For Service Revenue from Transports","Administration and General",Dedicated,"Property Taxes",Qtr 3,27880679,Actual
+FL,"Broward County Fire Rescue",2023,Totals,"Capital Related","Capital Related",Dedicated,"Fines and Penalties",Qtr 2,37774,Actual
+FL,"Miami-Dade Fire Rescue",2023,Trips,"Salaries","MTS",Dedicated,"Fines and Penalties",Full Year,36910,Actual
+FL,"Palm Beach County Fire Rescue",2023,Totals,"Capital Related","Administration and General",Dedicated,"Leases and Rentals",Qtr 2,24887,Actual
+FL,"Hillsborough County Fire Rescue",2023,Trips,"Medicaid Fee For Service Revenue from Transports","Administration and General",Shared,"Hours Logged for MTS Duty",Qtr 1,3356441,Forecast
+FL,"Orange County Fire Rescue",2023,Revenues,"Capital Related","MTS",Shared,"Property Taxes",Qtr 1,9964785,Actual
+FL,"Duval County Fire Rescue",2023,Totals,"Medicaid Fee For Service Revenue from Transports","Capital Related",Shared,"Hours Logged for MTS Duty",Qtr 2,207060.73,Budget
+FL,"Duval County Fire Rescue",2023,Revenues,"Capital Related","Non-MTS",Shared,"Training",Qtr 3,41810,Actual
+FL,"Miami-Dade Fire Rescue",2023,Trips,"Medicaid Fee For Service Revenue from Transports","Salaries",Shared,"Property Taxes",Qtr 4,41022842.47,Budget
+FL,"Miami-Dade Fire Rescue",2023,Allocation Statistics,"Totals","MTS",Shared,"Leases and Rentals",Qtr 4,31977,Actual
+FL,"Duval County Fire Rescue",2023,Totals,"Medicaid Fee For Service Revenue from Transports","Salaries",Shared,"Administrative",Qtr 2,872131,Forecast
+FL,"Miami-Dade Fire Rescue",2023,Totals,"Workers Comp","MTS",Dedicated,"All Trips",Qtr 3,23179019.62,Forecast
+FL,"Pinellas County Fire Rescue",2023,Revenues,"Capital Related","Salaries",Dedicated,"All Trips",Qtr 1,19559909,Actual
+FL,"Hillsborough County Fire Rescue",2023,Revenues,"Medicaid Fee For Service Revenue from Transports","Capital Related",Shared,"Medicaid FFS",Qtr 1,32382862.91,Forecast
+FL,"Palm Beach County Fire Rescue",2023,Revenues,"Totals","Administration and General",Shared,"Training",Qtr 4,2401,Forecast
+FL,"Broward County Fire Rescue",2023,Allocation Statistics,"Salaries","Salaries",Dedicated,"Logistics",Qtr 4,2475091,Budget
+FL,"Pinellas County Fire Rescue",2023,Trips,"Salaries","Capital Related",Shared,"All Trips",Qtr 4,26292529,Forecast
+FL,"Pinellas County Fire Rescue",2023,Allocation Statistics,"Medicaid Fee For Service Revenue from Transports","Administration and General",Dedicated,"Leases and Rentals",Full Year,26020,Actual
+FL,"Hillsborough County Fire Rescue",2023,Allocation Statistics,"Capital Related","Capital Related",Dedicated,"Training",Qtr 1,28036,Actual
+FL,"Broward County Fire Rescue",2023,Totals,"Salaries","Non-MTS",Shared,"Training",Full Year,37860,Forecast
+FL,"Hillsborough County Fire Rescue",2023,Trips,"Medicaid MCO","Non-MTS",Shared,"Property Taxes",Qtr 4,5412005.7,Budget
+FL,"Broward County Fire Rescue",2023,Trips,"Medicaid Fee For Service Revenue from Transports","Salaries",Dedicated,"Minor Equipment",Qtr 2,505,Actual
+FL,"Miami-Dade Fire Rescue",2023,Allocation Statistics,"Capital Related","Capital Related",Dedicated,"Property Taxes",Qtr 2,8747258,Forecast
+FL,"Orange County Fire Rescue",2023,Revenues,"Medicare","Administration and General",Shared,"Logistics",Qtr 3,1939893,Actual
+FL,"Broward County Fire Rescue",2023,Allocation Statistics,"Salaries","Administration and General",Dedicated,"Private Insurance",Qtr 2,1571528.53,Actual
+FL,"Miami-Dade Fire Rescue",2023,Trips,"Salaries","MTS",Dedicated,"Property Taxes",Qtr 1,55629515,Forecast
+FL,"Hillsborough County Fire Rescue",2023,Allocation Statistics,"Medicaid Fee For Service Revenue from Transports","MTS",Dedicated,"Administrative",Qtr 2,2471275.08,Forecast
+FL,"Miami-Dade Fire Rescue",2023,Totals,"Capital Related","Salaries",Dedicated,"Property Taxes",Qtr 2,34040263.86,Forecast
+FL,"Orange County Fire Rescue",2023,Revenues,"Medicaid MCO","Salaries",Dedicated,"Minor Equipment",Qtr 1,27897,Budget
+FL,"Orange County Fire Rescue",2023,Trips,"Workers Comp","MTS",Shared,"Hours Logged for MTS Duty",Qtr 2,3849359.03,Budget
+FL,"Broward County Fire Rescue",2023,Revenues,"Salaries","MTS",Shared,"Leases and Rentals",Qtr 1,6403,Actual
+FL,"Duval County Fire Rescue",2023,Allocation Statistics,"Medicaid MCO","MTS",Shared,"Medicare HMO",Qtr 1,35218488.96,Budget
+FL,"Duval County Fire Rescue",2023,Allocation Statistics,"Medicaid MCO","Salaries",Shared,"Medicare HMO",Qtr 3,37088045.21,Budget
+FL,"Pinellas County Fire Rescue",2023,Trips,"Totals","Capital Related",Dedicated,"Property Taxes",Qtr 3,16656650.41,Actual
+FL,"Palm Beach County Fire Rescue",2023,Trips,"Workers Comp","MTS",Shared,"All Trips",Qtr 3,26207852.43,Forecast
+FL,"Orange County Fire Rescue",2023,Totals,"Medicaid Fee For Service Revenue from Transports","Capital Related",Dedicated,"Hours Logged for MTS Duty",Qtr 3,1700333.32,Budget
+FL,"Palm Beach County Fire Rescue",2023,Allocation Statistics,"Capital Related","Salaries",Dedicated,"Leases and Rentals",Qtr 1,18417,Actual
+FL,"Miami-Dade Fire Rescue",2023,Allocation Statistics,"Medicaid Fee For Service Revenue from Transports","Salaries",Dedicated,"Hours Logged for MTS Duty",Qtr 2,2813987,Actual
+FL,"Palm Beach County Fire Rescue",2023,Trips,"Totals","Capital Related",Shared,"Minor Equipment",Qtr 4,41788,Forecast
+FL,"Duval County Fire Rescue",2023,Allocation Statistics,"Medicare","Salaries",Shared,"Medicaid FFS",Qtr 4,34049272,Budget
+FL,"Duval County Fire Rescue",2023,Totals,"Salaries","Non-MTS",Shared,"Fines and Penalties",Qtr 1,25384,Actual
+FL,"Palm Beach County Fire Rescue",2023,Revenues,"Capital Related","Non-MTS",Shared,"Medicare HMO",Qtr 1,22037417.05,Forecast
+FL,"Broward County Fire Rescue",2023,Trips,"Medicare","MTS",Dedicated,"Logistics",Qtr 4,1366018,Budget
+FL,"Orange County Fire Rescue",2023,Revenues,"Workers Comp","Administration and General",Shared,"Medicaid MTS Costs",Qtr 2,2656215.14,Actual
+FL,"Miami-Dade Fire Rescue",2023,Revenues,"Medicare","MTS",Shared,"Fines and Penalties",Qtr 2,8524,Forecast
+FL,"Duval County Fire Rescue",2023,Trips,"Totals","MTS",Dedicated,"Medicaid FFS",Full Year,38302953,Actual
+FL,"Pinellas County Fire Rescue",2023,Trips,"Totals","MTS",Shared,"Medicaid MTS Costs",Qtr 2,355484.6,Actual
+FL,"Pinellas County Fire Rescue",2023,Trips,"Medicaid Fee For Service Revenue from Transports","Administration and General",Shared,"Medicare HMO",Qtr 1,37744623,Budget
+FL,"Palm Beach County Fire Rescue",2023,Allocation Statistics,"Totals","MTS",Dedicated,"All Trips",Qtr 4,16700925,Forecast
+FL,"Palm Beach County Fire Rescue",2023,Allocation Statistics,"Salaries","Administration and General",Shared,"Medicaid MTS Costs",Qtr 4,1961574.42,Actual
+FL,"Pinellas County Fire Rescue",2023,Totals,"Salaries","Administration and General",Shared,"Leases and Rentals",Qtr 3,41607,Budget
+FL,"Orange County Fire Rescue",2023,Allocation Statistics,"Medicaid MCO","Administration and General",Shared,"Leases and Rentals",Qtr 2,35765,Forecast
+FL,"Broward County Fire Rescue",2023,Trips,"Medicaid Fee For Service Revenue from Transports","Administration and General",Dedicated,"All Trips",Qtr 4,59604669,Budget
+FL,"Miami-Dade Fire Rescue",2023,Allocation Statistics,"Totals","Non-MTS",Shared,"Medicaid FFS",Qtr 4,31263142,Actual
+FL,"Palm Beach County Fire Rescue",2023,Trips,"Capital Related","Non-MTS",Shared,"All Trips",Qtr 1,5628093.78,Forecast
+FL,"Palm Beach County Fire Rescue",2023,Allocation Statistics,"Totals","Administration and General",Dedicated,"Training",Qtr 4,25970,Budget
+FL,"Miami-Dade Fire Rescue",2023,Totals,"Workers Comp","Salaries",Shared,"Administrative",Qtr 1,2368348,Forecast
+FL,"Duval County Fire Rescue",2023,Totals,"Medicaid MCO","Non-MTS",Dedicated,"Fines and Penalties",Qtr 2,21347,Actual
+FL,"Pinellas County Fire Rescue",2023,Trips,"Totals","MTS",Dedicated,"Hours Logged for MTS Duty",Full Year,190126.72,Actual
+FL,"Miami-Dade Fire Rescue",2023,Totals,"Salaries","Capital Related",Shared,"Administrative",Qtr 3,4102092,Actual
+FL,"Miami-Dade Fire Rescue",2023,Trips,"Medicaid Fee For Service Revenue from Transports","MTS",Shared,"Property Taxes",Qtr 1,31156965,Budget
+FL,"Orange County Fire Rescue",2023,Revenues,"Salaries","Non-MTS",Dedicated,"Logistics",Qtr 4,3323216,Actual
+FL,"Hillsborough County Fire Rescue",2023,Revenues,"Medicaid MCO","Salaries",Shared,"Minor Equipment",Full Year,11476,Forecast
+FL,"Duval County Fire Rescue",2023,Revenues,"Totals","Salaries",Shared,"Hours Logged for MTS Duty",Qtr 4,713473.43,Actual
+FL,"Hillsborough County Fire Rescue",2023,Totals,"Capital Related","Capital Related",Shared,"Administrative",Qtr 3,1015028,Actual
+FL,"Orange County Fire Rescue",2023,Trips,"Capital Related","Administration and General",Dedicated,"All Trips",Qtr 1,34076893,Budget
+FL,"Duval County Fire Rescue",2023,Allocation Statistics,"Medicaid Fee For Service Revenue from Transports","Administration and General",Dedicated,"Fines and Penalties",Qtr 3,31467,Forecast
+FL,"Palm Beach County Fire Rescue",2023,Totals,"Medicare","Administration and General",Shared,"Medicaid FFS",Qtr 1,59209490,Actual
+FL,"Palm Beach County Fire Rescue",2023,Totals,"Medicare","Salaries",Dedicated,"Logistics",Qtr 2,1469198.27,Forecast
+FL,"Pinellas County Fire Rescue",2023,Allocation Statistics,"Medicaid Fee For Service Revenue from Transports","Non-MTS",Shared,"Leases and Rentals",Qtr 3,22574,Forecast
+FL,"Orange County Fire Rescue",2023,Revenues,"Capital Related","Salaries",Dedicated,"Administrative",Qtr 4,4242235,Budget
+FL,"Pinellas County Fire Rescue",2023,Revenues,"Totals","Salaries",Dedicated,"All Trips",Qtr 3,49212328,Forecast
+FL,"Pinellas County Fire Rescue",2023,Trips,"Workers Comp","Capital Related",Shared,"Property Taxes",Qtr 3,45119255.04,Actual
+FL,"Pinellas County Fire Rescue",2023,Totals,"Medicaid Fee For Service Revenue from Transports","Non-MTS",Dedicated,"Private Insurance",Qtr 1,3909211.04,Budget
+FL,"Orange County Fire Rescue",2023,Trips,"Medicaid Fee For Service Revenue from Transports","MTS",Dedicated,"Minor Equipment",Qtr 2,20367,Forecast
+FL,"Hillsborough County Fire Rescue",2023,Totals,"Salaries","Administration and General",Dedicated,"Medicare HMO",Qtr 2,28685426,Budget
+FL,"Hillsborough County Fire Rescue",2023,Totals,"Medicaid Fee For Service Revenue from Transports","Capital Related",Shared,"Logistics",Qtr 1,2902361,Budget
