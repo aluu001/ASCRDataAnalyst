@@ -251,3 +251,79 @@ ADDITIONAL YEAR-OVER-YEAR (YoY) ANALYSIS RULES:
     throw new Error('Failed to parse analyst insights. The model response was not in the expected JSON format.');
   }
 }
+
+/**
+ * Modifies an existing ChartSpecification based on natural language instructions.
+ */
+export async function editChartSpecification(
+  apiKey: string,
+  currentSpec: ChartSpecification,
+  instruction: string,
+  columns: ColumnMetadata[]
+): Promise<ChartSpecification> {
+  if (!apiKey) {
+    throw new Error('API Key is required to call the Gemini API.');
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  const columnsList = columns
+    .map(col => `- ${col.name} (type: ${col.type})`)
+    .join('\n');
+
+  const prompt = `
+You are a senior data visualization assistant.
+Your task is to modify an existing ChartSpecification based on the user's natural language instruction and the available columns in the dataset.
+
+Available Columns:
+${columnsList}
+
+Current Chart Specification:
+${JSON.stringify(currentSpec, null, 2)}
+
+User Instruction:
+"${instruction}"
+
+Output a valid, updated ChartSpecification matching the schema below. Ensure all column names exist in the available columns.
+`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3.5-flash',
+    contents: prompt,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: 'OBJECT' as any,
+        properties: {
+          chartType: { 
+             type: 'STRING' as any, 
+             enum: ['bar', 'horizontalBar', 'line', 'pie', 'scatter', 'bubble', 'radar', 'box', 'stackedBar', 'percentStackedBar', 'area'] 
+          },
+          title: { type: 'STRING' as any },
+          xAxisColumn: { type: 'STRING' as any, description: 'Column name for categories/X-axis.' },
+          yAxisColumn: { type: 'STRING' as any, description: 'Numeric column name for values/Y-axis.' },
+          aggregation: { 
+            type: 'STRING' as any, 
+            enum: ['sum', 'avg', 'count', 'none']
+          },
+          zAxisColumn: { type: 'STRING' as any, description: 'Optional third numeric column name specifically for Bubble chart dot sizes.' },
+          stackByColumn: { type: 'STRING' as any, description: 'Optional secondary categorical column name to segment/stack the data.' }
+        },
+        required: ['chartType', 'title', 'xAxisColumn', 'yAxisColumn', 'aggregation']
+      }
+    }
+  });
+
+  const responseText = response.text;
+  if (!responseText) {
+    throw new Error('Gemini returned an empty response.');
+  }
+
+  try {
+    return JSON.parse(responseText);
+  } catch (err) {
+    console.error('Failed to parse Gemini editChartSpecification response as JSON. Raw text:', responseText);
+    throw new Error('Failed to parse refined chart configuration. The model response was not in the expected format.');
+  }
+}
+

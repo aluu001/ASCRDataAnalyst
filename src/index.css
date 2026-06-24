@@ -1653,6 +1653,23 @@ code {
   animation: modalContainerScaleIn 0.48s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
 }
 
+/* Chart Edit Popover */
+.chart-edit-popover {
+  animation: chartEditFadeIn 0.15s ease-out forwards;
+}
+
+@keyframes chartEditFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
 
 
 

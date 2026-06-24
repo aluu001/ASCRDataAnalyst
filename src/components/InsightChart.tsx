@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -24,8 +24,9 @@ import {
   Area,
   Legend
 } from 'recharts';
-import { Info, EyeOff, Maximize2 } from 'lucide-react';
+import { Info, EyeOff, Maximize2, Sparkles } from 'lucide-react';
 import { aggregateDataset } from '../utils/dataEngine';
+import { editChartSpecification } from '../utils/gemini';
 import type { ChartSpecification } from '../utils/gemini';
 
 interface InsightChartProps {
@@ -37,7 +38,11 @@ interface InsightChartProps {
   onRemove?: () => void;
   onExpand?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   hideHeader?: boolean;
+  onUpdateChartSpec?: (oldSpec: ChartSpecification, newSpec: ChartSpecification) => void;
+  apiKey?: string;
+  columns?: any[];
 }
+
 
 const PIE_COLORS = [
   '#002185', // PCG Deep Blue
@@ -544,7 +549,65 @@ const CustomTooltip = ({ active, payload, label, isPercent }: any) => {
   return null;
 };
 
-export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, borderless = false, height, colorTheme = 'vibrant', onRemove, onExpand, hideHeader = false }) => {
+export const InsightChart: React.FC<InsightChartProps> = ({ 
+  chartSpec, 
+  rows, 
+  borderless = false, 
+  height, 
+  colorTheme = 'vibrant', 
+  onRemove, 
+  onExpand, 
+  hideHeader = false,
+  onUpdateChartSpec,
+  apiKey,
+  columns
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editPrompt, setEditPrompt] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setIsEditing(false);
+        setErrorMsg(null);
+      }
+    }
+    if (isEditing) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isEditing]);
+
+  const handleApplyEdit = async () => {
+    if (!editPrompt.trim() || !apiKey || !columns || !onUpdateChartSpec) return;
+
+    setIsUpdating(true);
+    setErrorMsg(null);
+
+    try {
+      const updatedSpec = await editChartSpecification(
+        apiKey,
+        chartSpec,
+        editPrompt,
+        columns
+      );
+      onUpdateChartSpec(chartSpec, updatedSpec);
+      setIsEditing(false);
+      setEditPrompt('');
+    } catch (err: any) {
+      console.error('Failed to refine chart spec:', err);
+      setErrorMsg(err.message || 'Failed to update chart. Please try again.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const data = useMemo(() => {
     try {
       return aggregateDataset(rows, chartSpec);
@@ -1082,9 +1145,144 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               </div>
             </div>
 
-            <div className={`badge ${colors.badgeClass}`} style={{ fontSize: '0.65rem', textTransform: 'capitalize' }}>
-              {chartSpec.chartType}
-            </div>
+            {onUpdateChartSpec && apiKey && columns ? (
+              <div ref={popoverRef} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  className="chart-edit-btn"
+                  onClick={() => setIsEditing(!isEditing)}
+                  title="Edit Visual with AI"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(0, 82, 189, 0.06) 0%, rgba(31, 113, 219, 0.06) 100%)',
+                    border: '1.5px solid rgba(0, 82, 189, 0.12)',
+                    color: 'var(--LabelBG)',
+                    cursor: 'pointer',
+                    padding: '3px 8px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    fontSize: '0.65rem',
+                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 82, 189, 0.12) 0%, rgba(31, 113, 219, 0.12) 100%)';
+                    e.currentTarget.style.borderColor = 'rgba(0, 82, 189, 0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 82, 189, 0.06) 0%, rgba(31, 113, 219, 0.06) 100%)';
+                    e.currentTarget.style.borderColor = 'rgba(0, 82, 189, 0.12)';
+                  }}
+                >
+                  <Sparkles size={11} style={{ color: 'var(--LabelBG)' }} />
+                  <span>Edit</span>
+                </button>
+
+                {isEditing && (
+                  <div className="chart-edit-popover" style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    width: '280px',
+                    background: 'white',
+                    border: '1px solid rgba(0, 33, 133, 0.12)',
+                    borderRadius: '8px',
+                    boxShadow: '0 8px 30px rgba(0, 33, 133, 0.12)',
+                    padding: '0.75rem',
+                    zIndex: 1000,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                    textAlign: 'left'
+                  }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.75rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Sparkles size={12} style={{ color: '#0052BD' }} />
+                      <span>Refine Visual with AI</span>
+                    </div>
+                    
+                    {errorMsg && (
+                      <div style={{ color: '#ef4444', fontSize: '0.65rem', padding: '0.25rem', background: '#fef2f2', borderRadius: '4px' }}>
+                        {errorMsg}
+                      </div>
+                    )}
+
+                    <textarea
+                      placeholder="e.g. change to a line chart, show regular pay on Y-axis, group by Job Title..."
+                      value={editPrompt}
+                      onChange={(e) => setEditPrompt(e.target.value)}
+                      disabled={isUpdating}
+                      style={{
+                        width: '100%',
+                        height: '70px',
+                        fontSize: '0.7rem',
+                        padding: '0.4rem',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        resize: 'none',
+                        outline: 'none',
+                        fontFamily: 'inherit',
+                        color: 'var(--DarkGray)',
+                        boxSizing: 'border-box'
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleApplyEdit();
+                        }
+                      }}
+                    />
+
+                    <div style={{ display: 'flex', justifyContent: 'end', gap: '0.35rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setErrorMsg(null);
+                        }}
+                        disabled={isUpdating}
+                        style={{
+                          background: '#f1f5f9',
+                          border: 'none',
+                          color: '#475569',
+                          padding: '3px 8px',
+                          fontSize: '0.65rem',
+                          fontWeight: 'bold',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleApplyEdit}
+                        disabled={isUpdating || !editPrompt.trim()}
+                        style={{
+                          background: 'var(--LabelBG)',
+                          border: 'none',
+                          color: 'white',
+                          padding: '3px 8px',
+                          fontSize: '0.65rem',
+                          fontWeight: 'bold',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.2,rem'
+                        }}
+                      >
+                        {isUpdating ? 'Refining...' : 'Apply'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className={`badge ${colors.badgeClass}`} style={{ fontSize: '0.65rem', textTransform: 'capitalize' }}>
+                {chartSpec.chartType}
+              </div>
+            )}
 
             {onExpand && (
               <button

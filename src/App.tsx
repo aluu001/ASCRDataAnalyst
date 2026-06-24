@@ -1679,6 +1679,25 @@ function App() {
     }
   };
 
+  const handleUpdateChartSpec = (oldSpec: ChartSpecification, newSpec: ChartSpecification) => {
+    setAvailableCharts(prev => 
+      prev.map(c => c.title === oldSpec.title ? newSpec : c)
+    );
+    setSelectedChartTitles(prev => 
+      prev.map(t => t === oldSpec.title ? newSpec.title : t)
+    );
+    setActiveChartTab(prev => 
+      prev === oldSpec.title ? newSpec.title : prev
+    );
+    setExpandedChart(prev => 
+      prev && prev.title === oldSpec.title ? newSpec : prev
+    );
+    setPrintChartOrder(prev => 
+      prev.map(c => c.title === oldSpec.title ? newSpec : c)
+    );
+  };
+
+
   // Filter available charts based on multi-select state
   const chartsToRender = availableCharts.filter(c => selectedChartTitles.includes(c.title));
 
@@ -1764,6 +1783,9 @@ function App() {
                          });
                          setExpandedChart(chart);
                        }}
+                       onUpdateChartSpec={handleUpdateChartSpec}
+                       apiKey={apiKey}
+                       columns={processedActiveSheet?.columns || []}
                      />
                    </div>
                 );
@@ -1806,6 +1828,9 @@ function App() {
                         });
                         setExpandedChart(chart);
                       }}
+                      onUpdateChartSpec={handleUpdateChartSpec}
+                      apiKey={apiKey}
+                      columns={processedActiveSheet?.columns || []}
                     />
                   </div>
                 );
@@ -3657,6 +3682,9 @@ function App() {
                                     });
                                     setExpandedChart(chartsToRender[carouselIndex]);
                                   }}
+                                  onUpdateChartSpec={handleUpdateChartSpec}
+                                  apiKey={apiKey}
+                                  columns={processedActiveSheet?.columns || []}
                                 />
                               </div>
                             )}
@@ -3706,6 +3734,9 @@ function App() {
                                     });
                                     setExpandedChart(chartsToRender.find(c => c.title === activeChartTab)!);
                                   }}
+                                  onUpdateChartSpec={handleUpdateChartSpec}
+                                  apiKey={apiKey}
+                                  columns={processedActiveSheet?.columns || []}
                                 />
                               </div>
                             )}
@@ -4847,6 +4878,9 @@ function App() {
                                       hideHeader={true}
                                       height="100%"
                                       colorTheme={colorTheme}
+                                      onUpdateChartSpec={handleUpdateChartSpec}
+                                      apiKey={apiKey}
+                                      columns={processedActiveSheet?.columns || []}
                                     />
                                   </div>
 
@@ -5143,6 +5177,9 @@ function App() {
                 borderless={true}
                 height="100%"
                 colorTheme={colorTheme}
+                onUpdateChartSpec={handleUpdateChartSpec}
+                apiKey={apiKey}
+                columns={processedActiveSheet?.columns || []}
               />
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--DarkGray)', borderTop: '1px solid var(--LightGray)', paddingTop: '0.75rem', display: 'flex', gap: '1.5rem', flexWrap: 'wrap', flexShrink: 0 }}>
