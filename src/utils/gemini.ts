@@ -142,10 +142,9 @@ Rules:
    - aggregation: 'sum', 'avg', or 'count'. If plotting raw points (e.g. scatter/bubble/box), use 'none'.
    - chartType can be 'bar', 'horizontalBar', 'line', 'pie', 'scatter', 'bubble', 'radar', 'box', 'stackedBar', 'percentStackedBar', or 'area'.
    - If using 'stackedBar', 'percentStackedBar', or 'area', you can optionally specify 'stackByColumn' to segment/split the data by a secondary categorical column.
-6. In "followUpQuestions", write 2-3 interactive, action-oriented questions that YOU (the analyst) are asking the user to guide them (e.g., "Would you like me to analyze X?"). Do NOT write questions that the user would ask you.
-   - Example: "Would you like me to analyze the correlation between Regular Hours and Salary?"
-   - Example: "Shall we build a Radar Chart comparing average dispatch times across Call Sources?"
-   - Note: The user may respond by repeating your question. If they do, treat it as confirmation to execute that analysis.
+6. In "followUpQuestions", write 2-3 interactive, action-oriented command statements written from the user's perspective. When the user clicks them, they act as direct commands/requests to you (e.g., "Analyze the correlation between X and Y"). Do NOT phrase these as questions, and do NOT use first-person pronouns like "I" or "we". Phrase them as actions the user is commanding you to take.
+   - Example: "Analyze the correlation between Regular Hours and Salary"
+   - Example: "Compare average dispatch times across Call Sources using a Radar Chart"
 `;
 
   if (isYoy) {
@@ -154,8 +153,8 @@ ADDITIONAL YEAR-OVER-YEAR (YoY) ANALYSIS RULES:
 1. You are performing a Year-over-Year (YoY) comparative analysis. Your primary goal is to compare the base period "${yoyBaseLabel || 'Base'}" and comparison period "${yoyCompareLabel || 'Compare'}".
 2. In the "thinking" field, focus specifically on calculating and identifying the differences, growth/decline rates, and variance between the base and comparison periods.
 3. In "insights", every insight MUST focus on comparing the two periods and highlighting key changes (e.g., changes in revenue, run volume, FTE counts, hourly rates, response times) from "${yoyBaseLabel || 'Base'}" to "${yoyCompareLabel || 'Compare'}".
-4. When recommending charts in "charts", you MUST prioritize comparative visualizations (like stackedBar, percentStackedBar, area, or line charts) and set "stackByColumn" to "YoY_Year" to ensure the data is split/grouped by year.
-5. In "followUpQuestions", ask questions that guide the user to explore year-over-year variations (e.g., "Shall we check the YoY change in regular pay for EMTs?").
+4. When recommending charts in "charts", you MUST prioritize comparative visualizations (like side-by-side bar, horizontalBar, stackedBar, percentStackedBar, area, or line charts) and set "stackByColumn" to "YoY_Year" to ensure the data is split/grouped by year.
+5. In "followUpQuestions", write command statements that guide the user to explore year-over-year variations (e.g., "Examine the YoY change in regular pay for EMTs", "Plot YoY run volume by station").
 `;
   }
 
@@ -223,7 +222,7 @@ ADDITIONAL YEAR-OVER-YEAR (YoY) ANALYSIS RULES:
                   description: 'How to roll up the values: sum, avg, count, or none.' 
                 },
                 zAxisColumn: { type: 'STRING' as any, description: 'Optional third numeric column name specifically for Bubble chart dot sizes.' },
-                stackByColumn: { type: 'STRING' as any, description: 'Optional secondary categorical column name to segment/stack the data by (specifically for stackedBar, percentStackedBar, and area charts).' }
+                stackByColumn: { type: 'STRING' as any, description: 'Optional secondary categorical column name to segment/stack the data by (specifically for bar, horizontalBar, stackedBar, percentStackedBar, line, and area charts).' }
               },
               required: ['chartType', 'title', 'xAxisColumn', 'yAxisColumn', 'aggregation']
             }
@@ -231,7 +230,7 @@ ADDITIONAL YEAR-OVER-YEAR (YoY) ANALYSIS RULES:
           followUpQuestions: {
             type: 'ARRAY' as any,
             items: { type: 'STRING' as any },
-            description: 'Questions asked BY the analyst TO the user to guide further analysis (e.g. "Would you like me to...").'
+            description: 'Action-oriented command statements written from the user\'s perspective to guide further analysis (e.g. "Analyze the relationship between X and Y").'
           }
         },
         required: ['thinking', 'conversationalResponse', 'insights', 'charts', 'followUpQuestions']

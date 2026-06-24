@@ -21,7 +21,8 @@ import {
   PolarRadiusAxis,
   Radar,
   AreaChart,
-  Area
+  Area,
+  Legend
 } from 'recharts';
 import { Info, EyeOff, Maximize2 } from 'lucide-react';
 import { aggregateDataset } from '../utils/dataEngine';
@@ -578,7 +579,23 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               tickFormatter={(val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
-            <Bar dataKey="value" name={yAxisColumn} fill={`url(#${barGradientId})`} radius={[4, 4, 0, 0]} />
+            {stackKeys.length > 0 && <Legend wrapperStyle={{ fontSize: '10px', marginTop: '5px' }} />}
+            {stackKeys.length > 0 ? (
+              stackKeys.map((key, index) => {
+                const color = PIE_COLORS[index % PIE_COLORS.length];
+                return (
+                  <Bar
+                    key={key}
+                    dataKey={key}
+                    name={key}
+                    fill={color}
+                    radius={[4, 4, 0, 0]}
+                  />
+                );
+              })
+            ) : (
+              <Bar dataKey="value" name={yAxisColumn} fill={`url(#${barGradientId})`} radius={[4, 4, 0, 0]} />
+            )}
           </BarChart>
         );
 
@@ -605,6 +622,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               domain={isPercent ? [0, 100] : [0, 'auto']}
             />
             <Tooltip content={<CustomTooltip isPercent={isPercent} />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
+            {stackKeys.length > 0 && <Legend wrapperStyle={{ fontSize: '10px', marginTop: '5px' }} />}
             {stackKeys.length > 0 ? (
               stackKeys.map((key, index) => {
                 const color = PIE_COLORS[index % PIE_COLORS.length];
@@ -665,6 +683,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               tickFormatter={(val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
             />
             <Tooltip content={<CustomTooltip />} />
+            {isStacked && <Legend wrapperStyle={{ fontSize: '10px', marginTop: '5px' }} />}
             {isStacked ? (
               stackKeys.map((key, index) => {
                 const color = PIE_COLORS[index % PIE_COLORS.length];
@@ -722,7 +741,23 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               width={100}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(31, 113, 219, 0.04)' }} />
-            <Bar dataKey="value" name={yAxisColumn} fill={`url(#${barHorizGradientId})`} radius={[0, 4, 4, 0]} />
+            {stackKeys.length > 0 && <Legend wrapperStyle={{ fontSize: '10px', marginTop: '5px' }} />}
+            {stackKeys.length > 0 ? (
+              stackKeys.map((key, index) => {
+                const color = PIE_COLORS[index % PIE_COLORS.length];
+                return (
+                  <Bar
+                    key={key}
+                    dataKey={key}
+                    name={key}
+                    fill={color}
+                    radius={[0, 4, 4, 0]}
+                  />
+                );
+              })
+            ) : (
+              <Bar dataKey="value" name={yAxisColumn} fill={`url(#${barHorizGradientId})`} radius={[0, 4, 4, 0]} />
+            )}
           </BarChart>
         );
 
@@ -746,6 +781,7 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               tickFormatter={(val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
             />
             <Tooltip content={<CustomTooltip />} />
+            {stackKeys.length > 0 && <Legend wrapperStyle={{ fontSize: '10px', marginTop: '5px' }} />}
             {stackKeys.length > 0 ? (
               stackKeys.map((key, index) => {
                 const color = PIE_COLORS[index % PIE_COLORS.length];

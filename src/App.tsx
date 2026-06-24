@@ -1046,7 +1046,11 @@ function App() {
   // Dynamically find columns we can filter on (string/bool with 2 to 25 unique values)
   const filterableColumns = useMemo(() => {
     if (!processedActiveSheet) return [];
-    return processedActiveSheet.columns.filter(col => {
+    
+    const hasYoyYear = processedActiveSheet.columns.some(c => c.name === 'YoY_Year');
+    
+    const cols = processedActiveSheet.columns.filter(col => {
+      if (col.name === 'YoY_Year') return false; // Handled explicitly to be first
       if (col.type !== 'string' && col.type !== 'boolean') return false;
       const uniqueVals = new Set(processedActiveSheet.rows.map(r => String(r[col.name] ?? '').trim()).filter(v => v !== ''));
       return uniqueVals.size >= 2 && uniqueVals.size <= 25;
@@ -1057,6 +1061,17 @@ function App() {
         values: uniqueVals
       };
     });
+
+    if (hasYoyYear) {
+      const yoyCol = processedActiveSheet.columns.find(c => c.name === 'YoY_Year')!;
+      const uniqueVals = Array.from(new Set(processedActiveSheet.rows.map(r => String(r[yoyCol.name] ?? '').trim()).filter(v => v !== ''))).sort();
+      cols.unshift({
+        name: 'YoY_Year',
+        values: uniqueVals
+      });
+    }
+
+    return cols;
   }, [processedActiveSheet]);
 
   const handleToggleFilterVal = (colName: string, value: string) => {
@@ -3266,7 +3281,7 @@ function App() {
                         {filteredRows.length.toLocaleString()} {filteredRows.length === processedActiveSheet?.rows.length ? 'rows' : 'filtered'}
                       </span>
                     </div>
-                    {processedActiveSheet?.columns.filter(c => c.type === 'number').slice(0, 3).map((col, idx) => {
+                    {processedActiveSheet?.columns.filter(c => c.type === 'number' && !/year/i.test(c.name)).slice(0, 3).map((col, idx) => {
                       const avg = getFilteredAverage(col.name);
                       // Dynamic harmonic palettes: Emerald Green, Indigo Purple, Amber Gold
                       const isClassic = colorTheme === 'classic';
@@ -4461,7 +4476,7 @@ function App() {
                                 <span style={{ fontSize: '0.6rem', color: 'var(--DarkGray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Records</span>
                                 <strong style={{ fontSize: '1rem', color: 'var(--LabelBG)' }}>{filteredRows.length.toLocaleString()} rows</strong>
                               </div>
-                              {processedActiveSheet?.columns.filter(c => c.type === 'number').slice(0, 3).map((col, idx) => {
+                              {processedActiveSheet?.columns.filter(c => c.type === 'number' && !/year/i.test(c.name)).slice(0, 3).map((col, idx) => {
                                 const avg = getFilteredAverage(col.name);
                                 return (
                                   <div key={idx} style={{ border: '1px solid #cbd5e1', borderRadius: '6px', padding: '0.5rem 0.6rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', background: '#f8fafc' }}>
