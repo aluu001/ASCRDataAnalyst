@@ -594,11 +594,29 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
   const chartMargin = useMemo(() => {
     if (!data || data.length === 0) return { top: 10, right: 20, left: 10, bottom: 20 };
+    
+    const isHorizontalOrRadar = chartSpec.chartType === 'horizontalBar' || chartSpec.chartType === 'radar';
     const hasLongLabel = data.some(d => String(d.name || '').length > 8);
     const hasManyLabels = data.length > 5;
-    const bottom = (hasLongLabel || hasManyLabels) ? 55 : 20;
-    return { top: 10, right: 20, left: 10, bottom };
-  }, [data]);
+    const isSlanted = !isHorizontalOrRadar && (hasLongLabel || hasManyLabels);
+    const hasLegend = stackKeys.length > 0;
+    
+    let top = 10;
+    let bottom = 20;
+    
+    if (isSlanted) {
+      bottom = 55;
+      if (hasLegend) {
+        top = 35;
+      }
+    } else {
+      if (hasLegend) {
+        bottom = 45;
+      }
+    }
+    
+    return { top, right: 20, left: 10, bottom };
+  }, [data, stackKeys, chartSpec.chartType]);
 
   const renderChart = (isPrint: boolean = false, printWidth?: number, printHeight?: number) => {
     if (chartSpec.chartType !== 'box' && data.length === 0) {
@@ -619,13 +637,28 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
 
     const renderLegend = () => {
       if (stackKeys.length === 0) return null;
-      return (
-        <Legend 
-          verticalAlign="bottom" 
-          align="center" 
-          wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} 
-        />
-      );
+      
+      const isHorizontalOrRadar = chartType === 'horizontalBar' || chartType === 'radar';
+      const isSlanted = !isHorizontalOrRadar && xAxisProps.angle !== undefined;
+      
+      if (isSlanted) {
+        return (
+          <Legend 
+            verticalAlign="top" 
+            align="center" 
+            height={24} 
+            wrapperStyle={{ fontSize: '10px', paddingBottom: '10px' }} 
+          />
+        );
+      } else {
+        return (
+          <Legend 
+            verticalAlign="bottom" 
+            align="center" 
+            wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} 
+          />
+        );
+      }
     };
 
     switch (chartType) {
@@ -791,8 +824,10 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
       }
 
       case 'horizontalBar': {
+        const hasLegend = stackKeys.length > 0;
+        const bottom = hasLegend ? 45 : 20;
         return (
-          <BarChart layout="vertical" width={w} height={h} data={data} margin={{ top: 10, right: 20, left: 15, bottom: 20 }}>
+          <BarChart layout="vertical" width={w} height={h} data={data} margin={{ top: 10, right: 20, left: 15, bottom }}>
             <defs>
               <linearGradient id={barHorizGradientId} x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.9} />
