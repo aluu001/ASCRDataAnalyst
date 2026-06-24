@@ -597,9 +597,8 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
     const hasLongLabel = data.some(d => String(d.name || '').length > 8);
     const hasManyLabels = data.length > 5;
     const bottom = (hasLongLabel || hasManyLabels) ? 55 : 20;
-    const top = stackKeys.length > 0 ? 35 : 10;
-    return { top, right: 20, left: 10, bottom };
-  }, [data, stackKeys]);
+    return { top: 10, right: 20, left: 10, bottom };
+  }, [data]);
 
   const renderChart = (isPrint: boolean = false, printWidth?: number, printHeight?: number) => {
     if (chartSpec.chartType !== 'box' && data.length === 0) {
@@ -622,10 +621,9 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
       if (stackKeys.length === 0) return null;
       return (
         <Legend 
-          verticalAlign="top" 
+          verticalAlign="bottom" 
           align="center" 
-          height={24} 
-          wrapperStyle={{ fontSize: '10px', paddingBottom: '10px' }} 
+          wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} 
         />
       );
     };
@@ -793,9 +791,8 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
       }
 
       case 'horizontalBar': {
-        const top = stackKeys.length > 0 ? 35 : 10;
         return (
-          <BarChart layout="vertical" width={w} height={h} data={data} margin={{ top, right: 20, left: 15, bottom: 20 }}>
+          <BarChart layout="vertical" width={w} height={h} data={data} margin={{ top: 10, right: 20, left: 15, bottom: 20 }}>
             <defs>
               <linearGradient id={barHorizGradientId} x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor={colors.gradient[0]} stopOpacity={0.9} />
@@ -978,9 +975,8 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
         );
 
       case 'radar': {
-        const top = stackKeys.length > 0 ? 30 : 10;
         return (
-          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data} width={w} height={h} margin={{ top, right: 10, left: 10, bottom: 10 }}>
+          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data} width={w} height={h} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
             <PolarGrid stroke="#cbd5e1" />
             <PolarAngleAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
             <PolarRadiusAxis angle={30} domain={[0, 'auto']} stroke="#cbd5e1" fontSize={8} tickLine={false} />
