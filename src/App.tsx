@@ -16,6 +16,9 @@ import {
   Users,
   Clock,
   DollarSign,
+  Trash2,
+  CheckCircle,
+  ArrowRight,
   ShieldCheck,
   Minimize2
 } from 'lucide-react';
@@ -25,7 +28,7 @@ import { ChatPanel } from './components/ChatPanel';
 import { InsightChart } from './components/InsightChart';
 import { queryGeminiAnalyst } from './utils/gemini';
 import { getMockWorkbook } from './utils/mockData';
-import type { WorkbookData, SheetData } from './utils/dataEngine';
+import type { WorkbookData, SheetData, ColumnMetadata } from './utils/dataEngine';
 import type { ChatMessage, ChartSpecification } from './utils/gemini';
 
 // Helper to format basic inline markdown bolding, backticks, and line breaks
@@ -253,11 +256,26 @@ function getAIInsightForChart(chart: ChartSpecification, rows: any[]): string {
 
 // Smart helper to generate 8+ default charts based on sheet columns
 function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecification[] {
+  const hasYoy = sheet.columns.some(c => c.name === 'YoY_Year');
+  
+  const applyYoy = (charts: ChartSpecification[]) => {
+    if (!hasYoy) return charts;
+    return charts.map(chart => {
+      if (['bar', 'horizontalBar', 'line', 'area', 'stackedBar', 'percentStackedBar'].includes(chart.chartType)) {
+        return {
+          ...chart,
+          stackByColumn: 'YoY_Year'
+        };
+      }
+      return chart;
+    });
+  };
+
   const numericCols = sheet.columns.filter(c => c.type === 'number');
 
   // 1. If it's a known mock file, return pre-configured highly specific metrics
   if (docName.includes('PEMT Data') || sheet.name.includes('PEMT Reimbursement')) {
-    return [
+    return applyYoy([
       { chartType: 'bar', title: 'Monthly Run Volume Distribution', xAxisColumn: 'Month', yAxisColumn: 'Run Volume', aggregation: 'sum' },
       { chartType: 'line', title: 'Average Cost per Transport Trend', xAxisColumn: 'Month', yAxisColumn: 'Avg Cost Per Transport', aggregation: 'avg' },
       { chartType: 'bar', title: 'Total Monthly Operational Revenue', xAxisColumn: 'Month', yAxisColumn: 'Total Revenue', aggregation: 'sum' },
@@ -266,11 +284,11 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       { chartType: 'scatter', title: 'Correlation: Run Volume vs Total Revenue', xAxisColumn: 'Run Volume', yAxisColumn: 'Total Revenue', aggregation: 'none' },
       { chartType: 'line', title: 'Transport Fee Charge Rates', xAxisColumn: 'Month', yAxisColumn: 'Transport Fee', aggregation: 'avg' },
       { chartType: 'bubble', title: 'Operational Correlation: Run Vol vs Total Revenue vs PEMT Size', xAxisColumn: 'Run Volume', yAxisColumn: 'Total Revenue', aggregation: 'none', zAxisColumn: 'PEMT Supplement' }
-    ];
+    ]);
   }
 
   if (docName.includes('Personnel Hours') || sheet.name.includes('Personnel Expenses')) {
-    return [
+    return applyYoy([
       { chartType: 'bar', title: 'FTE Distribution by Job Title', xAxisColumn: 'Job Title', yAxisColumn: 'FTE Count', aggregation: 'sum' },
       { chartType: 'bar', title: 'Total Regular Base Salary by Title', xAxisColumn: 'Job Title', yAxisColumn: 'Total Regular Pay', aggregation: 'sum' },
       { chartType: 'bar', title: 'Total Overtime Expenditures by Title', xAxisColumn: 'Job Title', yAxisColumn: 'Total Overtime Pay', aggregation: 'sum' },
@@ -279,11 +297,11 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       { chartType: 'bar', title: 'Accumulated Overtime Hours by Job Title', xAxisColumn: 'Job Title', yAxisColumn: 'Overtime Hours', aggregation: 'sum' },
       { chartType: 'scatter', title: 'Correlation: Base Hours vs Base Pay', xAxisColumn: 'Regular Hours', yAxisColumn: 'Total Regular Pay', aggregation: 'none' },
       { chartType: 'box', title: 'Hourly Rate Spread by Job Title Box Plot', xAxisColumn: 'Job Title', yAxisColumn: 'Avg Hourly Rate', aggregation: 'none' }
-    ];
+    ]);
   }
 
   if (docName.includes('Arrival Time') || docName.includes('CAD Data') || sheet.name.includes('CAD Responses')) {
-    return [
+    return applyYoy([
       { chartType: 'bar', title: 'Average Response Time by Incident Source', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'avg' },
       { chartType: 'bar', title: 'Average Dispatch Lag Time (Seconds)', xAxisColumn: 'Call Source', yAxisColumn: 'Dispatch Time (sec)', aggregation: 'avg' },
       { chartType: 'bar', title: 'Average On-Scene Treatment Duration', xAxisColumn: 'Call Source', yAxisColumn: 'Scene Time (min)', aggregation: 'avg' },
@@ -292,7 +310,7 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       { chartType: 'line', title: 'Response Efficiency Benchmark Index', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'avg' },
       { chartType: 'scatter', title: 'Correlation: Dispatch Latency vs Total Response Time', xAxisColumn: 'Dispatch Time (sec)', yAxisColumn: 'Response Time (min)', aggregation: 'none' },
       { chartType: 'radar', title: 'CAD Response Profile Radar Analysis', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'avg' }
-    ];
+    ]);
   }
 
   // 2. Smart dynamic generator for user-uploaded custom sheets
@@ -446,7 +464,7 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       });
     }
 
-    return list.slice(0, 8);
+    return applyYoy(list.slice(0, 8));
   }
 
   return [];
@@ -688,6 +706,12 @@ function App() {
 
   // Step Step States: 'upload' | 'preview' | 'dashboard'
   const [workspaceStep, setWorkspaceStep] = useState<'upload' | 'preview' | 'dashboard'>('upload');
+  const [analysisMode, setAnalysisMode] = useState<'adhoc' | 'yoy'>('adhoc');
+  const [yoyBaseWorkbook, setYoyBaseWorkbook] = useState<WorkbookData | null>(null);
+  const [yoyCompareWorkbook, setYoyCompareWorkbook] = useState<WorkbookData | null>(null);
+  const [yoyBaseName, setYoyBaseName] = useState<string>('');
+  const [yoyCompareName, setYoyCompareName] = useState<string>('');
+  const [isYoyActive, setIsYoyActive] = useState<boolean>(false);
   const [previewGoal, setPreviewGoal] = useState<string>('');
   const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false);
   const [columnTypes, setColumnTypes] = useState<Record<string, 'number' | 'string' | 'date' | 'boolean'>>({});
@@ -1250,6 +1274,153 @@ function App() {
     handleWorkbookLoaded(data, name);
   };
 
+  const computeSheetColumns = (rows: any[]): ColumnMetadata[] => {
+    const columnSet = new Set<string>();
+    rows.forEach(row => {
+      Object.keys(row).forEach(key => columnSet.add(key));
+    });
+    const columnNames = Array.from(columnSet);
+
+    return columnNames.map(colName => {
+      const values = rows
+        .map(row => row[colName])
+        .filter(val => val !== null && val !== undefined && val !== '');
+
+      const nullCount = rows.length - values.length;
+      let type: 'number' | 'string' | 'date' | 'boolean' = 'string';
+
+      if (values.length > 0) {
+        const firstVal = values[0];
+        if (typeof firstVal === 'number') {
+          type = 'number';
+        } else if (firstVal instanceof Date) {
+          type = 'date';
+        } else if (typeof firstVal === 'boolean') {
+          type = 'boolean';
+        } else {
+          const allNumeric = values.every(v => !isNaN(Number(v)) && typeof v !== 'boolean');
+          if (allNumeric) {
+            type = 'number';
+          }
+        }
+      }
+
+      const uniqueVals = new Set(values.map(v => (v instanceof Date ? v.getTime() : v)));
+      const uniqueCount = uniqueVals.size;
+
+      let min: any = undefined;
+      let max: any = undefined;
+      let avg: number | undefined = undefined;
+
+      if (type === 'number') {
+        const numericValues = values.map(v => Number(v)).filter(v => !isNaN(v));
+        if (numericValues.length > 0) {
+          min = Math.min(...numericValues);
+          max = Math.max(...numericValues);
+          const sum = numericValues.reduce((a, b) => a + b, 0);
+          avg = Number((sum / numericValues.length).toFixed(2));
+        }
+      } else if (type === 'date') {
+        const dateValues = values.map(v => (v instanceof Date ? v.getTime() : new Date(v).getTime())).filter(t => !isNaN(t));
+        if (dateValues.length > 0) {
+          min = new Date(Math.min(...dateValues)).toISOString().split('T')[0];
+          max = new Date(Math.max(...dateValues)).toISOString().split('T')[0];
+        }
+      }
+
+      return {
+        name: colName,
+        type,
+        uniqueCount,
+        nullCount,
+        min,
+        max,
+        avg
+      };
+    });
+  };
+
+  const handleYoySubmit = (baseWb: WorkbookData, compareWb: WorkbookData, baseLabel: string, compareLabel: string) => {
+    const getYearOrLabel = (fileName: string) => {
+      const match = fileName.match(/\b(20\d{2})\b/);
+      if (match) return match[1];
+      return fileName.replace(/\.[^/.]+$/, "");
+    };
+
+    const baseYear = getYearOrLabel(baseLabel);
+    const compareYear = getYearOrLabel(compareLabel);
+
+    const mergedSheets: SheetData[] = [];
+    const matchedCompareSheets = new Set<string>();
+
+    baseWb.sheets.forEach(baseSheet => {
+      const compareSheet = compareWb.sheets.find(
+        s => s.name.toLowerCase() === baseSheet.name.toLowerCase()
+      );
+
+      let mergedRows: any[] = [];
+      const baseRowsMapped = baseSheet.rows.map(row => ({
+        ...row,
+        YoY_Year: baseYear
+      }));
+
+      if (compareSheet) {
+        matchedCompareSheets.add(compareSheet.name);
+        const compareRowsMapped = compareSheet.rows.map(row => ({
+          ...row,
+          YoY_Year: compareYear
+        }));
+        mergedRows = [...baseRowsMapped, ...compareRowsMapped];
+      } else {
+        mergedRows = baseRowsMapped;
+      }
+
+      const columns = computeSheetColumns(mergedRows);
+
+      mergedSheets.push({
+        name: baseSheet.name,
+        rows: mergedRows,
+        columns,
+        rowCount: mergedRows.length
+      });
+    });
+
+    compareWb.sheets.forEach(compareSheet => {
+      if (!matchedCompareSheets.has(compareSheet.name)) {
+        const compareRowsMapped = compareSheet.rows.map(row => ({
+          ...row,
+          YoY_Year: compareYear
+        }));
+        const columns = computeSheetColumns(compareRowsMapped);
+        mergedSheets.push({
+          name: compareSheet.name,
+          rows: compareRowsMapped,
+          columns,
+          rowCount: compareRowsMapped.length
+        });
+      }
+    });
+
+    if (mergedSheets.length === 0) return;
+
+    const mergedWb: WorkbookData = {
+      sheets: mergedSheets,
+      activeSheetName: mergedSheets[0].name
+    };
+
+    setIsYoyActive(true);
+    setYoyBaseName(baseLabel);
+    setYoyCompareName(compareLabel);
+    
+    handleWorkbookLoaded(mergedWb, `${baseYear} vs ${compareYear} YoY Report`);
+  };
+
+  const handleLoadYoySample = () => {
+    const baseWb = getMockWorkbook('Florida 2023');
+    const compareWb = getMockWorkbook('Florida 2024');
+    handleYoySubmit(baseWb, compareWb, 'Florida 2023', 'Florida 2024');
+  };
+
   const handleCreateCustomChart = (e: React.FormEvent) => {
     e.preventDefault();
     if (!customTitle || !customX || !customY) return;
@@ -1452,6 +1623,11 @@ function App() {
     setPreviewGoal('');
     setColumnTypes({});
     setExcludedColumns(new Set());
+    setYoyBaseWorkbook(null);
+    setYoyCompareWorkbook(null);
+    setYoyBaseName('');
+    setYoyCompareName('');
+    setIsYoyActive(false);
   };
 
   const handleExportCSV = () => {
@@ -1638,8 +1814,13 @@ function App() {
         </div>
         {workbookData && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--LabelBG)', fontWeight: 600 }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--LabelBG)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               File: {currentDocName}
+              {isYoyActive && (
+                <span className="badge badge-purple" style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '12px' }}>
+                  YoY Mode
+                </span>
+              )}
             </span>
             
             {isLeftPanelCollapsed && (
@@ -1680,139 +1861,367 @@ function App() {
               {/* Main Uploader Card Container */}
               <div className="glass-card" style={{ padding: '2.5rem 2.5rem', borderRadius: '16px' }}>
                 
-                {/* 2-Column Split Layout */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '2.5rem', alignItems: 'stretch' }}>
-                  
-                  {/* Left Column: Title & Upload Area */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <div style={{ background: 'var(--WidgetBG)', width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(0, 82, 189, 0.12)', color: 'var(--BannerGB)', flexShrink: 0 }}>
-                        <FileSpreadsheet size={24} />
-                      </div>
-                      <div style={{ textAlign: 'left' }}>
-                        <h2 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-display)', color: 'var(--LabelBG)', margin: 0, fontWeight: 700 }}>
-                          ASCR Data Analyst Workspace
-                        </h2>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--DarkGray)', fontWeight: 500 }}>
-                          PUBLIC CONSULTING GROUP
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <p style={{ fontSize: '0.85rem', color: 'var(--DarkGray)', margin: 0, lineHeight: '1.5' }}>
-                      Upload an ambulance service cost report or personnel spreadsheet file to automatically parse sheets, compute rollup benchmarks, and run audits.
-                    </p>
-
-                    <FileUploader onWorkbookLoaded={handleWorkbookLoaded} />
+                {/* Segmented Toggle for Ad-Hoc vs YoY */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
+                  <div style={{
+                    display: 'inline-flex',
+                    background: 'var(--ExtraLightGray)',
+                    padding: '4px',
+                    borderRadius: '30px',
+                    border: '1.5px solid var(--LightGray)',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.03)'
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisMode('adhoc')}
+                      style={{
+                        padding: '0.5rem 1.5rem',
+                        borderRadius: '25px',
+                        border: 'none',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        background: analysisMode === 'adhoc' ? 'var(--LabelBG)' : 'transparent',
+                        color: analysisMode === 'adhoc' ? 'white' : 'var(--DarkGray)',
+                        boxShadow: analysisMode === 'adhoc' ? '0 2px 6px rgba(0, 33, 133, 0.2)' : 'none'
+                      }}
+                    >
+                      Ad-Hoc Analysis
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisMode('yoy')}
+                      style={{
+                        padding: '0.5rem 1.5rem',
+                        borderRadius: '25px',
+                        border: 'none',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        background: analysisMode === 'yoy' ? 'var(--LabelBG)' : 'transparent',
+                        color: analysisMode === 'yoy' ? 'white' : 'var(--DarkGray)',
+                        boxShadow: analysisMode === 'yoy' ? '0 2px 6px rgba(0, 33, 133, 0.2)' : 'none'
+                      }}
+                    >
+                      Year-over-Year Analysis
+                    </button>
                   </div>
-
-                  {/* Right Column: Demo Reports */}
-                  <div className="uploader-demo-reports" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <div>
-                      <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)' }}>
-                        Quick Start Demo Reports
-                      </h3>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--DarkGray)', margin: 0 }}>
-                        Explore the workspace immediately with one of our preloaded mock cost sheets:
-                      </p>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, justifyContent: 'center' }}>
-                      <div 
-                        className="clickable-row" 
-                        onClick={() => handleLoadSample('EMS_Public_Reimbursement_Model.xlsx', 'PEMT Data')}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '1rem',
-                          background: 'var(--ExtraLightGray)',
-                          border: '1.5px solid var(--LightGray)',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                          <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
-                            <Database size={18} />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>EMS_Public_Reimbursement_Model.xlsx</strong>
-                            <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>PEMT volumes, transport fees, & supplemental funding totals</span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
-                          <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
-                        </div>
-                      </div>
-
-                      <div 
-                        className="clickable-row" 
-                        onClick={() => handleLoadSample('Payroll_FTE_Expenditures_Audit.xlsx', 'Personnel Hours')}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '1rem',
-                          background: 'var(--ExtraLightGray)',
-                          border: '1.5px solid var(--LightGray)',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                          <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
-                            <Database size={18} />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Payroll_FTE_Expenditures_Audit.xlsx</strong>
-                            <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>FTE counts, base pay, and overtime expenditures by job title</span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
-                          <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
-                        </div>
-                      </div>
-
-
-
-                      <div 
-                        className="clickable-row" 
-                        onClick={() => handleLoadSample('Hospital_Clinical_Performance_Metrics.xlsx', 'Hospital Performance')}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '1rem',
-                          background: 'var(--ExtraLightGray)',
-                          border: '1.5px solid var(--LightGray)',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                          <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
-                            <Database size={18} />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                            <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Hospital_Clinical_Performance_Metrics.xlsx</strong>
-                            <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>Patient admissions, stay durations, satisfaction rates, staff pay, & overhead cost models</span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
-                          <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
                 </div>
+
+                {analysisMode === 'adhoc' ? (
+                  /* ==========================================
+                     ADHOC SPLIT LAYOUT (EXISTING)
+                     ========================================== */
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '2.5rem', alignItems: 'stretch' }}>
+                    
+                    {/* Left Column: Title & Upload Area */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ background: 'var(--WidgetBG)', width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(0, 82, 189, 0.12)', color: 'var(--BannerGB)', flexShrink: 0 }}>
+                          <FileSpreadsheet size={24} />
+                        </div>
+                        <div style={{ textAlign: 'left' }}>
+                          <h2 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-display)', color: 'var(--LabelBG)', margin: 0, fontWeight: 700 }}>
+                            ASCR Data Analyst Workspace
+                          </h2>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--DarkGray)', fontWeight: 500 }}>
+                            PUBLIC CONSULTING GROUP
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <p style={{ fontSize: '0.85rem', color: 'var(--DarkGray)', margin: 0, lineHeight: '1.5' }}>
+                        Upload an ambulance service cost report or personnel spreadsheet file to automatically parse sheets, compute rollup benchmarks, and run audits.
+                      </p>
+
+                      <FileUploader onWorkbookLoaded={handleWorkbookLoaded} />
+                    </div>
+
+                    {/* Right Column: Demo Reports */}
+                    <div className="uploader-demo-reports" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div>
+                        <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)' }}>
+                          Quick Start Demo Reports
+                        </h3>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--DarkGray)', margin: 0 }}>
+                          Explore the workspace immediately with one of our preloaded mock cost sheets:
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, justifyContent: 'center' }}>
+                        <div 
+                          className="clickable-row" 
+                          onClick={() => handleLoadSample('EMS_Public_Reimbursement_Model.xlsx', 'PEMT Data')}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '1rem',
+                            background: 'var(--ExtraLightGray)',
+                            border: '1.5px solid var(--LightGray)',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
+                              <Database size={18} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>EMS_Public_Reimbursement_Model.xlsx</strong>
+                              <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>PEMT volumes, transport fees, & supplemental funding totals</span>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
+                            <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
+                          </div>
+                        </div>
+
+                        <div 
+                          className="clickable-row" 
+                          onClick={() => handleLoadSample('Payroll_FTE_Expenditures_Audit.xlsx', 'Personnel Hours')}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '1rem',
+                            background: 'var(--ExtraLightGray)',
+                            border: '1.5px solid var(--LightGray)',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
+                              <Database size={18} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Payroll_FTE_Expenditures_Audit.xlsx</strong>
+                              <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>FTE counts, base pay, and overtime expenditures by job title</span>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
+                            <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
+                          </div>
+                        </div>
+
+                        <div 
+                          className="clickable-row" 
+                          onClick={() => handleLoadSample('Hospital_Clinical_Performance_Metrics.xlsx', 'Hospital Performance')}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '1rem',
+                            background: 'var(--ExtraLightGray)',
+                            border: '1.5px solid var(--LightGray)',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
+                              <Database size={18} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Hospital_Clinical_Performance_Metrics.xlsx</strong>
+                              <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>Patient admissions, stay durations, satisfaction rates, staff pay, & overhead cost models</span>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Excel sheet</span>
+                            <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                ) : (
+                  /* ==========================================
+                     YOY SPLIT LAYOUT (NEW)
+                     ========================================== */
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '2.5rem', alignItems: 'stretch' }}>
+                    
+                    {/* Left Column: YoY Upload form */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ background: 'var(--WidgetBG)', width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(0, 82, 189, 0.12)', color: 'var(--BannerGB)', flexShrink: 0 }}>
+                          <TrendingUp size={24} />
+                        </div>
+                        <div style={{ textAlign: 'left' }}>
+                          <h2 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-display)', color: 'var(--LabelBG)', margin: 0, fontWeight: 700 }}>
+                            Year-over-Year (YoY) Analysis
+                          </h2>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--DarkGray)', fontWeight: 500 }}>
+                            PUBLIC CONSULTING GROUP
+                          </span>
+                        </div>
+                      </div>
+
+                      <p style={{ fontSize: '0.85rem', color: 'var(--DarkGray)', margin: 0, lineHeight: '1.5' }}>
+                        Upload two cost reports (Base Year and Comparison Year) to merge their datasets, align worksheets by name, and enable comparative analytics automatically.
+                      </p>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '0.5rem' }}>
+                        {/* Base Year Selector */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--LabelBG)' }}>Base Year (Older File):</span>
+                          {yoyBaseWorkbook ? (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '0.75rem 1rem',
+                              background: 'rgba(16, 185, 129, 0.05)',
+                              border: '1.5px solid rgba(16, 185, 129, 0.25)',
+                              borderRadius: '8px'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                <CheckCircle size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+                                <span style={{ fontSize: '0.8rem', color: 'var(--HeaderText)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {yoyBaseName}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                onClick={() => { setYoyBaseWorkbook(null); setYoyBaseName(''); }}
+                              >
+                                <Trash2 size={12} /> Clear
+                              </button>
+                            </div>
+                          ) : (
+                            <FileUploader 
+                              compact={true} 
+                              placeholder="Upload base year report..." 
+                              onWorkbookLoaded={(data, name) => {
+                                setYoyBaseWorkbook(data);
+                                setYoyBaseName(name);
+                              }} 
+                            />
+                          )}
+                        </div>
+
+                        {/* Comparison Year Selector */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--LabelBG)' }}>Comparison Year (Newer File):</span>
+                          {yoyCompareWorkbook ? (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '0.75rem 1rem',
+                              background: 'rgba(16, 185, 129, 0.05)',
+                              border: '1.5px solid rgba(16, 185, 129, 0.25)',
+                              borderRadius: '8px'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                <CheckCircle size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+                                <span style={{ fontSize: '0.8rem', color: 'var(--HeaderText)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {yoyCompareName}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                onClick={() => { setYoyCompareWorkbook(null); setYoyCompareName(''); }}
+                              >
+                                <Trash2 size={12} /> Clear
+                              </button>
+                            </div>
+                          ) : (
+                            <FileUploader 
+                              compact={true} 
+                              placeholder="Upload comparison year report..." 
+                              onWorkbookLoaded={(data, name) => {
+                                setYoyCompareWorkbook(data);
+                                setYoyCompareName(name);
+                              }} 
+                            />
+                          )}
+                        </div>
+
+                        {yoyBaseWorkbook && yoyCompareWorkbook && (
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            style={{
+                              width: '100%',
+                              padding: '0.75rem',
+                              fontSize: '0.875rem',
+                              fontWeight: 700,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.5rem',
+                              marginTop: '0.5rem',
+                              borderRadius: '8px',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleYoySubmit(yoyBaseWorkbook, yoyCompareWorkbook, yoyBaseName, yoyCompareName)}
+                          >
+                            Process Year-over-Year Analysis <ArrowRight size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Column: YoY Demo Reports */}
+                    <div className="uploader-demo-reports" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div>
+                        <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem 0', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)' }}>
+                          Quick Start YoY Demo
+                        </h3>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--DarkGray)', margin: 0 }}>
+                          Preload the Florida ambulance report model spanning 2023 & 2024 to verify merged charts and reports immediately:
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, justifyContent: 'center' }}>
+                        <div 
+                          className="clickable-row" 
+                          onClick={handleLoadYoySample}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '1.25rem 1rem',
+                            background: 'var(--ExtraLightGray)',
+                            border: '1.5px solid var(--LightGray)',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            <div style={{ color: 'var(--BannerGB)', background: 'white', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--LightGray)' }}>
+                              <TrendingUp size={20} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                              <strong style={{ fontSize: '0.85rem', color: 'var(--LabelBG)' }}>Florida_YoY_Ambulance_Data (2023 vs 2024)</strong>
+                              <span style={{ fontSize: '0.725rem', color: 'var(--DarkGray)' }}>Comparative provider trips, salaries, and FFS revenues</span>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="badge badge-purple" style={{ fontSize: '0.65rem', textTransform: 'none' }}>Dual Mock YoY</span>
+                            <ChevronRight size={16} style={{ color: 'var(--DarkGray)' }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
 
               </div>
 
@@ -1829,8 +2238,13 @@ function App() {
             {/* Steps & Profile Import Header */}
             <div style={{ background: 'white', borderBottom: '1.5px solid var(--LightGray)', padding: '1rem 2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', color: 'var(--LabelBG)', margin: 0, fontWeight: 700 }}>
+                <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', color: 'var(--LabelBG)', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   Step 2 of 3: Set Focus & Select Visual Reports
+                  {isYoyActive && (
+                    <span className="badge badge-purple" style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '12px' }}>
+                      YoY Mode
+                    </span>
+                  )}
                 </h2>
                 <span style={{ fontSize: '0.75rem', color: 'var(--DarkGray)', fontWeight: 500 }}>
                   Analyzing Sheet: <strong>{activeSheetName}</strong> • Total Records: <strong>{activeSheet.rowCount}</strong>

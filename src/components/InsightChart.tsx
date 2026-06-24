@@ -746,15 +746,33 @@ export const InsightChart: React.FC<InsightChartProps> = ({ chartSpec, rows, bor
               tickFormatter={(val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val)}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Line
-              type="monotone"
-              dataKey="value"
-              name={yAxisColumn}
-              stroke={colors.stroke}
-              strokeWidth={3}
-              dot={{ r: 4, fill: '#ffffff', stroke: colors.stroke, strokeWidth: 2 }}
-              activeDot={{ r: 6, stroke: colors.gradient[1], strokeWidth: 2, fill: '#ffffff' }}
-            />
+            {stackKeys.length > 0 ? (
+              stackKeys.map((key, index) => {
+                const color = PIE_COLORS[index % PIE_COLORS.length];
+                return (
+                  <Line
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    name={key}
+                    stroke={color}
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: '#ffffff', stroke: color, strokeWidth: 2 }}
+                    activeDot={{ r: 6, stroke: color, strokeWidth: 2, fill: '#ffffff' }}
+                  />
+                );
+              })
+            ) : (
+              <Line
+                type="monotone"
+                dataKey="value"
+                name={yAxisColumn}
+                stroke={colors.stroke}
+                strokeWidth={3}
+                dot={{ r: 4, fill: '#ffffff', stroke: colors.stroke, strokeWidth: 2 }}
+                activeDot={{ r: 6, stroke: colors.gradient[1], strokeWidth: 2, fill: '#ffffff' }}
+              />
+            )}
           </LineChart>
         );
 

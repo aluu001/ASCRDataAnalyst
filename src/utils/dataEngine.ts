@@ -147,7 +147,7 @@ export interface AggregatedDataPoint {
  */
 export function aggregateDataset(rows: any[], request: AggregationRequest): AggregatedDataPoint[] {
   const { xAxisColumn, yAxisColumn, aggregation } = request;
-  const isStackedType = ['stackedBar', 'percentStackedBar', 'area'].includes(request.chartType);
+  const isStackedType = ['stackedBar', 'percentStackedBar', 'area', 'line'].includes(request.chartType);
   const stackBy = isStackedType ? request.stackByColumn : undefined;
 
   // Handle pivot aggregation if stackBy is defined and exists in the request

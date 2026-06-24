@@ -4,10 +4,16 @@ import { parseExcelWorkbook } from '../utils/dataEngine';
 import type { WorkbookData } from '../utils/dataEngine';
 
 interface FileUploaderProps {
-  onWorkbookLoaded: (data: WorkbookData) => void;
+  onWorkbookLoaded: (data: WorkbookData, loadedName: string) => void;
+  placeholder?: string;
+  compact?: boolean;
 }
 
-export const FileUploader: React.FC<FileUploaderProps> = ({ onWorkbookLoaded }) => {
+export const FileUploader: React.FC<FileUploaderProps> = ({ 
+  onWorkbookLoaded, 
+  placeholder = 'Drag and drop your cost report file here',
+  compact = false 
+}) => {
   const [isDragActive, setIsDragActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,8 +24,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onWorkbookLoaded }) 
     
     // Check file type
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    if (fileExtension !== 'xlsx' && fileExtension !== 'xls') {
-      setError('Unsupported file format. Please upload an Excel workbook (.xlsx or .xls).');
+    if (fileExtension !== 'xlsx' && fileExtension !== 'xls' && fileExtension !== 'csv') {
+      setError('Unsupported file format. Please upload an Excel workbook (.xlsx, .xls) or CSV (.csv).');
       return;
     }
 
@@ -29,10 +35,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onWorkbookLoaded }) 
     try {
       const arrayBuffer = await file.arrayBuffer();
       const workbookData = parseExcelWorkbook(arrayBuffer);
-      onWorkbookLoaded(workbookData);
+      onWorkbookLoaded(workbookData, file.name);
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || 'Failed to read the Excel file. It might be corrupted or in an invalid format.');
+      setError(err?.message || 'Failed to read the file. It might be corrupted or in an invalid format.');
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +89,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onWorkbookLoaded }) 
         style={{
           border: isDragActive ? '2px dashed var(--LabelBG)' : '2px dashed rgba(0, 82, 189, 0.25)',
           borderRadius: '12px',
-          padding: '2.5rem 1.5rem',
+          padding: compact ? '1.5rem 1rem' : '2.5rem 1.5rem',
           textAlign: 'center',
           background: isDragActive ? 'rgba(0, 82, 189, 0.04)' : 'var(--WidgetBG)',
           cursor: isLoading ? 'not-allowed' : 'pointer',
@@ -92,7 +98,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onWorkbookLoaded }) 
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.75rem'
+          gap: compact ? '0.5rem' : '0.75rem'
         }}
       >
         <input
@@ -100,41 +106,40 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onWorkbookLoaded }) 
           type="file"
           className="hidden"
           style={{ display: 'none' }}
-          accept=".xlsx, .xls"
+          accept=".xlsx, .xls, .csv"
           onChange={handleChange}
           disabled={isLoading}
         />
 
         {isLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', padding: '1rem' }}>
-            <Loader2 size={36} className="loading-dot" style={{ color: 'var(--BannerGB)', animation: 'spin 1s linear infinite' }} />
-            <p style={{ fontWeight: 600, color: 'var(--LabelBG)', margin: 0, fontSize: '0.9rem' }}>
-              Parsing Excel sheets & analyzing fields...
-            </p>
-            <p style={{ fontSize: '0.75rem', color: 'var(--DarkGray)', margin: 0 }}>
-              Performing aggregations, building column metrics, and loading AI structures
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: compact ? '0.25rem' : '1rem' }}>
+            <Loader2 size={compact ? 24 : 36} className="loading-dot" style={{ color: 'var(--BannerGB)', animation: 'spin 1s linear infinite' }} />
+            <p style={{ fontWeight: 600, color: 'var(--LabelBG)', margin: 0, fontSize: compact ? '0.8rem' : '0.9rem' }}>
+              Parsing sheets...
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-            <div className="uploader-icon" style={{ background: 'white', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--LightGray)', color: 'var(--BannerGB)', margin: '0 auto' }}>
-              <UploadCloud size={24} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: compact ? '0.25rem' : '0.5rem' }}>
+            <div className="uploader-icon" style={{ background: 'white', width: compact ? '36px' : '48px', height: compact ? '36px' : '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--LightGray)', color: 'var(--BannerGB)', margin: '0 auto' }}>
+              <UploadCloud size={compact ? 18 : 24} />
             </div>
             <div>
-              <p style={{ fontWeight: 600, color: 'var(--HeaderText)', margin: '0 0 0.15rem 0', fontSize: '0.95rem' }}>
-                Drag and drop your cost report file here
+              <p style={{ fontWeight: 600, color: 'var(--HeaderText)', margin: '0 0 0.15rem 0', fontSize: compact ? '0.825rem' : '0.95rem' }}>
+                {placeholder}
               </p>
-              <p style={{ fontSize: '0.8rem', color: 'var(--DarkGray)', margin: '0 0 0.75rem 0' }}>
-                Supports standard Excel sheets (`.xlsx` or `.xls`)
+              <p style={{ fontSize: compact ? '0.7rem' : '0.8rem', color: 'var(--DarkGray)', margin: '0 0 0.5rem 0' }}>
+                Supports Excel (.xlsx, .xls) or CSV
               </p>
             </div>
-            <button 
-              type="button" 
-              className="btn btn-primary"
-              style={{ padding: '0.35rem 1rem', fontSize: '0.75rem', pointerEvents: 'none' }}
-            >
-              Choose Spreadsheet File
-            </button>
+            {!compact && (
+              <button 
+                type="button" 
+                className="btn btn-primary"
+                style={{ padding: '0.35rem 1rem', fontSize: '0.75rem', pointerEvents: 'none' }}
+              >
+                Choose Spreadsheet File
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -142,20 +147,20 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onWorkbookLoaded }) 
       {error && (
         <div
           style={{
-            marginTop: '1rem',
-            padding: '0.75rem 1rem',
+            marginTop: '0.75rem',
+            padding: '0.5rem 0.75rem',
             borderRadius: '8px',
             backgroundColor: 'rgba(239, 68, 68, 0.08)',
             border: '1.5px solid rgba(239, 68, 68, 0.2)',
             color: '#b91c1c',
             display: 'flex',
             alignItems: 'flex-start',
-            gap: '0.75rem',
-            fontSize: '0.825rem',
+            gap: '0.5rem',
+            fontSize: '0.775rem',
             lineHeight: '1.4'
           }}
         >
-          <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '0.1rem', color: '#dc2626' }} />
+          <AlertCircle size={14} style={{ flexShrink: 0, marginTop: '0.1rem', color: '#dc2626' }} />
           <span>{error}</span>
         </div>
       )}

@@ -3385,7 +3385,86 @@ const hospitalPerformanceRows = [
   }
 ];
 
+function generateFloridaMockRows(year: number): any[] {
+  const providers = [
+    'Miami-Dade Fire Rescue',
+    'Broward County Fire Rescue',
+    'Pinellas County Fire Rescue',
+    'Hillsborough County Fire Rescue',
+    'Duval County Fire Rescue',
+    'Orange County Fire Rescue',
+    'Palm Beach County Fire Rescue'
+  ];
+  const sections = ['Trips', 'Revenues', 'Allocation Statistics', 'Totals'];
+  const buckets = [
+    'Salaries', 'Medicare', 'Medicaid MCO', 'Workers Comp', 'Totals', 'Capital Related', 'Medicaid Fee For Service Revenue from Transports'
+  ];
+  const groups = ['Administration and General', 'Salaries', 'MTS', 'Capital Related', 'Non-MTS'];
+  const subgroups = ['Dedicated', 'Shared'];
+  const lineItems = [
+    'Fines and Penalties', 'Logistics', 'Medicaid MTS Costs', 'All Trips', 'Medicare HMO', 'Minor Equipment',
+    'Medicaid FFS', 'Hours Logged for MTS Duty', 'Private Insurance', 'Leases and Rentals', 'Property Taxes',
+    'Administrative', 'Training'
+  ];
+  const quarters = ['Qtr 1', 'Qtr 2', 'Qtr 3', 'Qtr 4', 'Full Year'];
+  const types = ['Forecast', 'Budget', 'Actual'];
+
+  function getRandomValue(lineItem: string, idx: number) {
+    const smallItems = ['Fines and Penalties', 'Minor Equipment', 'Training', 'Leases and Rentals'];
+    const midItems = ['Logistics', 'Medicaid MTS Costs', 'Hours Logged for MTS Duty', 'Private Insurance', 'Administrative'];
+    const seed = (idx + 1) * 37;
+    const rand = Math.sin(seed) * 1000;
+    const absRand = Math.abs(rand - Math.floor(rand));
+
+    if (smallItems.includes(lineItem)) {
+      return Math.round(100 + absRand * 45000);
+    } else if (midItems.includes(lineItem)) {
+      return Math.round(50000 + absRand * 4500000);
+    } else {
+      return Math.round(5000000 + absRand * 55000000);
+    }
+  }
+
+  const rows = [];
+  for (let i = 0; i < 100; i++) {
+    const seed = (i + 1) * 17;
+    const rand = Math.sin(seed) * 1000;
+    const r = () => Math.abs(rand - Math.floor(rand));
+
+    const provider = providers[Math.floor(r() * providers.length)];
+    const section = sections[Math.floor(r() * sections.length)];
+    const bucket = buckets[Math.floor(r() * buckets.length)];
+    const group = groups[Math.floor(r() * groups.length)];
+    const subgroup = subgroups[Math.floor(r() * subgroups.length)];
+    const lineItem = lineItems[Math.floor(r() * lineItems.length)];
+    const quarter = quarters[Math.floor(r() * quarters.length)];
+    const type = types[Math.floor(r() * types.length)];
+    const value = getRandomValue(lineItem, i);
+
+    rows.push({
+      State: 'FL',
+      Provider: provider,
+      Year: year,
+      Section: section,
+      Bucket: bucket,
+      Group: group,
+      Subgroup: subgroup,
+      "Line Item": lineItem,
+      Quarter: quarter,
+      Value: value,
+      Type: type
+    });
+  }
+  return rows;
+}
+
 export const getMockWorkbook = (fileName: string): WorkbookData => {
+  if (fileName.includes('Florida 2023') || fileName.includes('florida_2023')) {
+    return createMockWorkbook('Florida Data Summary', generateFloridaMockRows(2023));
+  }
+  if (fileName.includes('Florida 2024') || fileName.includes('florida_2024')) {
+    return createMockWorkbook('Florida Data Summary', generateFloridaMockRows(2024));
+  }
   if (fileName.includes('EMS_Public_Reimbursement_Model') || fileName.includes('PEMT Data')) {
     return createMockWorkbook('PEMT Reimbursement Summary', pemtRows);
   }
