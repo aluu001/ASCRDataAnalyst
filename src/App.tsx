@@ -1932,7 +1932,6 @@ function App() {
     }
     
     setIsLoading(true);
-    setWorkspaceStep('dashboard');
 
     const getYearOrLabel = (fileName: string) => {
       const match = fileName.match(/\b(20\d{2})\b/);
@@ -2033,6 +2032,7 @@ function App() {
         setSelectedChartTitles(finalCharts.map(c => c.title));
         setActiveChartTab(finalCharts[0].title);
       }
+      setWorkspaceStep('dashboard');
     } catch (err: any) {
       console.error(err);
       setMessages([
@@ -2043,6 +2043,7 @@ function App() {
           isError: true 
         }
       ]);
+      setWorkspaceStep('dashboard');
     } finally {
       setIsLoading(false);
     }
@@ -5083,6 +5084,36 @@ function App() {
               {expandedChart.zAxisColumn && <span><strong>Z-Axis:</strong> {expandedChart.zAxisColumn}</span>}
               <span><strong>Aggregation:</strong> {expandedChart.aggregation}</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Glassmorphic Loading Overlay */}
+      {isLoading && workspaceStep === 'preview' && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(255, 255, 255, 0.72)',
+          backdropFilter: 'blur(16px)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'modalOverlayFadeIn 0.25s ease forwards',
+          gap: '1.5rem'
+        }}>
+          <div className="spinner" style={{ width: '48px', height: '48px', borderWidth: '3px' }}></div>
+          <div style={{ textAlign: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--LabelBG)', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+              Letting the AI Decide...
+            </h3>
+            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--DarkGray)', fontWeight: 500 }}>
+              Analyzing spreadsheet rows & curating exactly 10 premium visualizations.
+            </p>
           </div>
         </div>
       )}
