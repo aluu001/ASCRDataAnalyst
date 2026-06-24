@@ -9,6 +9,7 @@ export interface ChartSpecification {
   aggregation: 'sum' | 'avg' | 'count' | 'none';
   zAxisColumn?: string;
   stackByColumn?: string;
+  excludedCategories?: string[];
 }
 
 export interface AnalystResponse {
@@ -285,6 +286,10 @@ User Instruction:
 "${instruction}"
 
 Output a valid, updated ChartSpecification matching the schema below. Ensure all column names exist in the available columns.
+Special instructions for category exclusions:
+- If the user asks to remove/hide/exclude specific categories, items, or labels (for example: remove the "Other" category, exclude "Pinellas County Fire Rescue"), add those exact category string values to the "excludedCategories" array.
+- If the user asks to add back/show/restore a category that is currently in "excludedCategories", remove it from the "excludedCategories" array.
+- Maintain existing exclusions unless the user explicitly asks to restore them.
 `;
 
   const response = await ai.models.generateContent({
@@ -307,7 +312,12 @@ Output a valid, updated ChartSpecification matching the schema below. Ensure all
             enum: ['sum', 'avg', 'count', 'none']
           },
           zAxisColumn: { type: 'STRING' as any, description: 'Optional third numeric column name specifically for Bubble chart dot sizes.' },
-          stackByColumn: { type: 'STRING' as any, description: 'Optional secondary categorical column name to segment/stack the data.' }
+          stackByColumn: { type: 'STRING' as any, description: 'Optional secondary categorical column name to segment/stack the data.' },
+          excludedCategories: { 
+            type: 'ARRAY' as any, 
+            items: { type: 'STRING' as any },
+            description: 'Optional list of specific category or X-axis label values to exclude/remove from the visualization (case-insensitive).'
+          }
         },
         required: ['chartType', 'title', 'xAxisColumn', 'yAxisColumn', 'aggregation']
       }

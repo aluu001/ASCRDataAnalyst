@@ -1101,16 +1101,26 @@ export const InsightChart: React.FC<InsightChartProps> = ({
         );
       }
 
-      case 'box':
+      case 'box': {
+        const boxPlotRows = !chartSpec.excludedCategories || chartSpec.excludedCategories.length === 0
+          ? rows
+          : (() => {
+              const exSet = new Set(chartSpec.excludedCategories.map(c => String(c).trim().toLowerCase()));
+              return rows.filter(row => {
+                const xVal = String(row[chartSpec.xAxisColumn] ?? '').trim().toLowerCase();
+                return !exSet.has(xVal);
+              });
+            })();
         return (
           <BoxPlot 
-            rows={rows} 
+            rows={boxPlotRows} 
             xAxisColumn={chartSpec.xAxisColumn} 
             yAxisColumn={chartSpec.yAxisColumn} 
             colors={colors} 
             uniqueId={`${uniqueId}${suffix}`} 
           />
         );
+      }
 
       default:
         return null;
