@@ -136,7 +136,7 @@ Rules:
    - If the user asked to add a chart, confirm that you have added the visualization to the dashboard.
    - Example: "I have added a Bar Chart for FTE counts by Job Title to your dashboard. This comparison reveals that Paramedics constitute the highest FTE count."
 4. In "insights", write 2 to 4 bullet points. Keep insights extremely punchy, analytical, and backed by specific data points. Use Markdown formatting.
-5. In "charts", you can recommend up to 2 charts. Only select columns that actually exist in the schema.
+5. In "charts", you MUST recommend exactly 10 distinct, clean, and highly relevant visualizations to build a comprehensive dashboard when performing audits or when requested to auto-generate/decide. If not performing an audit or requested to auto-generate, recommend 2-3 charts. Ensure the 10 charts showcase a wide range of chartType values (bar, horizontalBar, line, pie, scatter, bubble, radar, box, stackedBar, percentStackedBar, area) and different combinations of numeric and categorical columns. Only select columns that actually exist in the schema.
    - xAxisColumn: typically a categorical, text, or date column.
    - yAxisColumn: MUST be a numeric column (unless aggregation is 'count', where it can count rows).
    - aggregation: 'sum', 'avg', or 'count'. If plotting raw points (e.g. scatter/bubble/box), use 'none'.

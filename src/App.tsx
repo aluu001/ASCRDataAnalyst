@@ -283,7 +283,9 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       { chartType: 'pie', title: 'Share of Annual PEMT Supplement', xAxisColumn: 'Month', yAxisColumn: 'PEMT Supplement', aggregation: 'sum' },
       { chartType: 'scatter', title: 'Correlation: Run Volume vs Total Revenue', xAxisColumn: 'Run Volume', yAxisColumn: 'Total Revenue', aggregation: 'none' },
       { chartType: 'line', title: 'Transport Fee Charge Rates', xAxisColumn: 'Month', yAxisColumn: 'Transport Fee', aggregation: 'avg' },
-      { chartType: 'bubble', title: 'Operational Correlation: Run Vol vs Total Revenue vs PEMT Size', xAxisColumn: 'Run Volume', yAxisColumn: 'Total Revenue', aggregation: 'none', zAxisColumn: 'PEMT Supplement' }
+      { chartType: 'bubble', title: 'Operational Correlation: Run Vol vs Total Revenue vs PEMT Size', xAxisColumn: 'Run Volume', yAxisColumn: 'Total Revenue', aggregation: 'none', zAxisColumn: 'PEMT Supplement' },
+      { chartType: 'horizontalBar', title: 'Average Revenue Rankings by Month', xAxisColumn: 'Month', yAxisColumn: 'Total Revenue', aggregation: 'avg' },
+      { chartType: 'area', title: 'Cumulative PEMT Supplement Trend', xAxisColumn: 'Month', yAxisColumn: 'PEMT Supplement', aggregation: 'sum' }
     ]);
   }
 
@@ -296,7 +298,9 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       { chartType: 'pie', title: 'FTE Share by Department Role', xAxisColumn: 'Job Title', yAxisColumn: 'FTE Count', aggregation: 'sum' },
       { chartType: 'bar', title: 'Accumulated Overtime Hours by Job Title', xAxisColumn: 'Job Title', yAxisColumn: 'Overtime Hours', aggregation: 'sum' },
       { chartType: 'scatter', title: 'Correlation: Base Hours vs Base Pay', xAxisColumn: 'Regular Hours', yAxisColumn: 'Total Regular Pay', aggregation: 'none' },
-      { chartType: 'box', title: 'Hourly Rate Spread by Job Title Box Plot', xAxisColumn: 'Job Title', yAxisColumn: 'Avg Hourly Rate', aggregation: 'none' }
+      { chartType: 'box', title: 'Hourly Rate Spread by Job Title Box Plot', xAxisColumn: 'Job Title', yAxisColumn: 'Avg Hourly Rate', aggregation: 'none' },
+      { chartType: 'radar', title: 'Hourly Rate Profile Radar by Job Title', xAxisColumn: 'Job Title', yAxisColumn: 'Avg Hourly Rate', aggregation: 'avg' },
+      { chartType: 'horizontalBar', title: 'Average Regular Hours Rankings by Job Title', xAxisColumn: 'Job Title', yAxisColumn: 'Regular Hours', aggregation: 'avg' }
     ]);
   }
 
@@ -309,7 +313,24 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       { chartType: 'pie', title: 'Incident Frequency Share by Category', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'count' },
       { chartType: 'line', title: 'Response Efficiency Benchmark Index', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'avg' },
       { chartType: 'scatter', title: 'Correlation: Dispatch Latency vs Total Response Time', xAxisColumn: 'Dispatch Time (sec)', yAxisColumn: 'Response Time (min)', aggregation: 'none' },
-      { chartType: 'radar', title: 'CAD Response Profile Radar Analysis', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'avg' }
+      { chartType: 'radar', title: 'CAD Response Profile Radar Analysis', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'avg' },
+      { chartType: 'box', title: 'Response Time Spread Box Plot by Call Source', xAxisColumn: 'Call Source', yAxisColumn: 'Response Time (min)', aggregation: 'none' },
+      { chartType: 'horizontalBar', title: 'Average Scene Time Rankings', xAxisColumn: 'Call Source', yAxisColumn: 'Scene Time (min)', aggregation: 'avg' }
+    ]);
+  }
+
+  if (docName.includes('Hospital Performance') || sheet.name.includes('Hospital Performance')) {
+    return applyYoy([
+      { chartType: 'bar', title: 'Patient Admissions by Hospital Division', xAxisColumn: 'Hospital Division', yAxisColumn: 'Patient Admissions', aggregation: 'sum' },
+      { chartType: 'horizontalBar', title: 'Operational Overheads by Division', xAxisColumn: 'Hospital Division', yAxisColumn: 'Operational Overheads ($)', aggregation: 'sum' },
+      { chartType: 'line', title: 'Average Stay Duration Trend', xAxisColumn: 'Month', yAxisColumn: 'Average Stay Duration (Days)', aggregation: 'avg' },
+      { chartType: 'pie', title: 'Share of Total Patient Admissions', xAxisColumn: 'Hospital Division', yAxisColumn: 'Patient Admissions', aggregation: 'sum' },
+      { chartType: 'scatter', title: 'Correlation: Stay Duration vs Satisfaction Rate', xAxisColumn: 'Average Stay Duration (Days)', yAxisColumn: 'Patient Satisfaction Rate (%)', aggregation: 'none' },
+      { chartType: 'bubble', title: 'Admissions vs Staffing Ratio vs Overheads', xAxisColumn: 'Patient Admissions', yAxisColumn: 'Staff Ratio (FTEs)', aggregation: 'none', zAxisColumn: 'Operational Overheads ($)' },
+      { chartType: 'radar', title: 'Satisfaction Rate Radar Profiles', xAxisColumn: 'Hospital Division', yAxisColumn: 'Patient Satisfaction Rate (%)', aggregation: 'avg' },
+      { chartType: 'box', title: 'Stay Duration Spread by Division Box Plot', xAxisColumn: 'Hospital Division', yAxisColumn: 'Average Stay Duration (Days)', aggregation: 'none' },
+      { chartType: 'stackedBar', title: 'Staff Pay by Division & Month', xAxisColumn: 'Month', yAxisColumn: 'Direct Staff Pay ($)', aggregation: 'sum', stackByColumn: 'Hospital Division' },
+      { chartType: 'area', title: 'Admissions Growth Trend over Months', xAxisColumn: 'Month', yAxisColumn: 'Patient Admissions', aggregation: 'sum' }
     ]);
   }
 
@@ -446,7 +467,7 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
     }
 
     // Chart 8: Radar Chart or Record Count
-    if (y1 && cat && list.length < 8) {
+    if (y1 && cat) {
       list.push({
         chartType: 'radar',
         title: `${y1} Profile Analysis by ${cat}`,
@@ -464,7 +485,53 @@ function generateDefaultCharts(sheet: SheetData, docName: string): ChartSpecific
       });
     }
 
-    return applyYoy(list.slice(0, 8));
+    // Chart 9: Stacked Bar Chart for secondary grouping
+    if (y1) {
+      list.push({
+        chartType: 'stackedBar',
+        title: `${y1} Aggregation Breakdown by ${cat}`,
+        xAxisColumn: cat,
+        yAxisColumn: y1,
+        aggregation: 'sum'
+      });
+    }
+
+    // Chart 10: Area Flow Chart
+    if (y2) {
+      list.push({
+        chartType: 'area',
+        title: `${y2} Cumulative Area Flow by ${timeCol || cat}`,
+        xAxisColumn: timeCol || cat,
+        yAxisColumn: y2,
+        aggregation: 'sum'
+      });
+    }
+
+    // Pad to exactly 10 charts of diverse types if we have fewer
+    const allChartTypes: Array<'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box' | 'stackedBar' | 'percentStackedBar' | 'area'> = [
+      'bar', 'horizontalBar', 'line', 'pie', 'scatter', 'bubble', 'radar', 'box', 'stackedBar', 'percentStackedBar', 'area'
+    ];
+    let typeIdx = 0;
+    while (list.length < 10 && numericCols.length > 0) {
+      const cType = allChartTypes[typeIdx % allChartTypes.length];
+      typeIdx++;
+      const hasType = list.some(c => c.chartType === cType);
+      if (hasType && typeIdx < allChartTypes.length) {
+        continue;
+      }
+      
+      const targetY = numericCols[list.length % numericCols.length].name;
+      list.push({
+        chartType: cType,
+        title: `AI Feature Analysis: ${targetY} (${cType.toUpperCase()})`,
+        xAxisColumn: cType === 'scatter' || cType === 'bubble' ? numericCols[0].name : cat,
+        yAxisColumn: targetY,
+        aggregation: cType === 'scatter' || cType === 'bubble' || cType === 'box' ? 'none' : 'avg',
+        zAxisColumn: cType === 'bubble' ? numericCols[Math.min(1, numericCols.length - 1)].name : undefined
+      });
+    }
+
+    return applyYoy(list.slice(0, 10));
   }
 
   return [];
@@ -1891,13 +1958,15 @@ function App() {
     const baseLabel = isYoyActive ? getYearOrLabel(yoyBaseName) : '';
     const compareLabel = isYoyActive ? getYearOrLabel(yoyCompareName) : '';
 
-    const promptText = previewGoal.trim().length > 0
+    let promptText = previewGoal.trim().length > 0
       ? (isYoyActive
           ? `Auto-generate dashboard YoY visual analysis comparing ${baseLabel} and ${compareLabel} for goal: ${previewGoal}`
           : `Auto-generate dashboard visual analysis for goal: ${previewGoal}`)
       : (isYoyActive
           ? `Perform an initial Year-over-Year (YoY) audit comparing the base period "${baseLabel}" and comparison period "${compareLabel}". Identify key operational and financial variances and recommend comparative visualizations.`
           : "Perform an initial cost report audit of this worksheet. Outline the primary operational/financial metrics and recommend some custom visualizations.");
+
+    promptText += " Please recommend exactly 10 distinct, clean, and highly relevant visualizations of diverse types (such as bar, horizontalBar, line, pie, scatter, bubble, radar, box, stackedBar, percentStackedBar, area) to fully showcase our dashboard system's capabilities. Make sure they cover different numeric columns and categorical breakdowns.";
 
     // Append initial user message
     const updatedMessages: ChatMessage[] = [
@@ -1927,10 +1996,58 @@ function App() {
         { role: 'model', content: '', analystResponse: res }
       ]);
 
-      if (res.charts && res.charts.length > 0) {
-        setAvailableCharts(res.charts);
-        setSelectedChartTitles(res.charts.map(c => c.title));
-        setActiveChartTab(res.charts[0].title);
+      let finalCharts = res.charts && res.charts.length > 0 ? [...res.charts] : [];
+
+      // If Gemini returned fewer than 10 charts, pad it with the smart default charts
+      if (finalCharts.length < 10) {
+        const defaults = generateDefaultCharts(processedActiveSheet, currentDocName);
+        for (const defChart of defaults) {
+          if (finalCharts.length >= 10) break;
+          // Check if title or yAxisColumn/xAxisColumn/chartType combo is already present to prevent duplicates
+          const isDuplicate = finalCharts.some(
+            c => c.title.toLowerCase() === defChart.title.toLowerCase() || 
+            (c.chartType === defChart.chartType && c.yAxisColumn === defChart.yAxisColumn && c.xAxisColumn === defChart.xAxisColumn)
+          );
+          if (!isDuplicate) {
+            finalCharts.push(defChart);
+          }
+        }
+      }
+
+      // If still less than 10, generate extra using default types
+      if (finalCharts.length < 10) {
+        const numericCols = processedActiveSheet.columns.filter(c => c.type === 'number');
+        const cat = processedActiveSheet.columns.find(c => c.type === 'string' || c.type === 'date')?.name || processedActiveSheet.columns[0]?.name || '';
+        const allChartTypes: Array<'bar' | 'horizontalBar' | 'line' | 'pie' | 'scatter' | 'bubble' | 'radar' | 'box' | 'stackedBar' | 'percentStackedBar' | 'area'> = [
+          'bar', 'horizontalBar', 'line', 'pie', 'scatter', 'bubble', 'radar', 'box', 'stackedBar', 'percentStackedBar', 'area'
+        ];
+        let typeIdx = 0;
+        while (finalCharts.length < 10 && numericCols.length > 0) {
+          const cType = allChartTypes[typeIdx % allChartTypes.length];
+          typeIdx++;
+          const hasType = finalCharts.some(c => c.chartType === cType);
+          if (hasType && typeIdx < allChartTypes.length) {
+            continue;
+          }
+          const targetY = numericCols[finalCharts.length % numericCols.length].name;
+          finalCharts.push({
+            chartType: cType,
+            title: `AI Spotlight: ${targetY} Analysis (${cType.toUpperCase()})`,
+            xAxisColumn: cType === 'scatter' || cType === 'bubble' ? numericCols[0].name : cat,
+            yAxisColumn: targetY,
+            aggregation: cType === 'scatter' || cType === 'bubble' || cType === 'box' ? 'none' : 'avg',
+            zAxisColumn: cType === 'bubble' ? numericCols[Math.min(1, numericCols.length - 1)].name : undefined
+          });
+        }
+      }
+
+      // Slice to exactly 10
+      finalCharts = finalCharts.slice(0, 10);
+
+      if (finalCharts.length > 0) {
+        setAvailableCharts(finalCharts);
+        setSelectedChartTitles(finalCharts.map(c => c.title));
+        setActiveChartTab(finalCharts[0].title);
       }
     } catch (err: any) {
       console.error(err);
