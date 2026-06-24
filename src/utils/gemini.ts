@@ -357,6 +357,36 @@ Few-Shot Examples of Exclusions Handling:
   try {
     const parsed: ChartSpecification = JSON.parse(responseText);
 
+    // Client-side fail-safe: Intercept and enforce synthetic "Other" category exclusion requests
+    const instLower = instruction.toLowerCase().trim();
+    const hasOtherWord = instLower.includes('other');
+    if (hasOtherWord) {
+      const isExcludeOther = 
+        instLower.includes('remove') || 
+        instLower.includes('exclude') || 
+        instLower.includes('hide') || 
+        instLower.includes('delete') ||
+        instLower.includes('minus');
+      
+      const isIncludeOther = 
+        instLower.includes('add') || 
+        instLower.includes('restore') || 
+        instLower.includes('show') || 
+        instLower.includes('include');
+
+      if (isExcludeOther) {
+        const tempSet = new Set<string>(parsed.excludedCategories || []);
+        tempSet.add('Other');
+        parsed.excludedCategories = Array.from(tempSet);
+      } else if (isIncludeOther) {
+        if (parsed.excludedCategories) {
+          parsed.excludedCategories = parsed.excludedCategories.filter(
+            c => c.toLowerCase().trim() !== 'other'
+          );
+        }
+      }
+    }
+
     // Client-side fail-safe: Reconcile excludedCategories to prevent Gemini from dropping exclusions during multi-turn edits
     if (currentSpec.excludedCategories && currentSpec.excludedCategories.length > 0) {
       const instructionLower = instruction.toLowerCase().trim();
